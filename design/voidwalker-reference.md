@@ -2,7 +2,7 @@
 
 *Generated 2026-11-18 from `prototypes/voidwalker/config.js` (game data and tuning) and the project history. Numbers are the current `config.js` values; change them there and regenerate.*
 
-**Build:** `prototypes/voidwalker/index.html` (open in a browser) · **Brief:** `design/game-brief.md` · **Checkpoints:** tag `one-shot/voidwalker`, commit `0053f63` (iteration 2)
+**Build:** `prototypes/voidwalker/index.html` (open in a browser) · **Brief:** `design/game-brief.md` · **Checkpoints:** tag `one-shot/voidwalker`, commit `708c5d9` (iteration 3)
 
 ## Contents
 - 1. The game in one page
@@ -16,7 +16,7 @@
 - 9. Effects glossary
 - 10. Discoveries (achievements)
 - 11. Omens and depth
-- 12. Ybasogs
+- 12. Ybasogs and natured Ybasogs
 - 13. Falling matter
 - 14. Stages and waves
 - 15. The save
@@ -358,34 +358,91 @@ After every adventure a new omen is rolled; it shows at the Altar so the deck ca
 
 ## 12. Ybasogs
 
-| Ybasog | Life | Speed | Behaviour | Void energy |
-|---|---|---|---|---|
-| Pod | 3 | 30 px/s | Drifts down; hatches a grazer after 9 s | 2 |
-| Grazer | 4 | 44 px/s | Dives at you (230 px/s) once past 45% of the screen | 3 |
-| Feeder | 7 | 26 px/s | Hovers high and spits a glob every 2.4 s (170 px/s) | 5 |
-| The Mother (boss) | 320 | sways | Spawns a pod every 3.2 s, a 7-glob spread every 3.6 s, throws matter every 7 s; below half life everything is 30% faster, +2 globs, grazers spawn too | 30 |
+The hive draws on Lovecraftian horror: flesh, clusters of eyes, tendrils and hooded choirs, in original creatures. Each kind appears first in the stage shown (one stage earlier from depth 2).
 
-Life x (1 + 0.35 per stage after the first) x omen x depth; speed x (1 + 0.1 per stage).
+| Family | Ybasog | Life | Speed | From stage | Behaviour | Void |
+|---|---|---|---|---|---|---|
+| Pods | **Pod** | 3 | 30 px/s | 1 | Drifts down and hatches a grazer. | 2 |
+| Pods | **Husk Pod** | 8 | 24 px/s | 1 | An armoured shell halves damage until it cracks; hatches a horned grazer. | 4 |
+| Pods | **Clutch Pod** | 4 | 28 px/s | 2 | Bursts into three mites when it dies or hatches. | 3 |
+| Pods | **Bloat Pod** | 3 | 22 px/s | 2 | Swollen with bile: bursts into a ring of globs when killed. | 3 |
+| Grazers | **Grazer** | 4 | 44 px/s | 1 | Dives at you once it passes the middle. | 3 |
+| Grazers | **Swift Grazer** | 3 | 70 px/s | 1 | Small and quick; dives early. | 3 |
+| Grazers | **Stalker** | 5 | 40 px/s | 2 | Weaves as it falls and turns once mid-dive. | 4 |
+| Grazers | **Horned Grazer** | 12 | 36 px/s | 2 | Tough; plunges straight down. | 5 |
+| Feeders | **Feeder** | 7 | 26 px/s | 1 | Hovers and spits a glob at you. | 5 |
+| Feeders | **Spitter** | 8 | 24 px/s | 2 | Three mouths: a spread of three globs. | 6 |
+| Feeders | **Lobber** | 7 | 24 px/s | 2 | Lobs a sac that bursts into droplets above you. | 6 |
+| Feeders | **Sniper** | 6 | 30 px/s | 3 | Aims a line, then fires a fast glob along it. | 6 |
+| Eyes | **Watcher** | 6 | 30 px/s | 2 | Marks your column, then burns it with its gaze. | 5 |
+| Eyes | **Blinker** | 5 | 0 px/s | 2 | Vanishes and reappears, spitting after each blink. | 5 |
+| Eyes | **Weeper** | 6 | 20 px/s | 1 | Drips tears that fall straight down. | 4 |
+| Devourers | **Devourer** | 9 | 40 px/s | 2 | Chases and eats your void energy, growing as it feeds. | 6 |
+| Devourers | **Gorger** | 14 | 20 px/s | 2 | Eats falling matter it touches to heal and grow. | 7 |
+| Devourers | **Maw** | 10 | 26 px/s | 3 | Its open mouth swallows bolts from below: strike it from the sides or bank shots off the top. | 6 |
+| Deacons | **Warder** | 10 | 22 px/s | 2 | Shields Ybasogs around it. | 8 |
+| Deacons | **Mender** | 9 | 22 px/s | 2 | Heals Ybasogs around it. | 8 |
+| Deacons | **Herald** | 11 | 20 px/s | 3 | Calls pods out of the dark. | 8 |
+| Mites | **Mite** (x5) | 1 | 80 px/s | 1 | A flickering swarm. | 1 |
+| Mites | **Lancer** (x4) | 1.5 | 60 px/s | 2 | Hovers, then darts at you. | 1 |
+| Mites | **Thief Mite** (x3) | 1 | 90 px/s | 2 | Steals void energy on touch and flees. | 1 |
+| Wall crawlers | **Creeper** | 7 | 35 px/s | 2 | Crawls down a rift wall, spitting across. | 5 |
+| Wall crawlers | **Lasher** | 12 | 30 px/s | 3 | Clings to a wall and sweeps a tendril across the rift. | 7 |
+| Wall crawlers | **Weaver** | 8 | 30 px/s | 2 | Spins webs across the rift that catch bolts. | 6 |
+| Mini-bosses | **Brood Warden** | 90 | 30 px/s | 1 | A shelled brood-carrier that sows pods and mites. | 25 |
+| Mini-bosses | **Hive Knight** | 80 | 30 px/s | 1 | An armoured grazer that charges again and again. | 25 |
+| Mini-bosses | **Gazer Prime** | 70 | 30 px/s | 2 | Burns three columns at once; five when hurt. | 25 |
+| Mini-bosses | **Gorging Behemoth** | 110 | 26 px/s | 2 | Eats falling matter and hurls it back at you. | 30 |
+| Bosses | **The Choir** · Pride | 260 | 30 px/s | 2 | Three hooded heads behind orbiting wards; sings rings of globs and calls deacons. | 40 |
+| Bosses | **The Hollow Eye** · Envy | 240 | 30 px/s | 2 | A vast eye that blinks across the rift and burns your column. | 40 |
+| Bosses | **The Mother** · Gluttony | 320 | 40 px/s | 3 | The hive itself: pods, grazers, spreads of globs, hurled matter. | 30 |
+
+Life x (1 + 0.35 per later stage) x omen x depth; speed x (1 + 0.1 per later stage). Mini-bosses and bosses are not slowed, charmed, slept, pulled or executed; touching one costs 3 energy. Gaze beams and lashes are telegraphed for 1 s and cost 2.
+
+### Natured Ybasogs
+
+Some Ybasogs carry an innate nature, shown by an aura in its colour and its sigil. A natured Ybasog has 30% more life and drops 2 more void energy. **A bolt holding the opposite nature deals x1.6** ("WEAK"); **a bolt holding the same nature deals x0.5** ("RESISTS"); burns and venom follow the same multiplier. A fused bolt counts every nature it holds.
+
+- **How many:** 20% of stage 1 Ybasogs, +12% per later stage, in a mixed tide.
+- **Prevailing nature:** each adventure has one, shown at the Altar's Prepare tab; 60% of natured Ybasogs carry it (85% in a surge).
+- **Tides:** each wave rolls a void tide (5% natured), a mixed tide, or a nature surge (70% natured). Surges grow more common: stage 1 void 40% / mixed 50% / surge 10%; stage 2 25 / 50 / 25; stage 3 15 / 45 / 40.
+- **Bosses** have fixed natures: The Choir is Pride, The Hollow Eye is Envy, The Mother is Gluttony. Mini-bosses always carry a nature (60% the prevailing one).
 
 ## 13. Falling matter
 
-| Matter | Life | Speed | Behaviour | Void energy |
-|---|---|---|---|---|
-| Asteroid | 4 | ~36 px/s | Jagged rock; bolts ricochet off it | 3 |
-| Big asteroid | 11 | ~36 px/s | Splits into 2 chunks (2.4 life) | 5 (+1 per chunk) |
-| Space debris | 3 | 105 px/s | Fast spinning hull plate; a ricochet surface | 2 |
-| Debris slab | 6 | 40 px/s | Wide, slow slab that shields grazers (first wave) | 2 |
-| Ruin | 26 | 17 px/s | Tough carved wall with two pods sheltering behind it | 8 |
+| Family | Matter | Life | Speed | From stage | Behaviour | Void |
+|---|---|---|---|---|---|---|
+| Rocks | **Asteroid** | 4 | 36 px/s | 1 | Jagged rock; bolts ricochet off it. | 3 |
+| Rocks | **Big Asteroid** | 11 | 30 px/s | 1 | Splits into two chunks. | 5 |
+| Rocks | **Chunk** (from breaking) | 2.4 | 40 px/s |  | A broken piece of rock. | 1 |
+| Rocks | **Iron Asteroid** | 22 | 24 px/s | 2 | Dense ore: tough, and rich in void energy. | 9 |
+| Rocks | **Crystal Asteroid** | 5 | 34 px/s | 2 | Shatters into six shards that fly as your bolts. | 4 |
+| Rocks | **Comet** | 3 | 230 px/s | 1 | Dangerously fast, with rare materials; a mark at the top warns of it. | 6 |
+| Rocks | **Cinder Rock** | 4 | 34 px/s | 2 | Bursts in fire when broken, burning Ybasogs and you nearby. | 3 |
+| Wrecks | **Hull Plate** | 3 | 105 px/s | 1 | A fast, spinning plate of hull. | 2 |
+| Wrecks | **Debris Slab** | 6 | 40 px/s | 1 | A wide, slow slab that shelters what falls behind it. | 2 |
+| Wrecks | **Hull Section** | 20 | 22 px/s | 2 | A long piece of a dead ship, dark windows in a row. | 6 |
+| Wrecks | **Solar Panel** | 1.5 | 70 px/s | 1 | Fragile; breaks into a spray of scrap. | 2 |
+| Wrecks | **Scrap** (from breaking) | 1 | 120 px/s |  | Shards of a panel. | 0 |
+| Wrecks | **Engine Core** | 6 | 30 px/s | 2 | Explodes when broken, hurting only Ybasogs. | 4 |
+| Wrecks | **Cargo Pod** | 8 | 30 px/s | 1 | Sealed cargo, full of void energy. | 14 |
+| Wrecks | **Antenna Spar** | 3 | 60 px/s | 2 | A long spinning mast with a dish. | 2 |
+| Ruins | **Ruin Wall** | 26 | 17 px/s | 2 | A carved wall, with two pods sheltering behind it. | 8 |
+| Ruins | **Fallen Pillar** | 18 | 20 px/s | 2 | A fluted column, falling upright. | 6 |
+| Ruins | **Broken Arch** | 12 | 18 px/s | 3 | Two legs and a lintel: bolts slip through the gap. | 4 |
+| Ruins | **Sunken Idol** | 30 | 16 px/s | 3 | The carved head of a drowned god, its beard of tentacles. | 12 |
+| Ruins | **Glyph Stone** | 10 | 22 px/s | 2 | Breaking its glyph grants you a ward. | 5 |
+| Ruins | **Shrine** | 12 | 18 px/s | 2 | A small lit shrine; breaking it heals you 4. | 5 |
+| Ruins | **Monolith** | 40 | 14 px/s | 3 | A black slab that drinks light: bolts never ricochet off it. | 15 |
 
-Matter body-checks the blob and takes burn, chill and venom; it ignores sleep, charm and pulls.
+Matter body-checks the blob and takes burn, chill and venom; it ignores sleep, charm and pulls. Matter that slips past costs 1 energy (scrap costs nothing).
 
 ## 14. Stages and waves
 
-- **Stage 1, wave 1** is fixed: an asteroid and 3 pods, more pods, a slab of debris at 27 s with 3 grazers behind it, pods to finish.
-- **Other waves** are generated: 10 spawns + 4 per wave + 5 per stage, over 22 + 4 x wave + 3 x stage seconds. Pool: pods, grazers, asteroids, debris; feeders and big asteroids from stage 1 wave 2; ruins from stage 2.
-- **Stage 1 wave 2** always has 2 feeders and a big asteroid; **stage 2 wave 1** always has 2 ruins.
-- **Stage 3 wave 3** is the Mother.
-- A wave ends when everything has spawned and nothing is left; the next begins after about 2 s.
+- **Stage 1, wave 1** is fixed: an asteroid and pods, a debris slab with three grazers behind it. It introduces pods, grazers, asteroids and the slab.
+- **Every other wave** opens with a **debut**: 1 Ybasog kind not yet met this adventure (never-met kinds first, earliest stage first), shown alone, and one new kind of matter. The first meeting ever shows a name card. The wave then plays **3 + 1 per later wave and stage beats**, drawn from kinds already met: trickle, line, V formation, column, flank, swarm, rockfall, wreck field, ruin wall, elite pair, lull.
+- **Mini-bosses** close stage 1 wave 3 and wave 2 of stages 2 and 3. **Bosses:** The Choir or The Hollow Eye end stage 2; The Mother ends stage 3.
+- About 9 new kinds are met in one adventure, so the bestiary (counted at the Altar) fills over several adventures.
 
 ## 15. The save
 
@@ -489,33 +546,25 @@ Saved in the browser (`localStorage`, key `voidwalker.save.v1`): innate nature, 
 | `leech_share` | 0.15 | 0 to 1 | 0.01 |
 | `decoy_time` | 4 | 0 to 12 | 0.5 |
 | `ward_max` | 3 | 1 to 10 | 1 |
-| `pod_hp` | 3 | 1 to 30 | 1 |
-| `pod_speed` | 30 | 5 to 200 | 1 |
 | `pod_hatch` | 9 | 1 to 30 | 0.5 |
-| `grazer_hp` | 4 | 1 to 30 | 1 |
-| `grazer_speed` | 44 | 5 to 200 | 1 |
-| `grazer_dive_speed` | 230 | 50 to 600 | 10 |
 | `grazer_dive_line` | 0.45 | 0.1 to 0.8 | 0.05 |
-| `feeder_hp` | 7 | 1 to 40 | 1 |
-| `feeder_speed` | 26 | 5 to 200 | 1 |
-| `feeder_spit` | 2.4 | 0.3 to 8 | 0.1 |
 | `glob_speed` | 170 | 40 to 500 | 10 |
 | `mother_hp` | 320 | 20 to 2000 | 10 |
 | `mother_spawn` | 3.2 | 0.5 to 10 | 0.1 |
 | `mother_spread` | 3.6 | 0.5 to 10 | 0.1 |
 | `mother_volley` | 7 | 1 to 20 | 1 |
-| `asteroid_hp` | 4 | 1 to 30 | 1 |
-| `big_asteroid_hp` | 11 | 1 to 60 | 1 |
-| `asteroid_speed` | 36 | 5 to 200 | 1 |
-| `debris_hp` | 3 | 1 to 30 | 1 |
-| `debris_speed` | 105 | 10 to 400 | 5 |
-| `ruin_hp` | 26 | 1 to 120 | 1 |
-| `ruin_speed` | 17 | 5 to 100 | 1 |
+| `telegraph_time` | 1 | 0.2 to 3 | 0.1 |
+| `beam_damage` | 2 | 0 to 10 | 1 |
+| `nature_chance` | 0.2 | 0 to 1 | 0.05 |
+| `nature_chance_step` | 0.12 | 0 to 0.5 | 0.01 |
+| `prevailing_share` | 0.6 | 0 to 1 | 0.05 |
+| `opposite_mult` | 1.6 | 1 to 4 | 0.05 |
+| `same_mult` | 0.5 | 0 to 1 | 0.05 |
 | `stage_hp_scale` | 0.35 | 0 to 2 | 0.05 |
 | `stage_speed_scale` | 0.1 | 0 to 1 | 0.02 |
-| `wave_base_count` | 10 | 2 to 40 | 1 |
-| `wave_count_step` | 4 | 0 to 20 | 1 |
-| `stage_count_step` | 5 | 0 to 20 | 1 |
+| `beats_base` | 3 | 1 to 12 | 1 |
+| `beats_step` | 1 | 0 to 6 | 1 |
+| `debuts_per_wave` | 1 | 0 to 3 | 1 |
 ## 17. Development history and changelog
 
 ### Timeline
@@ -529,8 +578,21 @@ Saved in the browser (`localStorage`, key `voidwalker.save.v1`): innate nature, 
 | 22:47 to 23:11 | **Iteration 1** (`2c3cd10`) | The collection game, all 14 natures, all 84 fusions, 15 forms, the Altar hub, the save. Light check: no errors, a play run and a screenshot of every Altar tab. |
 | 23:15 | This reference | Generated from `config.js`, then published as the Voidwalker Codex page. |
 | 23:22 to 23:30 | **Iteration 2** (`0053f63`) | Achievements made hard to get. |
+| 23:32 to 23:52 | **Iteration 3** (`708c5d9`) | 34 Ybasog kinds, natured Ybasogs, nature tides, procedural waves with debuts, 20 kinds of matter. |
 
 ### Changelog
+
+#### Iteration 3: the hive grows (`708c5d9`)
+
+Your words: *"We will eventually move to Godot .net but now stay on browser. Now give Ybasogs more type variations (same type but different variants) -- at least 3 and more types -- at least 30 including what we have now -- including mini bosses and bosses."* · *"Let some ybasog have an innate nature. Opposite nature are more effective. Same natures are less effective."* · *"Make sure to create good points in time where you start confronting each type. There should be times when there are more innate ones or more void ones. Make the spawning more procedural. Make more debris and ruin types and variants too."* · *"Ybasogs are based on Cthulhu mythos inspirations so you can take more references from Lovecraftian horrors"*
+
+- **Added** 30 Ybasog kinds (34 in all): 8 families of 3 or 4 variants each, plus 4 mini-bosses and 2 new bosses, The Choir and The Hollow Eye. All are drawn as Lovecraftian flesh, eyes and tendrils, each kind with its own outline and behaviour (telegraphed gaze columns, tendril lashes, webs that catch bolts, a maw that swallows bolts from below, thieves, healers and shielders).
+- **Added** natured Ybasogs: an aura and sigil, ×1.6 damage from the opposite nature and ×0.5 from the same, and a prevailing nature for each adventure shown at the Altar.
+- **Added** nature tides for each wave: void tide, mixed tide, nature surge.
+- **Changed** wave building to a director: a debut of kinds not yet met, with a name card the first time ever, then weighted beats such as formations, flanks, swarms, rockfalls, wreck fields, ruin walls, elite pairs and lulls. Mini-bosses close waves in every stage.
+- **Added** 15 kinds of falling matter (20 in all, in rock, wreck and ruin families), several with break effects.
+- **Added** a Ybasogs-met count at the Altar, a test option (`?stage=&wave=&autofire=1`), and Godot .NET in the brief as the later engine.
+- **Fixed** during the check: the debut card's drawing function shared a name with the card drawer and crashed the first run.
 
 #### Iteration 2: achievements made hard to get (`0053f63`)
 
