@@ -288,20 +288,22 @@ window.NATURES = {
   // Discoveries: each nature but your innate one is found by an achievement. Progress is kept
   // between adventures. stat names are counted in index.html (track()).
   discover: {
-    wrath:      { stat: 'multikill',   n: 1,  text: 'Slay 3 Ybasogs within half a second' },
-    patience:   { stat: 'cleanwave',   n: 1,  text: 'Clear a wave without being hurt' },
-    greed:      { stat: 'motes',       n: 120, text: 'Gather 120 void energy' },
-    charity:    { stat: 'sealedwave',  n: 1,  text: 'Clear a wave with nothing slipping past' },
-    pride:      { stat: 'kills',       n: 80, text: 'Slay 80 Ybasogs' },
-    humility:   { stat: 'asteroids',   n: 8,  text: 'Break 8 asteroids' },
-    envy:       { stat: 'ricochets',   n: 10, text: 'Slay 10 Ybasogs with bolts that ricocheted twice' },
-    kindness:   { stat: 'lowwave',     n: 1,  text: 'Clear a wave on 5 energy or less' },
-    lust:       { stat: 'closekills',  n: 10, text: 'Slay 10 Ybasogs close to your body' },
-    chastity:   { stat: 'ruins',       n: 2,  text: 'Shatter 2 ruins' },
-    gluttony:   { stat: 'pods',        n: 20, text: 'Slay 20 pods before they hatch' },
-    temperance: { stat: 'debris',      n: 8,  text: 'Break 8 pieces of space debris' },
-    sloth:      { stat: 'stillkills',  n: 12, text: 'Slay 12 Ybasogs while standing still' },
-    diligence:  { stat: 'feeders',     n: 6,  text: 'Slay 6 feeders' },
+    // Hard on purpose: most take several adventures. Rough pace of one full adventure: ~150 kills,
+    // ~60 pods, ~15 feeders, ~25 asteroids, ~15 debris, ~6 ruins, ~400 void energy, 9 waves.
+    wrath:      { stat: 'multikill',   n: 30,   text: 'Slay 3 Ybasogs within half a second, 30 times' },
+    patience:   { stat: 'cleanwave',   n: 8,    text: 'Clear 8 waves without being hurt' },
+    greed:      { stat: 'motes',       n: 2500, text: 'Gather 2,500 void energy' },
+    charity:    { stat: 'sealedwave',  n: 15,   text: 'Clear 15 waves with nothing slipping past' },
+    pride:      { stat: 'kills',       n: 1500, text: 'Slay 1,500 Ybasogs' },
+    humility:   { stat: 'asteroids',   n: 150,  text: 'Break 150 asteroids' },
+    envy:       { stat: 'ricochets',   n: 200,  text: 'Slay 200 Ybasogs with bolts that ricocheted twice' },
+    kindness:   { stat: 'lowwave',     n: 5,    text: 'Clear 5 waves on 5 energy or less' },
+    lust:       { stat: 'closekills',  n: 150,  text: 'Slay 150 Ybasogs close to your body' },
+    chastity:   { stat: 'ruins',       n: 40,   text: 'Shatter 40 ruins' },
+    gluttony:   { stat: 'pods',        n: 400,  text: 'Slay 400 pods before they hatch' },
+    temperance: { stat: 'debris',      n: 150,  text: 'Break 150 pieces of space debris' },
+    sloth:      { stat: 'stillkills',  n: 300,  text: 'Slay 300 Ybasogs while standing still' },
+    diligence:  { stat: 'feeders',     n: 120,  text: 'Slay 120 feeders' },
   },
 
   // Omens: each adventure is read before it starts, so the deck can be prepared for it.

@@ -28,6 +28,8 @@ After play: "Cards/innate natures are discovered in adventures as achievement re
 
 After play: "Make gachability and deckbuilding specific to this game: collections are fun and need to be rewarding -- preparation before adventures which can be fun and replayability matters."
 
+After play: "Achievements should be hard to get."
+
 **Pitch:** A blob born of the void holds the edge of a rift as Ybasogs, asteroids and wrecked ruins pour down, and its deck of sin and virtue cards is its ammo: every ricocheting bolt is the next nature in the deck. *(provisional)*
 
 **Genre:** survivors-like × roguelike deckbuilder (vertical rift shooter)
@@ -66,7 +68,7 @@ Stage 1 wave 2 (about 1:30) brings feeders spitting slow globs, grazers that div
 - [x] The nature deck is the magazine: each bolt is the next card, draw and discard counts shown, reshuffle when empty
 - [x] All 14 innate natures, each with its own effect: Pride (double damage to the unhurt), Greed (pull), Wrath (burn), Envy (stacking venom), Lust (charm: turns on its kin), Gluttony (grows per hit), Sloth (sleep), Humility (heavy stone), Charity (split, heal), Patience (freeze), Kindness (brambles), Chastity (pierce), Temperance (gust), Diligence (chain lightning)
 - [x] All 84 two-nature fusions, most with a unique mechanic (black hole, comet, mirror-twin, beam, walls, decoys, thralls, storms, orbit guard, boomerang and more); opposites annul; a recipe table keyed by any set of natures, so 3- and 4-nature recipes are data later; an unknown set reads "unstable, not yet known"
-- [x] Natures discovered by achievements during adventures, progress kept between adventures; a discovery adds cards to the collection at the Altar
+- [x] Natures discovered by hard achievements during adventures (most take several adventures), progress kept between adventures; a discovery adds cards to the collection at the Altar
 - [x] The Rift Altar before each adventure: Prepare (deck from the collection, 6 to 12 cards), Void Rite (gacha with focus, rare and mythic odds, pity), Forge (fuse, level twins, annul opposites, first-fusion bounty), Codex (84 fusions), Discoveries
 - [x] 15 forms of the blob (shapeless plus one per nature), each with a trait that helps and costs
 - [x] Omens and depth: each adventure is read in advance; a win opens a deeper rift with more life and more void energy
