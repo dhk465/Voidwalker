@@ -193,7 +193,7 @@ function formTraits(n) {
 }
 
 // ---- The adventure's state ---------------------------------------------------------------------
-const RL = 340, RR = 940, RCX = (RL + RR) / 2, PR = 18;
+const RL = 100, RR = 1180, RCX = (RL + RR) / 2, PR = 18, WF = (RR - RL) / 600; // WF: how much wider the rift is than the first build's
 let scene, state;
 function reset() { // a new adventure from the loadout (or, the first time, the firefly's crack of light)
   seed = Number(params.get('seed')) || (CONFIG.seed + meta.runs * 7919);
@@ -219,7 +219,7 @@ function reset() { // a new adventure from the loadout (or, the first time, the 
     shake: 0, leakFlash: 0, found: [], banked: 0, won: false,
   };
   for (const c of deck) state.deck.push({ id: state.nextId++, natures: c.natures, level: c.level });
-  if (!intro) { floatText(omen.name, RCX, 260, '#e9dcff', 30, 2.4); floatText(omen.says, RCX, 300, '#b8acd6', 17, 2.4); }
+  if (!intro && state.omen !== OMENS.calm) floatText(omen.name.toUpperCase(), RCX, 280, '#ffd27a', 26, 2.2);
 }
 const cardById = id => state.deck.find(c => c.id === id);
 function rebuildPiles() { state.draw = shuffle(state.deck.map(c => c.id)); state.discard = []; }
@@ -238,8 +238,7 @@ function discover(nat) {
   meta.bank += tune.discovery_bonus;
   if (state) state.found.push(nat);
   saveMeta();
-  floatText(`Discovered ${BASE[nat].name}!`, RCX, 210, BASE[nat].color, 30, 3.2);
-  floatText(`${tune.discovery_copies} cards join your collection at the Altar  ·  +${tune.discovery_bonus} void`, RCX, 246, '#e9dcff', 15, 3.2);
+  floatText(`${BASE[nat].name.toUpperCase()} FOUND`, RCX, 220, BASE[nat].color, 34, 3);
   tone(392, 0.25, 'sine', 0.2); tone(588, 0.5, 'sine', 0.15, 1.5);
   events.push({ type: 'discover', nature: nat });
 }
@@ -285,16 +284,16 @@ const X = (m = 50) => RL + m + rng() * (RR - RL - 2 * m);
 function pickY(fn) { const l = metOf(MINIONS, fn); return l.length ? pickW(l, k => YB[k].w * (YB[k].fam === 'pod' ? (state.omen.pods || 1) : 1)) : 'pod'; }
 function pickM(fam) { const l = metOf(MATTERS, k => MT[k].fam === fam); return l.length ? pickW(l, k => MT[k].wt * (fam === 'rock' ? (state.omen.rocks || 1) : 1)) : null; }
 const BEATS = {
-  trickle(L, t) { const n = 3 + state.stage; for (let i = 0; i < n; i++) L.push({ t: t + i * 1.1, k: pickY(), x: X() }); return t + n * 1.1 + 0.6; },
-  line(L, t) { const k = pickY(k => ['pod', 'grazer', 'mite'].includes(YB[k].fam)), n = 4 + (state.stage > 1); for (let i = 0; i < n; i++) L.push({ t, k, x: RL + 70 + i * (RR - RL - 140) / (n - 1) }); return t + 3.2; },
-  vee(L, t) { const k = pickY(k => ['pod', 'grazer'].includes(YB[k].fam)), c = X(140); for (let i = -2; i <= 2; i++) L.push({ t: t + Math.abs(i) * 0.35, k, x: c + i * 50 }); return t + 3.6; },
+  trickle(L, t) { const n = Math.round((3 + state.stage) * 1.4); for (let i = 0; i < n; i++) L.push({ t: t + i * 1.1, k: pickY(), x: X() }); return t + n * 1.1 + 0.6; },
+  line(L, t) { const k = pickY(k => ['pod', 'grazer', 'mite'].includes(YB[k].fam)), n = 6 + 2 * (state.stage > 1); for (let i = 0; i < n; i++) L.push({ t, k, x: RL + 70 + i * (RR - RL - 140) / (n - 1) }); return t + 3.2; },
+  vee(L, t) { const k = pickY(k => ['pod', 'grazer'].includes(YB[k].fam)), c = X(200); for (let i = -3; i <= 3; i++) L.push({ t: t + Math.abs(i) * 0.3, k, x: c + i * 55 }); return t + 3.6; },
   column(L, t) { const k = pickY(), x = X(); for (let i = 0; i < 3; i++) L.push({ t: t + i * 0.7, k, x }); return t + 2.8; },
-  flank(L, t) { const k = pickY(k => YB[k].fam !== 'crawler'); for (let i = 0; i < 2; i++) { L.push({ t: t + i * 0.8, k, x: RL + 45 }); L.push({ t: t + i * 0.8 + 0.4, k, x: RR - 45 }); } return t + 3.4; },
-  swarm(L, t) { const l = metOf(MINIONS, k => YB[k].fam === 'mite'); if (!l.length) return BEATS.trickle(L, t); const n = 1 + (state.stage > 1); for (let i = 0; i < n; i++) L.push({ t: t + i * 1.6, k: l[Math.floor(rng() * l.length)], x: X(90) }); return t + 3.4; },
-  rockfall(L, t) { const n = 3 + state.stage; for (let i = 0; i < n; i++) { const k = pickM('rock'); if (k) L.push({ t: t + i * 0.7, k, x: X() }); } return t + 4; },
-  wreckfield(L, t) { const n = 2 + state.stage; for (let i = 0; i < n; i++) { const k = pickM('wreck'); if (k) L.push({ t: t + i * 0.9, k, x: X(80) }); } return t + 4; },
-  ruinwall(L, t) { const k = pickM('ruin'); if (!k) return BEATS.rockfall(L, t); L.push({ t, k, x: X(110) }); if (state.stage > 2) { const k2 = pickM('ruin'); if (k2) L.push({ t: t + 2, k: k2, x: X(110) }); } return t + 5; },
-  elite(L, t) { const k = pickY(k => YB[k].hp >= 8); L.push({ t, k, x: X(100) }); L.push({ t: t + 0.6, k: 'pod', x: X() }); L.push({ t: t + 1.2, k: 'pod', x: X() }); if (state.stage > 1) L.push({ t: t + 1.8, k: pickY(k => YB[k].hp >= 8), x: X(100) }); return t + 5; },
+  flank(L, t) { const k = pickY(k => YB[k].fam !== 'crawler'); for (let i = 0; i < 3; i++) { L.push({ t: t + i * 0.7, k, x: RL + 45 }); L.push({ t: t + i * 0.7 + 0.35, k, x: RR - 45 }); } return t + 3.6; },
+  swarm(L, t) { const l = metOf(MINIONS, k => YB[k].fam === 'mite'); if (!l.length) return BEATS.trickle(L, t); const n = 2 + (state.stage > 1); for (let i = 0; i < n; i++) L.push({ t: t + i * 1.3, k: l[Math.floor(rng() * l.length)], x: X(90) }); return t + 3.6; },
+  rockfall(L, t) { const n = Math.round((3 + state.stage) * 1.4); for (let i = 0; i < n; i++) { const k = pickM('rock'); if (k) L.push({ t: t + i * 0.7, k, x: X() }); } return t + 4; },
+  wreckfield(L, t) { const n = Math.round((2 + state.stage) * 1.4); for (let i = 0; i < n; i++) { const k = pickM('wreck'); if (k) L.push({ t: t + i * 0.9, k, x: X(80) }); } return t + 4; },
+  ruinwall(L, t) { const k = pickM('ruin'); if (!k) return BEATS.rockfall(L, t); L.push({ t, k, x: X(110) }); if (state.stage > 1) { const k2 = pickM('ruin'); if (k2) L.push({ t: t + 2, k: k2, x: X(110) }); } return t + 5; },
+  elite(L, t) { const k = pickY(k => YB[k].hp >= 8); L.push({ t, k, x: X(100) }); for (let i = 0; i < 4; i++) L.push({ t: t + 0.5 + i * 0.4, k: 'pod', x: X() }); if (state.stage > 1) L.push({ t: t + 1.8, k: pickY(k => YB[k].hp >= 8), x: X(100) }); return t + 5; },
   lull(L, t) { return t + 3.5; },
 };
 function beatWeights() {
@@ -313,6 +312,7 @@ function makeWave(s, w) {
       { t: 34, k: 'pod', x: 560 }, { t: 35, k: 'pod', x: 720 });
     if (o.rocks) L.push({ t: 6, k: 'asteroid', x: 450 }, { t: 16, k: 'asteroid', x: 820 });
     if (o.pods) L.push({ t: 5, k: 'pod', x: 600 }, { t: 14, k: 'pod', x: 700 }, { t: 24, k: 'pod', x: 460 });
+    for (const e of L) e.x = RCX + (e.x - 640) * WF; // the hand-placed first minute, spread to the wide rift
     state.tide = 'mixed';
     return L.sort((a, b) => a.t - b.t);
   }
@@ -337,9 +337,9 @@ function startWave() {
   state.wave = { list: makeWave(state.stage, state.waveN), idx: 0, t: 0 };
   state.wave.isBoss = state.wave.list.some(x => x.boss); state.waveBoss = null;
   state.phase = 'wave'; state.waveHurt = false; state.waveLeak = false; rebuildPiles();
-  floatText(`Stage ${state.stage}  ·  Wave ${state.waveN}`, RCX, 340, '#e9dcff', 26, 2);
+  floatText(state.waveN === 1 ? `STAGE ${state.stage}` : `WAVE ${state.waveN}`, RCX, 330, '#e9dcff', 30, 1.8);
   const td = TIDES[state.tide]; if (state.tide !== 'mixed' || state.waveN > 1 || state.stage > 1)
-    floatText(state.tide === 'surge' && state.prevail ? `Nature surge: ${BASE[state.prevail].name}` : td.name, RCX, 372, state.tide === 'surge' && state.prevail ? BASE[state.prevail].color : td.color, 17, 2);
+    if (state.tide !== 'mixed') floatText(state.tide === 'surge' && state.prevail ? `${BASE[state.prevail].name.toUpperCase()} SURGE` : 'VOID TIDE', RCX, 368, state.tide === 'surge' && state.prevail ? BASE[state.prevail].color : td.color, 18, 1.8);
   events.push({ type: 'wave', stage: state.stage, wave: state.waveN, tide: state.tide });
 }
 const hpScale = () => (1 + tune.stage_hp_scale * (state.stage - 1)) * state.hpMul;
@@ -361,7 +361,7 @@ function spawnY(k, x, y, ex) {
   if (k === 'creeper' || k === 'lasher') { e.side = rng() < 0.5 ? -1 : 1; e.x = e.side < 0 ? RL + d.r : RR - d.r; e.stopY = 180 + rng() * 200; }
   if (big) { e.stopY = 140; e.orbA = 0; if (k === 'mother') { e.spawnT = 2; e.spreadT = 3; e.debrisT = 6; } }
   state.enemies.push(e);
-  if (big) { state.bigs.push(e); if (d.role === 'boss') state.waveBoss = e; floatText(d.name, RCX, 280, nature ? BASE[nature].color : '#d9a7ff', 30, 2.5); tone(70, 1.4, 'sawtooth', 0.22, 0.5); }
+  if (big) { state.bigs.push(e); if (d.role === 'boss') state.waveBoss = e; floatText(d.name.toUpperCase(), RCX, 280, nature ? BASE[nature].color : '#d9a7ff', 30, 2.2); tone(70, 1.4, 'sawtooth', 0.22, 0.5); }
   meet(k);
   return e;
 }
@@ -398,7 +398,7 @@ function hurt(n, why) {
   if (state.tr.armor) n = Math.max(1, n - state.tr.armor);
   state.energy -= n; state.waveHurt = true; state.shake = Math.min(12, state.shake + 4 + n * 2);
   tone(110, 0.25, 'sawtooth', 0.25, 0.5);
-  floatText(`-${n} ${why}`, state.player.x, state.player.y - 40, '#ff8a8a', 16, 0.9);
+  floatText(`-${n}`, state.player.x, state.player.y - 40, '#ff8a8a', 20, 0.8);
 }
 function heal(n) { if (n > 0 && state.energy < state.maxEnergy) { state.energy = Math.min(state.maxEnergy, state.energy + n); floatText(`+${Math.round(n * 10) / 10}`, state.player.x + 20, state.player.y - 30, '#c8ffe8', 15, 0.7); } }
 
@@ -670,7 +670,7 @@ function updatePlay(dt) {
   p.x += mx / ml * sp * dt; p.y += my / ml * sp * dt;
   p.x = Math.max(RL + PR, Math.min(RR - PR, p.x)); p.y = Math.max(top, Math.min(H - PR - 6, p.y));
   if (mouse.moved) { let a = Math.atan2(mouse.y - p.y, mouse.x - p.x); if (a > 0) a = a > Math.PI / 2 ? -Math.PI + 0.12 : -0.12; p.aim = Math.max(-Math.PI + 0.12, Math.min(-0.12, a)); }
-  if (pressed('KeyQ')) { state.autoFire = !state.autoFire; floatText(state.autoFire ? 'Auto-fire on' : 'Auto-fire off', p.x, p.y - 50, '#e9dcff', 16, 1); }
+  if (pressed('KeyQ')) { state.autoFire = !state.autoFire; floatText(state.autoFire ? 'AUTO' : 'MANUAL', p.x, p.y - 50, '#e9dcff', 16, 0.8); }
   p.iframe = Math.max(0, p.iframe - dt);
   if (tr.regen) state.energy = Math.min(state.maxEnergy, state.energy + tr.regen * dt);
   state.fireCd -= dt; state.reshuffleT -= dt; state.frenzy -= dt; state.timewarp -= dt; state.magnetT -= dt;
@@ -698,7 +698,7 @@ function updatePlay(dt) {
       const stageEnd = state.waveN === 3 && !final;
       if (stageEnd) heal(tune.stage_heal);
       tone(660, 0.3, 'sine', 0.15, 1.5);
-      floatText(final ? 'The rift falls quiet' : stageEnd ? `Stage ${state.stage} cleared  ·  +${tune.stage_heal} energy` : 'Wave cleared', RCX, 300, '#e9dcff', 28, 1.8);
+      floatText(final ? 'SILENCE' : stageEnd ? 'STAGE CLEAR' : 'CLEAR', RCX, 300, '#e9dcff', 30, 1.6);
     }
   }
   if (state.phase === 'clear' && (state.clearT -= dt) <= 0 && (!state.motes.length || state.clearT < -2)) {
@@ -808,14 +808,14 @@ function updatePlay(dt) {
         break;
       case 'lasher':
         if (e.y < e.stopY) e.y += e.vy * tk; else if (e.age > 14) e.y += 50 * tk;
-        else if (e.t1 <= 0) { e.t1 = 3.2; state.warnings.push({ kind: 'arc', x: e.x, y: e.y, a: e.side < 0 ? 0.45 : Math.PI - 0.45, spread: 0.9, rad: 300, t: tune.telegraph_time, max: tune.telegraph_time }); }
+        else if (e.t1 <= 0) { e.t1 = 3.2; state.warnings.push({ kind: 'arc', x: e.x, y: e.y, a: e.side < 0 ? 0.45 : Math.PI - 0.45, spread: 0.9, rad: 440, t: tune.telegraph_time, max: tune.telegraph_time }); }
         break;
       case 'weaver':
         if (e.y < e.stopY) e.y += e.vy * tk; else { e.x += Math.sin(e.age + e.ph) * 40 * tk; if (e.age > 20) e.y += 40 * tk; }
-        if (e.t1 <= 0 && e.y >= e.stopY) { e.t1 = 5; state.webs.push({ x: e.x, y: e.y + 46, w: 200, t: 4, hits: 0 }); }
+        if (e.t1 <= 0 && e.y >= e.stopY) { e.t1 = 5; state.webs.push({ x: e.x, y: e.y + 46, w: 320, t: 4, hits: 0 }); }
         break;
       case 'warden':
-        hover(e, tk, 60);
+        hover(e, tk, 110);
         if (e.t1 <= 0) { e.t1 = half ? 3 : 4; if (rng() < 0.5) brood(e, 'mite', 4); else { spawn('pod', e.x - 30, e.y + 30, { single: 1 }); spawn(rng() < 0.5 ? 'clutch' : 'husk', e.x + 30, e.y + 30, { single: 1 }); } }
         if (e.t2 <= 0) { e.t2 = 6; for (let i = 0; i < 5; i++) shootGlob(e.x, e.y + 30, Math.PI / 2 + (i - 2) * 0.3); }
         break;
@@ -827,22 +827,22 @@ function updatePlay(dt) {
         else { e.y -= 180 * tk; if (e.y <= 150) { e.mode = 'aim'; e.t1 = half ? 0.8 : 1.2; } }
         break;
       case 'prime':
-        hover(e, tk, 70);
-        if (e.t1 <= 0 && e.y >= e.stopY) { e.t1 = 3; const n = half ? 5 : 3; for (let i = 0; i < n; i++) column(target().x + (i - (n - 1) / 2) * 120, 44); }
+        hover(e, tk, 120);
+        if (e.t1 <= 0 && e.y >= e.stopY) { e.t1 = 3; const n = half ? 7 : 5; for (let i = 0; i < n; i++) column(target().x + (i - (n - 1) / 2) * 140, 44); }
         break;
       case 'choir':
-        hover(e, tk, 90); e.orbA += (half ? 2.2 : 1.4) * tk;
+        hover(e, tk, 160); e.orbA += (half ? 2.2 : 1.4) * tk;
         if (e.t1 <= 0) { e.t1 = 5; if (state.enemies.filter(o => o.fam === 'deacon').length < 3) spawn(['warder', 'mender', 'herald'][Math.floor(rng() * 3)], e.x + (rng() - 0.5) * 160, e.y + 40, { single: 1 }); }
         if (e.t2 <= 0) { e.t2 = half ? 2.4 : 3.2; for (let i = 0; i < 12; i++) shootGlob(e.x, e.y, i / 12 * 6.283 + e.age, 0.7); tone(330, 0.5, 'sine', 0.1, 0.7); }
         break;
       case 'hollow':
         if (e.y < e.stopY) e.y += 40 * tk;
-        if (e.t1 <= 0) { e.t1 = half ? 2 : 3; column(target().x, 60); if (half) column(X(60), 60); }
+        if (e.t1 <= 0) { e.t1 = half ? 2 : 3; column(target().x, 60); column(X(60), 60); if (half) column(X(60), 60); }
         if (e.t2 <= 0) { e.t2 = 6; sparks(e.x, e.y, '#d6e25a', 16, 260); e.x = RL + 110 + rng() * (RR - RL - 220); sparks(e.x, e.y, '#d6e25a', 16, 260); }
         if (e.t3 <= 0) { e.t3 = 7; spawn('weeper', e.x - 80, e.y + 40, { single: 1 }); spawn('weeper', e.x + 80, e.y + 40, { single: 1 }); }
         break;
       case 'mother':
-        if (e.y < 135) e.y += 40 * dt; else e.x = RCX + Math.sin(e.age * 0.45) * 190;
+        if (e.y < 135) e.y += 40 * dt; else e.x = RCX + Math.sin(e.age * 0.45) * 190 * WF * 0.85;
         e.spawnT -= tk; e.spreadT -= tk; e.debrisT -= dt;
         if (e.spawnT <= 0) { e.spawnT = tune.mother_spawn * (half ? 0.7 : 1); spawn(half && rng() < 0.5 ? 'grazer' : 'pod', e.x + (rng() - 0.5) * 80, e.y + 50, { single: 1 }); }
         if (e.spreadT <= 0) { e.spreadT = tune.mother_spread * (half ? 0.7 : 1); const n = tune.mother_volley + (half ? 2 : 0); for (let i = 0; i < n; i++) shootGlob(e.x, e.y + 50, Math.PI / 2 + (i / (n - 1) - 0.5) * 1.6); tone(90, 0.4, 'sawtooth', 0.12, 0.6); }
@@ -973,7 +973,7 @@ function updatePlay(dt) {
     for (const w of state.walls) if (Math.abs(g.x - w.x) < w.w / 2 && Math.abs(g.y - w.y) < w.h / 2 + 6) { g.dead = true; sparks(g.x, g.y, '#c8a77a', 3); }
     if (!g.dead && Math.hypot(g.x - p.x, g.y - p.y) < PR + 8) {
       g.dead = true;
-      if (tr.glob_dodge && rng() < tr.glob_dodge) floatText('passed through', p.x, p.y - 40, '#ffffff', 14, 0.6);
+      if (tr.glob_dodge && rng() < tr.glob_dodge) sparks(p.x, p.y, '#ffffff', 4, 80);
       else { sparks(g.x, g.y, '#b5c43a', 6); if (p.iframe <= 0) { hurt(tune.glob_damage, 'spat on'); p.iframe = tune.iframes + tr.iframes; } }
     }
   }
@@ -1036,8 +1036,7 @@ function absorbFirst() { // the very first adventure: the firefly's light become
   for (let i = 0; i < 2; i++) state.deck.push({ id: state.nextId++, natures: [n], level: 1 });
   state.form = n; state.tr = formTraits(n); state.statusMul = state.tr.status; state.maxEnergy = tune.max_energy + state.tr.max_energy; state.energy = state.maxEnergy;
   sparks(RCX, 575, BASE[n].color, 30, 300); tone(330, 0.6, 'sine', 0.2, 2.5);
-  floatText(`Your innate nature: ${BASE[n].name}`, RCX, 430, BASE[n].color, 26, 3.2);
-  floatText(`${RECIPES[n].says}  You take the shape of a ${BASE[n].formName}.`, RCX, 466, '#e9dcff', 16, 3.2);
+  floatText(BASE[n].name.toUpperCase(), RCX, 440, BASE[n].color, 40, 3);
   events.push({ type: 'absorb', nature: n });
   startWave();
 }
@@ -1595,19 +1594,18 @@ function drawHazards(t) {
   for (const wb of state.webs) { ctx.save(); ctx.globalAlpha = Math.min(1, wb.t); ctx.strokeStyle = '#e8e6c0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(wb.x - wb.w / 2, wb.y); ctx.lineTo(wb.x + wb.w / 2, wb.y);
     for (let x = -wb.w / 2; x < wb.w / 2; x += 16) { ctx.moveTo(wb.x + x, wb.y - 6); ctx.lineTo(wb.x + x + 8, wb.y + 6); ctx.moveTo(wb.x + x + 8, wb.y - 6); ctx.lineTo(wb.x + x, wb.y + 6); } ctx.stroke(); ctx.restore(); }
 }
-function drawDebutCard() { // the first ever meeting with a kind: its name and what it does
+function drawDebutCard() { // the first ever meeting with a kind: a tag and its name
   const c = state.card; if (!c) return;
-  const d = YB[c.k] || MT[c.k], isY = !!YB[c.k];
+  const d = YB[c.k] || MT[c.k], isY = !!YB[c.k], bw = 380, bx = RCX - bw / 2;
   ctx.save(); ctx.globalAlpha = Math.min(1, c.t * 2, (3.4 - c.t) * 4);
-  roundRect(RL + 40, 70, RR - RL - 80, 104, 10); ctx.fillStyle = 'rgba(8,5,16,0.88)'; ctx.fill(); ctx.strokeStyle = isY ? (d.role === 'minion' ? BILE : '#e0a040') : '#a89a8a'; ctx.lineWidth = 1.5; ctx.stroke();
-  const fx = RL + 100, fy = 122, sc = Math.min(1, 34 / ((d.r || 40) + 6));
+  roundRect(bx, 66, bw, 74, 10); ctx.fillStyle = 'rgba(8,5,16,0.85)'; ctx.fill(); ctx.strokeStyle = isY ? (d.role === 'minion' ? BILE : '#e0a040') : '#a89a8a'; ctx.lineWidth = 1.5; ctx.stroke();
+  const fx = bx + 48, fy = 103, sc = Math.min(1, 28 / ((d.r || 40) + 6));
   ctx.save(); ctx.translate(fx, fy); ctx.scale(sc, sc);
   if (isY) drawY({ k: c.k, fam: d.fam, role: d.role, x: 0, y: 0, r: d.r, ph: 1, age: 2, vx: 0, vy: 1, hp: 1, maxhp: 1, side: -1, orbA: state.t }, state.t, 0, 300);
   else { const m = figureMatter(c.k); m.x = 0; m.y = 0; drawMatter(m, state.t); }
   ctx.restore();
-  text(isY ? (d.role === 'boss' ? 'A NEW HORROR' : d.role === 'mini' ? 'A NEW MINI-BOSS' : 'A NEW YBASOG') : 'NEW MATTER', fx + 60, 92, 13, '#9d92bb', 'left', 'bold');
-  text(d.name, fx + 60, 114, 22, '#efe6ff', 'left', 'bold');
-  wrapText(d.says, fx + 60, 142, RR - fx - 110, 14, '#cfc6e6', 'left');
+  text(isY ? (d.role === 'minion' ? 'NEW' : d.role === 'mini' ? 'MINI-BOSS' : 'HORROR') : 'NEW MATTER', fx + 50, 88, 13, '#9d92bb', 'left', 'bold');
+  text(d.name, fx + 50, 114, 26, '#efe6ff', 'left', 'bold');
   ctx.restore();
 }
 function figureMatter(k) {
@@ -1666,42 +1664,34 @@ function nextDiscoveries(k) {
     .sort((a, b) => b.frac - a.frac).slice(0, k);
 }
 function drawHUD() {
-  ctx.fillStyle = '#08060f'; ctx.fillRect(0, 0, RL - 4, H); ctx.fillRect(RR + 4, 0, W - RR - 4, H);
-  text('THE DECK', 30, 30, 20, '#e9dcff', 'left', 'bold');
-  text(`Draw ${state.draw.length}   Discard ${state.discard.length}   Cards ${state.deck.length}`, 30, 58, 15, '#b8acd6', 'left');
-  text(state.reshuffleT > 0 ? 'Reshuffling...' : 'Next bolts, in order:', 30, 86, 15, state.reshuffleT > 0 ? '#ffd27a' : '#8f84ad', 'left');
-  state.draw.slice(0, 9).map(cardById).filter(Boolean).forEach((c, i) => {
-    const y = 104 + i * 44, col = cardColor(c);
-    roundRect(26, y, 284, 36, 6); ctx.fillStyle = i === 0 ? '#1a1229' : '#0f0b18'; ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = i === 0 ? 2 : 1; ctx.stroke();
-    cardSigil(c, 48, y + 18, 11); text(cardName(c), 72, y + 18, 16, col, 'left', i === 0 ? 'bold' : '');
-  });
-  if (!state.deck.length) wrapText('No natures yet. Find the light.', 165, 130, 260, 16, '#8f84ad');
-  if (state.found.length) { text('DISCOVERED THIS ADVENTURE', 30, 520, 15, '#e9dcff', 'left', 'bold'); state.found.slice(-4).forEach((n, i) => { sigil(n, 40, 548 + i * 26, 9, BASE[n].color); text(BASE[n].name, 58, 548 + i * 26, 15, BASE[n].color, 'left'); }); }
-  const x = RR + 30;
-  text('ENERGY', x, 30, 18, '#e9dcff', 'left', 'bold');
-  roundRect(x, 46, 280, 18, 5); ctx.fillStyle = '#1a0f12'; ctx.fill();
-  const ef = Math.max(0, state.energy / state.maxEnergy); if (ef > 0) { roundRect(x, 46, Math.max(8, 280 * ef), 18, 5); ctx.fillStyle = ef > 0.35 ? '#7b5bdf' : '#c94a4a'; ctx.fill(); }
-  text(`${Math.ceil(state.energy)} / ${state.maxEnergy}`, x + 140, 55, 14, '#fff', 'center', 'bold');
-  for (let i = 0; i < state.ward; i++) sigil('pride', x + 270 - 20 * i, 80, 7, '#fff0b0');
-  text('VOID ENERGY', x, 90, 18, '#e9dcff', 'left', 'bold');
-  ctx.save(); ctx.translate(x + 10, 120); ctx.fillStyle = '#d8c8ff'; ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(6, 0); ctx.lineTo(0, 10); ctx.lineTo(-6, 0); ctx.fill(); ctx.restore();
-  text(`${state.voidE}`, x + 28, 120, 26, '#d8c8ff', 'left', 'bold');
-  if (state.voidMul !== 1) text(`x${Math.round(state.voidMul * 100) / 100} when banked`, x + 110, 122, 14, '#b8acd6', 'left');
-  text(`Stage ${state.stage} / 3   ·   Wave ${state.waveN} / 3`, x, 160, 17, '#e9dcff', 'left');
-  text(`Depth ${state.depth}   ·   ${state.omen.name}`, x, 182, 15, '#b8acd6', 'left');
-  { const surge = state.tide === 'surge' && state.prevail, c = surge ? BASE[state.prevail].color : TIDES[state.tide].color; text(surge ? `Nature surge: ${BASE[state.prevail].name}` : TIDES[state.tide].name, x, 204, 14, c, 'left'); }
+  const L = RL + 18, Rt = RR - 18;
+  // top left: energy, wards, void energy, what was found
+  roundRect(L, 16, 240, 14, 7); ctx.fillStyle = 'rgba(26,15,30,0.85)'; ctx.fill();
+  const ef = Math.max(0, state.energy / state.maxEnergy); if (ef > 0) { roundRect(L, 16, Math.max(10, 240 * ef), 14, 7); ctx.fillStyle = ef > 0.35 ? '#7b5bdf' : '#c94a4a'; ctx.fill(); }
+  text(`${Math.ceil(state.energy)}`, L + 250, 23, 16, '#efe6ff', 'left', 'bold');
+  for (let i = 0; i < state.ward; i++) sigil('pride', L + 290 + i * 18, 23, 7, '#fff0b0');
+  ctx.save(); ctx.translate(L + 7, 50); ctx.fillStyle = '#d8c8ff'; ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(5.5, 0); ctx.lineTo(0, 9); ctx.lineTo(-5.5, 0); ctx.fill(); ctx.restore();
+  text(`${state.voidE}`, L + 20, 51, 22, '#d8c8ff', 'left', 'bold');
+  state.found.forEach((n, i) => sigil(n, L + 8 + i * 22, 80, 8, BASE[n].color));
+  // top right: stage and wave as pips, the tide as a mark
+  for (let s2 = 1; s2 <= 3; s2++) for (let w = 1; w <= 3; w++) {
+    const x = Rt - (3 - s2) * 46 - (3 - w) * 12, y = 22, done = s2 < state.stage || (s2 === state.stage && w < state.waveN), now = s2 === state.stage && w === state.waveN;
+    ctx.beginPath(); ctx.moveTo(x, y - 5); ctx.lineTo(x + 4, y); ctx.lineTo(x, y + 5); ctx.lineTo(x - 4, y); ctx.closePath();
+    ctx.fillStyle = now ? '#efe6ff' : done ? '#7b5bdf' : 'rgba(110,100,140,0.5)'; ctx.fill();
+  }
+  if (state.tide === 'surge' && state.prevail) sigil(state.prevail, Rt - 6, 48, 9, BASE[state.prevail].color);
+  else if (state.tide === 'void') { ctx.strokeStyle = '#b9a6ff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(Rt - 6, 48, 7, 0, 6.283); ctx.stroke(); }
+  if (state.depth) text(`${state.depth}`, Rt - 26, 49, 14, '#ffd27a', 'right', 'bold');
+  // bottom left: the next bolts, as sigils, the first one larger
+  const next = state.draw.slice(0, 5).map(cardById).filter(Boolean);
+  next.forEach((c, i) => { const x = L + 14 + i * 34 + (i ? 8 : 0), y = H - 26, r = i ? 12 : 17;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.fillStyle = 'rgba(10,7,18,0.8)'; ctx.fill(); ctx.strokeStyle = cardColor(c); ctx.lineWidth = i ? 1 : 2; ctx.stroke();
+    cardSigil(c, x, y, r * 0.62); });
+  if (state.reshuffleT > 0 || (!next.length && state.deck.length)) { ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(L + 14, H - 26, 19, state.t * 8, state.t * 8 + 4); ctx.stroke(); }
+  // bottom right: the form, and the fire mode
   const n = state.form, col = n ? BASE[n].color : '#b9a6ff';
-  text('YOUR FORM', x, 224, 18, '#e9dcff', 'left', 'bold');
-  drawForm(n ? BASE[n].form : 'blob', x + 34, 276, col, state.t, 1.3);
-  text(n ? BASE[n].formName : 'Shapeless', x + 82, 258, 18, col, 'left', 'bold');
-  wrapText(n ? BASE[n].traitText : 'no nature yet', x + 82, 282, 200, 14, '#b8acd6', 'left');
-  const nd = nextDiscoveries(3);
-  if (nd.length) text('NEXT DISCOVERIES', x, 352, 16, '#e9dcff', 'left', 'bold');
-  nd.forEach((d, i) => { const y = 380 + i * 50; sigil(d.n, x + 9, y, 8, '#6d6488'); wrapText(d.text, x + 24, y, 250, 14, '#b8acd6', 'left');
-    roundRect(x + 24, y + 16, 240, 6, 3); ctx.fillStyle = '#1a1229'; ctx.fill(); if (d.frac > 0) { roundRect(x + 24, y + 16, Math.max(6, 240 * d.frac), 6, 3); ctx.fillStyle = '#9b7bff'; ctx.fill(); } });
-  text(`Auto-fire (Q): ${state.autoFire ? 'on' : 'off'}`, x, 560, 15, state.autoFire ? '#c8ffe8' : '#8f84ad', 'left');
-  text('Hold the left button to fire', x, 586, 14, '#8f84ad', 'left');
-  text('Space or P: pause   ·   M: mute', x, 610, 14, '#8f84ad', 'left');
+  drawForm(n ? BASE[n].form : 'blob', Rt - 20, H - 32, col, state.t, 0.8);
+  if (state.autoFire) text('AUTO', Rt - 50, H - 26, 13, '#c8ffe8', 'right', 'bold');
 }
 function drawPlay() {
   const t = state.t, p = state.player;
@@ -1743,7 +1733,6 @@ function drawPlay() {
     drawCrack(RCX, 575, t);
     const fx = RCX + 60 + Math.sin(t * 1.3) * 30, fy = 520 + Math.cos(t * 1.7) * 20; drawFirefly(fx, fy, t);
     ctx.globalAlpha = Math.min(1, state.introT / 1.5); text('"take it..."', fx + 20, fy - 34, 18, '#d8ffb0', 'left'); ctx.globalAlpha = 1;
-    text('Move to the crack of light (WASD or Arrows)', RCX, 400, 18, 'rgba(233,220,255,0.75)');
   }
   const col = state.form ? BASE[state.form].color : '#b9a6ff';
   ctx.strokeStyle = col; ctx.globalAlpha = 0.35; ctx.setLineDash([4, 8]); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + Math.cos(p.aim) * 90, p.y + Math.sin(p.aim) * 90); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
@@ -1751,7 +1740,7 @@ function drawPlay() {
   if (!(p.iframe > 0 && Math.floor(t * 20) % 2)) drawForm(state.form ? BASE[state.form].form : 'blob', p.x, p.y, col, t);
   for (const fl of state.floaters) { ctx.globalAlpha = Math.min(1, fl.life / fl.max * 2); text(fl.s, fl.x, fl.y, fl.size, fl.c, 'center', 'bold'); }
   ctx.globalAlpha = 1;
-  state.bigs.filter(e => !e.dead).slice(0, 2).forEach((e, i) => { const c = e.nature ? BASE[e.nature].color : '#d6e25a'; text(YB[e.k].name.toUpperCase(), RCX, 18 + i * 34, 15, c, 'center', 'bold'); if (e.nature) sigil(e.nature, RCX - 150, 18 + i * 34, 7, c); hpBar(RCX, 30 + i * 34, 500, e.hp / e.maxhp, '#c7d84c'); });
+  state.bigs.filter(e => !e.dead).slice(0, 2).forEach((e, i) => { const c = e.nature ? BASE[e.nature].color : '#d6e25a'; text(YB[e.k].name.toUpperCase(), RCX, 18 + i * 34, 15, c, 'center', 'bold'); if (e.nature) sigil(e.nature, RCX - 130, 18 + i * 34, 7, c); hpBar(RCX, 30 + i * 34, 420, e.hp / e.maxhp, '#c7d84c'); });
   drawDebutCard();
   ctx.restore();
   drawHUD();
@@ -1968,14 +1957,12 @@ function drawAltar() {
 // ---- Scenes ------------------------------------------------------------------------------------
 function drawEnd(won) {
   ctx.fillStyle = 'rgba(0,0,0,0.72)'; ctx.fillRect(RL, 0, RR - RL, H);
-  wrapText(state.gained, RCX, 170, 540, 30, won ? '#efe6ff' : '#ffb0b0');
-  text(`Ybasogs slain: ${state.kills}   ·   Void energy gathered: ${state.voidE}`, RCX, 250, 18, '#ddd');
-  text(`Banked: +${state.banked} void energy`, RCX, 284, 22, '#d8c8ff', 'center', 'bold');
-  text(won ? `including +${tune.win_bonus} for the Mother` : `${Math.round(tune.loss_keep * 100)}% kept after a fall`, RCX, 312, 15, '#b8acd6');
-  if (state.found.length) { text('Discovered:', RCX, 352, 18, '#e9dcff', 'center', 'bold'); state.found.forEach((n, i) => { const x = RCX + (i - (state.found.length - 1) / 2) * 120; sigil(n, x, 390, 14, BASE[n].color); text(BASE[n].name, x, 420, 16, BASE[n].color); }); }
-  if (won && meta.maxDepth > state.depth) text(`Depth ${state.depth + 1} is open to you.`, RCX, 462, 18, '#ffd27a', 'center', 'bold');
-  text(`Next omen: ${(OMENS[meta.omen] || OMENS.calm).name}`, RCX, 500, 16, '#b8acd6');
-  text('Enter or click: return to the Rift Altar', RCX, 566, 22, '#fff', 'center', 'bold');
+  text(won ? 'THE MOTHER FALLS' : 'YOUR LIGHT GOES OUT', RCX, 200, 44, won ? '#efe6ff' : '#ffb0b0', 'center', 'bold');
+  ctx.save(); ctx.translate(RCX - 62, 290); ctx.fillStyle = '#d8c8ff'; ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(10, 0); ctx.lineTo(0, 16); ctx.lineTo(-10, 0); ctx.fill(); ctx.restore();
+  text(`+${state.banked}`, RCX - 40, 292, 44, '#d8c8ff', 'left', 'bold');
+  state.found.forEach((n, i) => { const x = RCX + (i - (state.found.length - 1) / 2) * 60; sigil(n, x, 380, 16, BASE[n].color); });
+  if (won && meta.maxDepth > state.depth) text(`DEPTH ${state.depth + 1}`, RCX, 440, 22, '#ffd27a', 'center', 'bold');
+  text('Enter', RCX, 560, 22, '#fff', 'center', 'bold');
 }
 const scenes = {
   figures: { // ?scene=figures: every Ybasog; &page=2: matter and the blob's forms
@@ -2017,7 +2004,7 @@ const scenes = {
   altar: { update(dt) { updateAltar(dt); }, draw() { drawAltar(); } },
   pause: {
     update() { if (pressed('KeyP') || pressed('Escape') || pressed('Space')) scene = 'play'; },
-    draw() { drawPlay(); ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(RL, 0, RR - RL, H); text('Paused', RCX, H / 2 - 20, 48, '#fff', 'center', 'bold'); text('Space or P to resume', RCX, H / 2 + 30, 20, '#ccc'); },
+    draw() { drawPlay(); ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(RL, 0, RR - RL, H); text('PAUSED', RCX, H / 2, 48, '#fff', 'center', 'bold'); },
   },
   over: { update() { if (pressed('Enter') || pressed('KeyR') || mouse.click) openAltar(); }, draw() { drawPlay(); drawEnd(false); } },
   results: { update() { if (pressed('Enter') || pressed('KeyR') || mouse.click) openAltar(); }, draw() { drawPlay(); drawEnd(true); } },

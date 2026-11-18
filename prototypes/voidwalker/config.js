@@ -30,7 +30,7 @@ window.CONFIG = {
   stage_heal: { value: 5, min: 0, max: 20, step: 1 },            // energy back between stages
 
   // ---- The blob ----
-  player_speed: { value: 330, min: 150, max: 600, step: 10 },   // px/s
+  player_speed: { value: 470, min: 150, max: 600, step: 10 },   // px/s
   band_top: { value: 520, min: 400, max: 640, step: 10 },       // px: top of the band the blob may move in
   max_energy: { value: 20, min: 5, max: 60, step: 1 },          // energy is HP
   iframes: { value: 0.8, min: 0, max: 3, step: 0.1 },           // s of safety after a hit

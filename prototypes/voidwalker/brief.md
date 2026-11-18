@@ -38,6 +38,8 @@ After play: "Make sure to create good points in time where you start confronting
 
 After play: "Ybasogs are based on Cthulhu mythos inspirations so you can take more references from Lovecraftian horrors"
 
+After play: "Make the gameplay view (perspective) much larger, and adjust all elements behaviors to the enlarged view. Make the adventure UI simpler with less words / wordy = less fun."
+
 **Pitch:** A blob born of the void holds the edge of a rift as Ybasogs, asteroids and wrecked ruins pour down, and its deck of sin and virtue cards is its ammo: every ricocheting bolt is the next nature in the deck. *(provisional)*
 
 **Genre:** survivors-like × roguelike deckbuilder (vertical rift shooter)
@@ -72,8 +74,9 @@ Stage 1 wave 2 (about 1:30) brings feeders spitting slow globs, grazers that div
 - Fail: energy reaches 0 from hits or from things reaching the bottom; the run ends. *(provisional)*
 
 ## Features
-- [x] One full adventure: 3 stages of waves, ending on the Mother
-- [x] The nature deck is the magazine: each bolt is the next card, draw and discard counts shown, reshuffle when empty
+- [x] One full adventure: 3 stages of waves, ending on the Mother, in a wide rift that fills the screen
+- [x] A wordless adventure HUD: an energy bar, a void energy count, stage and wave pips, the tide mark, the next bolts as sigils, the form; short call-outs only
+- [x] The nature deck is the magazine: each bolt is the next card, the next five shown as sigils, reshuffle when empty
 - [x] All 14 innate natures, each with its own effect: Pride (double damage to the unhurt), Greed (pull), Wrath (burn), Envy (stacking venom), Lust (charm: turns on its kin), Gluttony (grows per hit), Sloth (sleep), Humility (heavy stone), Charity (split, heal), Patience (freeze), Kindness (brambles), Chastity (pierce), Temperance (gust), Diligence (chain lightning)
 - [x] All 84 two-nature fusions, most with a unique mechanic (black hole, comet, mirror-twin, beam, walls, decoys, thralls, storms, orbit guard, boomerang and more); opposites annul; a recipe table keyed by any set of natures, so 3- and 4-nature recipes are data later; an unknown set reads "unstable, not yet known"
 - [x] Natures discovered by hard achievements during adventures (most take several adventures), progress kept between adventures; a discovery adds cards to the collection at the Altar
