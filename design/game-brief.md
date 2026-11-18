@@ -40,6 +40,10 @@ After play: "Ybasogs are based on Cthulhu mythos inspirations so you can take mo
 
 After play: "Make the gameplay view (perspective) much larger, and adjust all elements behaviors to the enlarged view. Make the adventure UI simpler with less words / wordy = less fun."
 
+After play: "Our game is roguelite. But we still want a HUB where the cards are prepared in deck. Just like the town in BALL x PIT. Just that there is no building but just card deck preps and gacha. The card upgrades and merge between stages is not that. There should be also some progression/upgrades/differences between adventure sessions. Make it less like some flash game or a simple browser game."
+
+After play (answers): merging and upgrading between stages, run only; progression: permanent upgrades, unlocks, adventure choices, "Journal and Quests and Loots (artifacts and logs from lost civilizations)"; feel: hub presentation, combat feel, sound and music, art: "We use pixel with type/variant-limited and specific colors to specific things for better visibilities of different things. Make enemy and player effects and projectiles distinctive. Just to add, what end game stuff should you suggest?"
+
 **Pitch:** A blob born of the void holds the edge of a rift as Ybasogs, asteroids and wrecked ruins pour down, and its deck of sin and virtue cards is its ammo: every ricocheting bolt is the next nature in the deck. *(provisional)*
 
 **Genre:** survivors-like × roguelike deckbuilder (vertical rift shooter)
@@ -78,9 +82,13 @@ Stage 1 wave 2 (about 1:30) brings feeders spitting slow globs, grazers that div
 - [x] A wordless adventure HUD: an energy bar, a void energy count, stage and wave pips, the tide mark, the next bolts as sigils, the form; short call-outs only
 - [x] The nature deck is the magazine: each bolt is the next card, the next five shown as sigils, reshuffle when empty
 - [x] All 14 innate natures, each with its own effect: Pride (double damage to the unhurt), Greed (pull), Wrath (burn), Envy (stacking venom), Lust (charm: turns on its kin), Gluttony (grows per hit), Sloth (sleep), Humility (heavy stone), Charity (split, heal), Patience (freeze), Kindness (brambles), Chastity (pierce), Temperance (gust), Diligence (chain lightning)
-- [x] All 84 two-nature fusions, most with a unique mechanic (black hole, comet, mirror-twin, beam, walls, decoys, thralls, storms, orbit guard, boomerang and more); opposites annul; a recipe table keyed by any set of natures, so 3- and 4-nature recipes are data later; an unknown set reads "unstable, not yet known"
+- [x] All 84 two-nature fusions (made at the Rift Rest or drawn as mythics), most with a unique mechanic (black hole, comet, mirror-twin, beam, walls, decoys, thralls, storms, orbit guard, boomerang and more); opposites annul; a recipe table keyed by any set of natures, so 3- and 4-nature recipes are data later; an unknown set reads "unstable, not yet known"
 - [x] Natures discovered by hard achievements during adventures (most take several adventures), progress kept between adventures; a discovery adds cards to the collection at the Altar
-- [x] The Rift Altar before each adventure: Prepare (deck from the collection, 6 to 12 cards), Void Rite (gacha with focus, rare and mythic odds, pity), Forge (fuse, level twins, annul opposites, first-fusion bounty), Codex (84 fusions), Discoveries
+- [x] The hub, the Rift Altar: a floating altar in the void with six stations (Deck, Void Rite, Rift Gate, Sigils, Relics, Journal); deck prep and gacha with a reveal ceremony; no buildings
+- [x] Rift Rest between stages: merge and temper this adventure's cards (run only), then choose the next stage's path
+- [x] Progression between adventures: Sigils (permanent upgrades), unlocks, a choice of rifts at the Gate (omen, prevailing nature, boon), relics (16, equipped in slots), logs (16) and quests (12) in the Journal
+- [x] Pixel look: half-resolution, snapped to a limited palette with colours kept for kinds of thing; a pixel font; distinct enemy projectiles (crimson spiked rims) and player bolts (nature-coloured diamonds)
+- [x] Combat feel and sound: hit-stop, impact flashes, a light that falls off at the edges; layered sound effects and a score that follows the hub, the stage and the boss
 - [x] 15 forms of the blob (shapeless plus one per nature), each with a trait that helps and costs
 - [x] Omens and depth: each adventure is read in advance; a win opens a deeper rift with more life and more void energy
 - [x] The collection is saved in the browser between sessions

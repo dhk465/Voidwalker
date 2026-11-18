@@ -15,8 +15,11 @@ window.CONFIG = {
   rare_chance: { value: 0.2, min: 0, max: 1, step: 0.01 },       // a level II card
   mythic_chance: { value: 0.07, min: 0, max: 1, step: 0.01 },    // an already-fused card
   mythic_pity: { value: 10, min: 1, max: 50, step: 1 },          // a mythic is certain by this many draws without one
-  fuse_cost: { value: 20, min: 0, max: 200, step: 5 },           // void energy per fusion at the Forge
-  void_refund: { value: 8, min: 0, max: 100, step: 1 },          // void energy back when opposites annul
+  void_refund: { value: 8, min: 0, max: 100, step: 1 },          // void energy back when opposites annul at a Rift Rest
+  rest_actions: { value: 2, min: 0, max: 6, step: 1 },           // rites (merge or temper) at each Rift Rest between stages
+  relic_chance: { value: 1, min: 0, max: 5, step: 0.1 },         // multiplies every relic and log drop chance
+  hitstop: { value: 0.06, min: 0, max: 0.3, step: 0.01 },        // s the action freezes on a heavy blow
+  music_volume: { value: 0.35, min: 0, max: 1, step: 0.05 },     // the score, under the sound effects
   first_fusion_bonus: { value: 15, min: 0, max: 200, step: 5 },  // void energy for making a fusion for the first time
   discovery_bonus: { value: 40, min: 0, max: 300, step: 5 },     // void energy for discovering a nature
   discovery_copies: { value: 2, min: 1, max: 5, step: 1 },       // cards of a discovered nature added to the collection
@@ -384,5 +387,117 @@ window.MATTER = {
   glyph:    { fam: 'ruin', name: 'Glyph Stone',      shape: 'rect', w: 56,  h: 56, hp: 10,  sp: 22, drop: 5,  from: 2, wt: 0.4, onBreak: 'ward', glyphs: 1, says: 'Breaking its glyph grants you a ward.' },
   shrine:   { fam: 'ruin', name: 'Shrine',           shape: 'rect', w: 70,  h: 50, hp: 12,  sp: 18, drop: 5,  from: 2, wt: 0.4, onBreak: 'heal', says: 'A small lit shrine; breaking it heals you 4.' },
   monolith: { fam: 'ruin', name: 'Monolith',         shape: 'rect', w: 40,  h: 150, hp: 40, sp: 14, drop: 15, from: 3, wt: 0.25, absorb: 1, says: 'A black slab that drinks light: bolts never ricochet off it.' },
+};
+
+// ---- The look: a limited palette. Every frame is drawn at half resolution and snapped to these colours,
+// each kept for one kind of thing: violet and bile for the hive, crimson rims for its projectiles, cold
+// lavender for the player's void, a nature's colour only for that nature, greys and browns for matter.
+window.PALETTE = [
+  '#000000', '#07040d', '#0e0a18', '#1a1229', '#241a3a', '#3b3350', '#6d6488', '#9d92bb', '#cfc6e6', '#efe6ff', '#ffffff',
+  '#b9a6ff', '#7b5bdf', '#d8c8ff', '#4a3a7a',
+  '#9b55b0', '#5d2e6e', '#3a1746', '#1a0a20', '#b5c43a', '#6f7a1e', '#d6e25a', '#c06a8a', '#3a0a1c', '#e8e6c0', '#2a1636',
+  '#c8e04a', '#8a1030', '#ff4466', '#ff8a8a', '#c94a4a',
+  '#6e6156', '#2c2520', '#a89a8a', '#353a44', '#8b95a3', '#45404d', '#8a8296', '#5ac8b9', '#1f3a72', '#5a4a36',
+  '#ffd27a', '#e0a040', '#fff0b0', '#d8f4ff',
+];
+
+// ---- Sigils: permanent upgrades bought with banked void energy at the hub ----
+window.SIGILS = {
+  vessel:    { name: 'Vessel',    says: '+3 max energy',               costs: [60, 140, 300],  give: { max_energy: 3 } },
+  reach:     { name: 'Reach',     says: '+50 px void energy pull',     costs: [50, 120, 250],  give: { magnet: 50 } },
+  swiftness: { name: 'Swiftness', says: '+8% speed',                   costs: [80, 180],       give: { speed: 0.08 } },
+  ricochet:  { name: 'Ricochet',  says: '+1 ricochet',                 costs: [200, 450],      give: { bounces: 1 } },
+  resonance: { name: 'Resonance', says: '+0.1 to opposite-nature damage', costs: [120, 260, 420], give: { opposite_bonus: 0.1 } },
+  warding:   { name: 'Warding',   says: 'begin each adventure with a ward', costs: [120, 280], give: { ward_start: 1 } },
+  recovery:  { name: 'Recovery',  says: '+3 energy between stages',    costs: [90, 220],       give: { stage_heal: 3 } },
+  rites:     { name: 'Rites',     says: '+1 rite at each Rift Rest',   costs: [250, 500],      give: { rest_actions: 1 } },
+  breadth:   { name: 'Breadth',   says: '+2 cards in a deck',          costs: [100, 250],      give: { deck_max: 2 } },
+  favor:     { name: 'Favor',     says: '+2% mythic chance at the Rite', costs: [150, 300, 500], give: { mythic: 0.02 } },
+  keeping:   { name: 'Keeping',   says: 'keep +10% void after a fall', costs: [70, 160, 320],  give: { loss_keep: 0.1 } },
+  shrine:    { name: 'Shrine',    says: '+1 relic slot',               costs: [400],           give: { relic_slots: 1 } },
+};
+
+// ---- Relics: artifacts of lost civilizations, found in ruins, wrecks and on fallen bosses; equip at the hub ----
+window.RELICS = {
+  bell:    { name: 'Drowned Bell',       give: { ward_stage: 1 },       says: 'A ward at the start of each stage.',     lore: 'It still rings under the void, for a city no one remembers.' },
+  shard:   { name: 'Star-Map Shard',     give: { void_mul: 0.15 },      says: '+15% void energy.',                      lore: 'A sliver of a chart of stars that have since gone out.' },
+  lens:    { name: 'Hollow Lens',        give: { telegraph: 0.4 },      says: 'Warnings last 0.4 s longer.',            lore: 'Ground from the eye of something that watched too long.' },
+  charm:   { name: 'Chitin Charm',       give: { shell_break: 1 },      says: 'Shells no longer halve your damage.',    lore: 'Carved from a husk; the brood fear their own skins.' },
+  ember:   { name: 'First Ember',        give: { status: 0.2 },         says: 'Nature effects last 20% longer.',        lore: 'Taken from the first fire, before Wrath had a name.' },
+  tide:    { name: 'Tide Stone',         give: { opposite_bonus: 0.2 }, says: '+0.2 to opposite-nature damage.',        lore: 'Two halves that will not touch, however long you hold them.' },
+  lamp:    { name: "Pilgrim's Lamp",     give: { magnet: 80 },          says: '+80 px void energy pull.',               lore: 'Its light falls toward whoever carries it.' },
+  crown:   { name: 'Broken Crown',       give: { damage: 0.1 },         says: '+10% bolt damage.',                      lore: 'Three points remain. The rest were eaten.' },
+  tooth:   { name: 'Hive Tooth',         give: { fire_rate: 0.1 },      says: '+10% fire rate.',                        lore: 'It hums when the Mother is near.' },
+  salt:    { name: 'Vial of Black Salt', give: { max_energy: 3 },       says: '+3 max energy.',                         lore: 'Salt of a sea that dried into the void.' },
+  scale:   { name: 'Mirror Scale',       give: { glob_dodge: 0.15 },    says: '15% of globs pass through you.',         lore: 'What strikes it sees itself and hesitates.' },
+  nail:    { name: 'Keel Nail',          give: { bounces: 1 },          says: '+1 ricochet.',                           lore: 'From a ship that sailed between the stars and struck one.' },
+  orrery:  { name: 'Brass Orrery',       give: { stage_heal: 3 },       says: '+3 energy between stages.',              lore: 'The planets on it no longer exist. It still keeps their time.' },
+  idoleye: { name: "Idol's Eye",         give: { relic_find: 0.5 },     says: 'Relics and logs turn up more often.',    lore: 'A green stone that was set in a drowned face. It looks for its kin.' },
+  psalm:   { name: 'Sealed Psalm',       give: { rest_actions: 1 },     says: 'One more rite at each Rift Rest.',       lore: 'The Choir sang it once. No one has opened it since.' },
+  pearl:   { name: 'Void Pearl',         give: { loss_keep: 0.15 },     says: 'Keep 15% more void energy after a fall.', lore: 'It formed around nothing at all.' },
+};
+
+// ---- Logs: what is left of lost civilizations, read in the Journal ----
+window.LOGS = {
+  l1:  { src: 'wreck', title: 'Flight recorder, the Cassiel',  text: 'Day 212. The stars ahead are going out one by one. Navigation says they are not dying. Something is eating the light.' },
+  l2:  { src: 'wreck', title: 'Cargo manifest',                text: 'Hold 3: seed vaults, sealed. Hold 4: void-glass, do not open in darkness. Hold 5: unlisted. Hold 5 is warm.' },
+  l3:  { src: 'wreck', title: "Engineer's note",               text: 'The pods on the hull hatched. We vented the deck. The grazers came back through the vents.' },
+  l4:  { src: 'wreck', title: 'Last broadcast',                text: 'To anyone: do not follow the fireflies. They show you the way, then they leave you there.' },
+  l5:  { src: 'wreck', title: 'Medical log',                   text: 'Crew report the same dream: a choir of three, singing from behind their own faces.' },
+  l6:  { src: 'wreck', title: 'Captain, unsent',               text: 'If the hive takes the ship, burn the cargo. If the cargo wakes, burn the ship.' },
+  l7:  { src: 'wreck', title: 'Survey drone',                  text: 'Rift wall composition: unknown. Rift wall temperature: rising. Rift wall: breathing.' },
+  l8:  { src: 'wreck', title: "Child's drawing",               text: 'A blob of black crayon with two small eyes, holding a light. Written under it: our friend.' },
+  l9:  { src: 'ruin',  title: 'Glyph band, translated',        text: 'Seven we cast down, seven we raised up. Where two opposites meet, nothing remains, and nothing is holy.' },
+  l10: { src: 'ruin',  title: 'Idol inscription',              text: 'He sleeps in the drowned deep and dreams the rift. When he wakes, the void will be awake too.' },
+  l11: { src: 'ruin',  title: 'Shrine tablet',                 text: 'Bring light to the hollow, and the hollow will take its shape from you.' },
+  l12: { src: 'ruin',  title: 'Monolith, the black face',      text: 'There is no writing. Only your reflection, and behind it something that is not reflecting you.' },
+  l13: { src: 'ruin',  title: 'Wall of names',                 text: 'A thousand names, each scratched out. The last name is unfinished, and the stone is wet.' },
+  l14: { src: 'ruin',  title: 'The record of records',         text: 'Those who gather all fourteen will read the Akashic Records, and learn why the void dreamed them.' },
+  l15: { src: 'ruin',  title: 'Hymn fragment',                 text: 'The Mother does not hunger. She is hunger, given a body so it could be killed.' },
+  l16: { src: 'ruin',  title: 'Pillar graffiti',               text: 'We were here. We were many. We were food.' },
+};
+
+// ---- Quests: long goals with rewards, claimed in the Journal ----
+window.QUESTS = {
+  mother:   { name: 'The Brood Ends',     text: 'Fell the Mother',                 stat: 'fell_mother', n: 1,  reward: { void: 150 } },
+  choir:    { name: 'Silence the Hymn',   text: 'Fell the Choir',                  stat: 'fell_choir',  n: 1,  reward: { void: 100 } },
+  hollow:   { name: 'Close the Eye',      text: 'Fell the Hollow Eye',             stat: 'fell_hollow', n: 1,  reward: { void: 100 } },
+  minis:    { name: 'Wardens and Knights', text: 'Fell 6 mini-bosses',             stat: 'minis',       n: 6,  reward: { void: 120 } },
+  natures:  { name: 'Seven and Seven',    text: 'Discover 6 natures',              stat: 'natures',     n: 6,  reward: { void: 200 } },
+  logs:     { name: 'Archivist',          text: 'Find 6 logs',                     stat: 'logs',        n: 6,  reward: { void: 100 } },
+  relics:   { name: 'Reliquary',          text: 'Find 4 relics',                   stat: 'relics',      n: 4,  reward: { relic: 1 } },
+  deep:     { name: 'Deeper',             text: 'Win at depth 1+',        stat: 'deepwin',     n: 1,  reward: { void: 250 } },
+  bestiary: { name: 'Naturalist',         text: 'Meet 20 Ybasog kinds',         stat: 'bestiary',    n: 20, reward: { void: 150 } },
+  weak:     { name: 'Opposites',          text: 'Slay 100 with opposites', stat: 'weakkills', n: 100, reward: { void: 150 } },
+  clean:    { name: 'Untouched',          text: 'Clear a stage unhurt', stat: 'cleanstage', n: 1, reward: { relic: 1 } },
+  codex:    { name: 'Codex Keeper',       text: 'Record 12 fusions',  stat: 'codex',       n: 12, reward: { void: 250 } },
+};
+
+// ---- Unlocks: what opens over time ----
+window.UNLOCKS = {
+  rift3:   { name: 'A third rift at the Gate',            stat: 'wins',   n: 1 },
+  omens:   { name: 'Darker omens', stat: 'runs', n: 4 },
+  slot2:   { name: 'A second relic slot',                 stat: 'relics', n: 3 },
+  depth:   { name: 'Deeper rifts',   stat: 'wins',   n: 1 },
+};
+
+// ---- Rifts: the adventure is chosen at the Gate. Each rift has an omen, a prevailing nature and a boon ----
+window.RIFTS = {
+  adj:  ['Drowned', 'Whispering', 'Hollow', 'Weeping', 'Starless', 'Coiled', 'Ashen', 'Gilded', 'Sunken', 'Screaming'],
+  noun: ['Trench', 'Choir', 'Maw', 'Reach', 'Deep', 'Vault', 'Spiral', 'Expanse', 'Throat', 'Cradle'],
+  boons: {
+    relics: { name: 'Relic-rich', says: 'Relics and logs turn up twice as often.', relic: 2 },
+    void:   { name: 'Rich veins', says: '+30% void energy.',                        void: 1.3 },
+    hive:   { name: 'Teeming',    says: 'One more new kind each wave; more natured Ybasogs.', debut: 1, natured: 0.15 },
+    calm:   { name: 'Still',      says: 'No boon, and no added danger.' },
+  },
+};
+
+// ---- Paths: chosen at the Rift Rest after stages 1 and 2; they shape the next stage ----
+window.PATHS = {
+  ruins: { name: 'Sunken Path', says: 'More ruins, relics and logs.',           ruins: 2, relic: 1.5 },
+  hive:  { name: 'Hive Path',   says: 'More Ybasogs, +25% void energy.',        hive: 1.4, void: 1.25 },
+  storm: { name: 'Storm Path',  says: 'More rocks and comets, +1 ricochet.',    rocks: 2, bounces: 1 },
+  tide:  { name: 'Tide Path',   says: 'Nature surges every wave; natured drop double.', surge: 1 },
 };
 

@@ -10,7 +10,7 @@
 <style>
   html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
   body { font-variant-numeric: tabular-nums; }
-  canvas { display: block; margin: 0 auto; cursor: crosshair; }
+  canvas { display: block; margin: 0 auto; cursor: crosshair; image-rendering: pixelated; image-rendering: crisp-edges; }
 </style>
 </head>
 <body>
@@ -27,7 +27,7 @@ const params = new URLSearchParams(location.search);
 const tune = new Proxy({}, { get: (_, k) => CONFIG[k].value });
 const STEP = 1 / 60;
 const W = 1280, H = 720;
-const PIXEL = false;
+const PIXEL = true; // drawn at half resolution, snapped to the palette in config.js
 const FONT = '"Trebuchet MS", "Segoe UI", sans-serif';
 const TITLE = 'Voidwalker';
 const CONTROLS = ['WASD or Arrows: move along the rift floor', 'Mouse: aim  ·  hold left button: fire',
@@ -43,27 +43,50 @@ function rng() { // mulberry32; every gameplay random call reads this, never Mat
 }
 const events = [];
 
-// ---- Screen ---------------------------------------------------------------------------
+// ---- Screen: a half-resolution pixel buffer, snapped to the palette, shown in whole pixels ------------
 const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-let VIEW_R = 1;
+const BW = W / 2, BH = H / 2; // one buffer pixel is two logical units
+canvas.width = BW; canvas.height = BH;
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
 function fit() {
-  const k = Math.min(innerWidth / W, innerHeight / H);
-  const r = k * (devicePixelRatio || 1); VIEW_R = r;
-  canvas.width = Math.round(W * r); canvas.height = Math.round(H * r);
-  canvas.style.width = Math.round(W * k) + 'px'; canvas.style.height = Math.round(H * k) + 'px';
-  canvas.style.marginTop = Math.max(0, Math.floor((innerHeight - H * k) / 2)) + 'px';
-  ctx.setTransform(r, 0, 0, r, 0, 0);
+  const dpr = devicePixelRatio || 1, k = Math.max(1, Math.floor(Math.min(innerWidth * dpr / BW, innerHeight * dpr / BH)));
+  canvas.style.width = (BW * k / dpr) + 'px'; canvas.style.height = (BH * k / dpr) + 'px';
+  canvas.style.marginTop = Math.max(0, Math.floor((innerHeight - BH * k / dpr) / 2)) + 'px';
 }
 addEventListener('resize', fit); fit();
+// the palette: config's colours, every nature's colour and a dark of it
+const PAL = (() => {
+  const hx = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), l = window.PALETTE.map(hx);
+  for (const n of Object.values(window.NATURES.base)) { const c = hx(n.color); l.push(c, c.map(v => Math.round(v * 0.5))); }
+  return l;
+})();
+const LUT = new Uint32Array(32768);
+for (let r = 0; r < 32; r++) for (let g = 0; g < 32; g++) for (let b = 0; b < 32; b++) {
+  const R = r * 8 + 4, G = g * 8 + 4, B2 = b * 8 + 4; let best = 0, bd = 1e12;
+  for (let i = 0; i < PAL.length; i++) { const q = PAL[i], dr = R - q[0], dg = G - q[1], db = B2 - q[2], d = 2 * dr * dr + 4 * dg * dg + 3 * db * db; if (d < bd) { bd = d; best = i; } }
+  const q = PAL[best]; LUT[(r << 10) | (g << 5) | b] = (255 << 24) | (q[2] << 16) | (q[1] << 8) | q[0];
+}
+function quantize() {
+  const img = ctx.getImageData(0, 0, BW, BH), d = new Uint32Array(img.data.buffer);
+  for (let i = 0; i < d.length; i++) { const v = d[i]; d[i] = LUT[(((v & 255) >> 3) << 10) | ((((v >> 8) & 255) >> 3) << 5) | (((v >> 16) & 255) >> 3)]; }
+  ctx.putImageData(img, 0, 0);
+}
 function clear(c) { ctx.fillStyle = c; ctx.fillRect(0, 0, W, H); }
+// a 5 by 7 pixel font, upper case
+const FONT5 = {"A": [14, 17, 17, 31, 17, 17, 17], "B": [30, 17, 17, 30, 17, 17, 30], "C": [14, 17, 16, 16, 16, 17, 14], "D": [30, 17, 17, 17, 17, 17, 30], "E": [31, 16, 16, 30, 16, 16, 31], "F": [31, 16, 16, 30, 16, 16, 16], "G": [14, 17, 16, 23, 17, 17, 15], "H": [17, 17, 17, 31, 17, 17, 17], "I": [14, 4, 4, 4, 4, 4, 14], "J": [7, 2, 2, 2, 2, 18, 12], "K": [17, 18, 20, 24, 20, 18, 17], "L": [16, 16, 16, 16, 16, 16, 31], "M": [17, 27, 21, 21, 17, 17, 17], "N": [17, 17, 25, 21, 19, 17, 17], "O": [14, 17, 17, 17, 17, 17, 14], "P": [30, 17, 17, 30, 16, 16, 16], "Q": [14, 17, 17, 17, 21, 18, 13], "R": [30, 17, 17, 30, 20, 18, 17], "S": [15, 16, 16, 14, 1, 1, 30], "T": [31, 4, 4, 4, 4, 4, 4], "U": [17, 17, 17, 17, 17, 17, 14], "V": [17, 17, 17, 17, 17, 10, 4], "W": [17, 17, 17, 21, 21, 21, 10], "X": [17, 17, 10, 4, 10, 17, 17], "Y": [17, 17, 10, 4, 4, 4, 4], "Z": [31, 1, 2, 4, 8, 16, 31], "0": [14, 17, 19, 21, 25, 17, 14], "1": [4, 12, 4, 4, 4, 4, 14], "2": [14, 17, 1, 2, 4, 8, 31], "3": [30, 1, 1, 14, 1, 1, 30], "4": [2, 6, 10, 18, 31, 2, 2], "5": [31, 16, 30, 1, 1, 17, 14], "6": [6, 8, 16, 30, 17, 17, 14], "7": [31, 1, 2, 4, 8, 8, 8], "8": [14, 17, 17, 14, 17, 17, 14], "9": [14, 17, 17, 15, 1, 2, 12], ".": [0, 0, 0, 0, 0, 12, 12], ",": [0, 0, 0, 0, 12, 4, 8], ":": [0, 12, 12, 0, 12, 12, 0], ";": [0, 12, 12, 0, 12, 4, 8], "!": [4, 4, 4, 4, 4, 0, 4], "?": [14, 17, 1, 2, 4, 0, 4], "'": [4, 4, 8, 0, 0, 0, 0], "\"": [10, 10, 0, 0, 0, 0, 0], "-": [0, 0, 0, 31, 0, 0, 0], "+": [0, 4, 4, 31, 4, 4, 0], "/": [1, 2, 2, 4, 8, 8, 16], "(": [2, 4, 8, 8, 8, 4, 2], ")": [8, 4, 2, 2, 2, 4, 8], "%": [24, 25, 2, 4, 8, 19, 3], "·": [0, 0, 0, 12, 12, 0, 0], "#": [10, 10, 31, 10, 31, 10, 10], "&": [12, 18, 20, 8, 21, 18, 13], "=": [0, 0, 31, 0, 31, 0, 0], "<": [2, 4, 8, 16, 8, 4, 2], ">": [8, 4, 2, 1, 2, 4, 8], "*": [0, 4, 21, 14, 21, 4, 0], "_": [0, 0, 0, 0, 0, 0, 31], "[": [14, 8, 8, 8, 8, 8, 14], "]": [14, 2, 2, 2, 2, 2, 14], " ": [0, 0, 0, 0, 0, 0, 0]};
+const fontUnit = size => 2 * Math.max(1, Math.round(size / 13)); // logical units per font pixel
+function textWidth(s, size) { const u = fontUnit(size); return String(s).length * 6 * u - u; }
 function text(s, x, y, size, c, align = 'center', weight = '') {
-  ctx.fillStyle = c; ctx.font = `${weight} ${size}px ${FONT}`; ctx.textAlign = align;
-  ctx.textBaseline = 'middle'; ctx.fillText(s, x, y);
+  s = String(s).toUpperCase().replace(/[—–]/g, '-').replace(/[’‘]/g, "'").replace(/×/g, 'X');
+  const u = fontUnit(size), w = s.length * 6 * u - u;
+  const x0 = Math.round((align === 'center' ? x - w / 2 : align === 'right' ? x - w : x) / 2) * 2, y0 = Math.round((y - 3.5 * u) / 2) * 2;
+  const put = (col, ox, oy) => { ctx.fillStyle = col; for (let i = 0; i < s.length; i++) { const g = FONT5[s[i]] || FONT5['?']; for (let r = 0; r < 7; r++) { const row = g[r]; if (!row) continue; for (let b = 0; b < 5; b++) if (row & (16 >> b)) ctx.fillRect(x0 + ox + (i * 6 + b) * u, y0 + oy + r * u, u, u); } } };
+  if (weight === 'bold' || u > 2) put('#07040d', u / 2 > 1 ? u / 2 : 2, u / 2 > 1 ? u / 2 : 2);
+  put(c, 0, 0);
 }
 function wrapText(s, x, y, maxW, size, c, align = 'center') {
-  ctx.font = `${size}px ${FONT}`; const words = String(s).split(' '); let line = '', yy = y;
-  for (const wd of words) { const tst = line ? line + ' ' + wd : wd; if (ctx.measureText(tst).width > maxW && line) { text(line, x, yy, size, c, align); line = wd; yy += size + 4; ctx.font = `${size}px ${FONT}`; } else line = tst; }
+  const words = String(s).split(' '); let line = '', yy = y; const lh = 7 * fontUnit(size) + 6;
+  for (const wd of words) { const tst = line ? line + ' ' + wd : wd; if (textWidth(tst, size) > maxW && line) { text(line, x, yy, size, c, align); line = wd; yy += lh; } else line = tst; }
   if (line) text(line, x, yy, size, c, align);
   return yy;
 }
@@ -87,29 +110,74 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('blur', () => { down.clear(); mouse.down = false; });
 const inBox = (p, x, y, w, h) => !!p && p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h;
 
-// ---- Audio --------------------------------------------------------------------------------
+// ---- Audio: layered sound effects and a score that follows the scene ---------------------------------
 let audio = null, muted = false;
 function startAudio() {
   if (!audio) {
     const ac = window.GAME_AUDIO || new (window.AudioContext || window.webkitAudioContext)();
-    const out = ac.createGain(); out.gain.value = muted ? 0 : tune.volume;
-    out.connect(ac.destination); audio = { ac, out };
+    const out = ac.createGain(); out.gain.value = muted ? 0 : tune.volume; out.connect(ac.destination);
+    const sfx = ac.createGain(); sfx.gain.value = 1; sfx.connect(out);
+    const mus = ac.createGain(); mus.gain.value = tune.music_volume; mus.connect(out);
+    const len = ac.sampleRate, nb = ac.createBuffer(1, len, ac.sampleRate), nd = nb.getChannelData(0); let z = 7;
+    for (let i = 0; i < len; i++) { z = (z * 16807) % 2147483647; nd[i] = z / 1073741823.5 - 1; }
+    audio = { ac, out, sfx, mus, noise: nb, next: 0, beat: 0 };
   }
   if (audio.ac.state === 'suspended') audio.ac.resume();
 }
 function setMuted(m) { muted = m; if (audio) audio.out.gain.value = m ? 0 : tune.volume; }
-addEventListener('tune', () => setMuted(muted));
-function tone(freq, dur, type = 'square', vol = 0.3, slide = 0) {
+addEventListener('tune', () => { setMuted(muted); if (audio) audio.mus.gain.value = tune.music_volume; });
+function tone(freq, dur, type = 'square', vol = 0.3, slide = 0, when = 0, bus) {
   if (!audio || muted) return;
-  const t = audio.ac.currentTime, o = audio.ac.createOscillator(), g = audio.ac.createGain();
+  const t = audio.ac.currentTime + when, o = audio.ac.createOscillator(), g = audio.ac.createGain();
   o.type = type; o.frequency.setValueAtTime(freq, t);
   if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq * slide), t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.005); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g).connect(bus || audio.sfx); o.start(t); o.stop(t + dur + 0.02);
+}
+function noise(dur, vol = 0.2, freq = 1200, q = 1, when = 0, bus) {
+  if (!audio || muted) return;
+  const t = audio.ac.currentTime + when, src = audio.ac.createBufferSource(), f = audio.ac.createBiquadFilter(), g = audio.ac.createGain();
+  src.buffer = audio.noise; src.loop = true; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  o.connect(g).connect(audio.out); o.start(t); o.stop(t + dur);
+  src.connect(f).connect(g).connect(bus || audio.sfx); src.start(t, Math.random() * 0.5); src.stop(t + dur + 0.02);
+}
+const SFX = {
+  hit() { noise(0.05, 0.05, 2400, 2); },
+  kill(big) { noise(big ? 0.5 : 0.16, big ? 0.3 : 0.12, big ? 300 : 900, 1); tone(big ? 70 : 150, big ? 0.6 : 0.16, 'square', big ? 0.18 : 0.07, 0.35); },
+  hurt() { noise(0.25, 0.25, 500, 0.7); tone(110, 0.3, 'sawtooth', 0.18, 0.5); },
+  boom() { noise(0.7, 0.35, 180, 0.6); tone(55, 0.8, 'sine', 0.3, 0.5); },
+  pick() { tone(1320, 0.06, 'sine', 0.05); },
+  relic() { [0, 4, 7, 12].forEach((s2, i) => tone(523 * Math.pow(2, s2 / 12), 0.5, 'triangle', 0.12, 0, i * 0.07)); },
+  ui() { tone(880, 0.05, 'triangle', 0.06); },
+  rite(r) { const base = r === 'mythic' ? 392 : r === 'rare' ? 440 : 523; noise(0.6, 0.1, 3000, 0.5); [0, 7, 12, 16, 19].forEach((s2, i) => tone(base * Math.pow(2, s2 / 12), 0.7, 'sine', r === 'mythic' ? 0.14 : 0.08, 0, i * 0.06)); },
+};
+// the score: a drone, a slow arpeggio in a dark mode, and in battle a pulse; the boss adds a heartbeat
+const MODE = [0, 1, 3, 5, 7, 8, 10];
+function musicMood() { if (scene === 'altar' || scene === 'title') return 'hub'; if (scene === 'rest') return 'rest'; if (state && state.bigs && state.bigs.some(e => e.role === 'boss' && !e.dead)) return 'boss'; return 'rift'; }
+function musicTick() {
+  if (!audio || muted) return;
+  const ac = audio.ac, mood = musicMood(), stg = state ? state.stage : 1;
+  const bpm = mood === 'hub' ? 56 : mood === 'rest' ? 50 : mood === 'boss' ? 104 : 76 + stg * 8, step = 60 / bpm / 2;
+  const root = mood === 'boss' ? 46.25 : 55 * Math.pow(2, [0, 3, -2][Math.min(2, stg - 1)] / 12);
+  if (audio.next < ac.currentTime) audio.next = ac.currentTime + 0.05;
+  while (audio.next < ac.currentTime + 0.25) {
+    const b = audio.beat++, w = audio.next - ac.currentTime; audio.next += step;
+    if (b % 16 === 0) { tone(root, step * 16, 'sawtooth', 0.025, 0, w, audio.mus); tone(root * 1.5, step * 16, 'triangle', 0.03, 0, w, audio.mus); tone(root * 2, step * 16, 'sine', 0.035, 0, w, audio.mus); }
+    const arp = [0, 2, 4, 2, 5, 4, 2, 6][b % 8];
+    if (mood === 'hub' || mood === 'rest') { if (b % 4 === 0) tone(root * 4 * Math.pow(2, MODE[arp] / 12), step * 6, 'sine', 0.04, 0, w, audio.mus); }
+    else {
+      if (b % 2 === 0) tone(root * 4 * Math.pow(2, MODE[arp] / 12), step * 1.8, 'triangle', 0.035, 0, w, audio.mus);
+      if (b % 4 === 0) tone(root * 2, step * 1.5, 'square', 0.03, 0.7, w, audio.mus);
+      if (b % 4 === 2) noise(0.05, 0.03, 6000, 2, w, audio.mus);
+      if (mood === 'boss' && b % 8 === 0) { tone(60, 0.25, 'sine', 0.2, 0.6, w, audio.mus); tone(60, 0.2, 'sine', 0.14, 0.6, w + step * 0.6, audio.mus); }
+    }
+  }
 }
 
 // ---- Natures, recipes, cards -----------------------------------------------------------------
 const BASE = NATURES.base, RECIPES = NATURES.recipes, DISCOVER = NATURES.discover, OMENS = NATURES.omens;
+const SIG = window.SIGILS, REL = window.RELICS, LOG = window.LOGS, QST = window.QUESTS, UNL = window.UNLOCKS, RIFTS = window.RIFTS, PATHS = window.PATHS;
+const RELIC_IDS = Object.keys(REL), LOG_IDS = Object.keys(LOG);
 const NIDS = Object.keys(BASE);
 const FUSION_KEYS = Object.keys(RECIPES).filter(k => k.split('+').length === 2);
 function hexMix(a, b) {
@@ -147,7 +215,7 @@ const SAVE_KEY = 'voidwalker.save.v1';
 const NOSAVE = params.get('nosave') === '1' || navigator.webdriver; // a check never reads or writes a player's save
 function freshMeta() {
   return { v: 1, innate: null, discovered: [], cards: {}, loadout: {}, fusions: [], stats: {}, bank: 0,
-    runs: 0, wins: 0, depth: 0, maxDepth: 0, pity: 0, draws: 0, omen: 'calm', focus: null, seen: {}, bestiary: {}, prevail: null };
+    runs: 0, wins: 0, depth: 0, maxDepth: 0, pity: 0, draws: 0, omen: 'calm', focus: null, seen: {}, bestiary: {}, prevail: null, upg: {}, relics: {}, equipped: [], logs: {}, quests: {}, rifts: null, riftPick: 0, boon: 'calm' };
 }
 function demoMeta() { // ?demo=1: a collection part-way through, for looking at the Altar
   const m = freshMeta();
@@ -156,7 +224,7 @@ function demoMeta() { // ?demo=1: a collection part-way through, for looking at 
   m.loadout = { '|1': 2, 'wrath|1': 3, 'wrath|2': 1, 'greed+wrath|1': 1, 'envy|1': 2 };
   m.fusions = ['greed+wrath', 'envy+wrath', 'charity+diligence', 'envy+sloth'];
   m.stats = { kills: 52, motes: 410, asteroids: 5, ricochets: 10, pods: 14, feeders: 6, debris: 8 };
-  m.bank = 340; m.runs = 4; m.wins = 1; m.maxDepth = 1; m.omen = 'rockfall'; m.focus = 'wrath'; m.pity = 6; m.prevail = 'patience';
+  m.bank = 340; m.runs = 4; m.wins = 1; m.maxDepth = 1; m.omen = 'rockfall'; m.focus = 'wrath'; m.pity = 6; m.prevail = 'patience'; m.upg = { vessel: 1, reach: 2 }; m.relics = { bell: 1, lens: 1, crown: 1, tooth: 1 }; m.equipped = ['crown']; m.logs = { l1: 1, l9: 1, l14: 1 }; m.stats.minis = 2; m.stats.fell_choir = 1;
   for (const k of ['pod', 'husk', 'grazer', 'swift', 'feeder', 'spitter', 'weeper', 'mite', 'warden', 'asteroid', 'big', 'plate', 'slab', 'comet', 'cargo', 'panel']) m.bestiary[k] = 1;
   for (const k in m.cards) m.seen[k] = true;
   return m;
@@ -185,6 +253,20 @@ function dominantNature(cards) {
   return best;
 }
 const loadoutCards = () => stacks(meta.loadout).flatMap(s => Array.from({ length: s.n }, () => ({ natures: s.natures, level: s.level })));
+function bonuses() { // sigils bought and relics equipped, summed by key
+  const b = {}, add = g => { for (const [k, v] of Object.entries(g)) b[k] = (b[k] || 0) + v; };
+  for (const [id, lv] of Object.entries(meta.upg || {})) if (SIG[id]) for (let i = 0; i < lv; i++) add(SIG[id].give);
+  for (const id of meta.equipped || []) if (REL[id]) add(REL[id].give);
+  return b;
+}
+function unlocked(id) { const u = UNL[id], v = u.stat === 'relics' ? Object.keys(meta.relics).length : u.stat === 'wins' ? meta.wins : u.stat === 'runs' ? meta.runs : (meta.stats[u.stat] || 0); return v >= u.n; }
+function rollRifts() {
+  seed = CONFIG.seed * 7 + meta.runs * 131 + meta.draws * 3;
+  const pk = l => l[Math.floor(rng() * l.length)], n = unlocked('rift3') ? 3 : 2;
+  const om = Object.keys(OMENS).filter(k => unlocked('omens') || ['calm', 'swarm', 'rockfall', 'ruinwake'].includes(k)), bk = Object.keys(RIFTS.boons).filter(k => k !== 'calm');
+  return Array.from({ length: n }, (_, i) => ({ name: `The ${pk(RIFTS.adj)} ${pk(RIFTS.noun)}`, omen: i === 0 ? 'calm' : pk(om), prevail: pk(NIDS), boon: i === 0 ? 'calm' : pk(bk) }));
+}
+function applyRift() { const r = meta.rifts[meta.riftPick] || meta.rifts[0]; meta.omen = r.omen; meta.prevail = r.prevail; meta.boon = r.boon; }
 function formTraits(n) {
   const t = { damage: 1, max_energy: 0, magnet: 0, mote_bonus: 0, fire_rate: 1, bite: 0, bounces: 0, status: 1, contact_charm: 0,
     speed: 1, aura: 0, armor: 0, wave_heal: 0, iframes: 0, quick_shuffle: 0, regen: 0, leak_guard: 0, glob_dodge: 0, band: 0 };
@@ -198,23 +280,27 @@ let scene, state;
 function reset() { // a new adventure from the loadout (or, the first time, the firefly's crack of light)
   seed = Number(params.get('seed')) || (CONFIG.seed + meta.runs * 7919);
   const intro = !meta.innate;
-  const omen = OMENS[intro ? 'calm' : meta.omen] || OMENS.calm;
+  const omen = OMENS[intro ? 'calm' : meta.omen] || OMENS.calm, boon = RIFTS.boons[intro ? 'calm' : (meta.boon || 'calm')] || RIFTS.boons.calm;
   const deck = intro ? [] : loadoutCards();
   const form = intro ? null : dominantNature(deck);
-  const tr = formTraits(form);
+  const tr = formTraits(form), bo = intro ? {} : bonuses();
+  tr.max_energy += bo.max_energy || 0; tr.magnet += bo.magnet || 0; tr.bounces += bo.bounces || 0;
+  tr.speed *= 1 + (bo.speed || 0); tr.damage *= 1 + (bo.damage || 0); tr.fire_rate *= 1 + (bo.fire_rate || 0); tr.status *= 1 + (bo.status || 0);
+  tr.glob_dodge = 1 - (1 - tr.glob_dodge) * (1 - (bo.glob_dodge || 0));
   state = {
     t: 0, score: 0, gained: '', phase: intro ? 'intro' : 'start', introT: 0, startT: 1.2,
-    omen, depth: intro ? 0 : meta.depth, form, tr, prevail: intro ? null : meta.prevail,
+    omen, boon, bo, depth: intro ? 0 : meta.depth, form, tr, prevail: intro ? null : meta.prevail, path: null,
     statusMul: tr.status * (omen.status || 1),
-    voidMul: (omen.void || 1) * (1 + tune.depth_void * (intro ? 0 : meta.depth)),
+    voidMul: (omen.void || 1) * (boon.void || 1) * (1 + (bo.void_mul || 0)) * (1 + tune.depth_void * (intro ? 0 : meta.depth)),
     hpMul: (omen.hp || 1) * (1 + tune.depth_hp * (intro ? 0 : meta.depth)),
     player: { x: RCX, y: 670, iframe: 0, aim: -Math.PI / 2, still: true },
-    maxEnergy: tune.max_energy + tr.max_energy, energy: tune.max_energy + tr.max_energy, voidE: 0, kills: 0, ward: 0,
+    maxEnergy: tune.max_energy + tr.max_energy, energy: tune.max_energy + tr.max_energy, voidE: 0, kills: 0, ward: bo.ward_start || 0,
     deck: [], draw: [], discard: [], fireCd: 0, reshuffleT: 0, autoFire: false, nextId: 1,
-    stage: 1, waveN: 1, wave: null, clearT: 0, waveHurt: false, waveLeak: false,
+    stage: 1, waveN: 1, wave: null, clearT: 0, waveHurt: false, waveLeak: false, stageHurt: false,
     enemies: [], matter: [], bolts: [], globs: [], motes: [], petals: [], fields: [], parts: [], floaters: [],
     walls: [], decoys: [], allies: [], meteors: [], mines: [], beams: [], arcs: [], echoes: [],
     warnings: [], webs: [], strikes: [], bigs: [], card: null, tide: 'mixed', met: new Set(),
+    loot: [], foundLoot: [], flashes: [], hitstop: 0, rest: null,
     timewarp: 0, frenzy: 0, magnetT: 0, leechAcc: 0, recentKills: [],
     shake: 0, leakFlash: 0, found: [], banked: 0, won: false,
   };
@@ -259,10 +345,11 @@ function canMeet(k) {
 function pickW(list, wfn) { const tot = list.reduce((a, k) => a + wfn(k), 0); let r = rng() * tot; for (const k of list) { r -= wfn(k); if (r <= 0) return k; } return list[list.length - 1]; }
 const TIDES = { void: { name: 'Void tide', color: '#b9a6ff' }, mixed: { name: 'Mixed tide', color: '#cfc6e6' }, surge: { name: 'Nature surge', color: '#ffd27a' } };
 function rollTide() {
+  if (state.path === 'tide') return 'surge';
   const w = [[0.4, 0.5, 0.1], [0.25, 0.5, 0.25], [0.15, 0.45, 0.4]][Math.min(2, state.stage - 1)], r = rng();
   return r < w[0] ? 'void' : r < w[0] + w[1] ? 'mixed' : 'surge';
 }
-function natureShare() { return state.tide === 'void' ? 0.05 : state.tide === 'surge' ? 0.7 : Math.min(0.9, tune.nature_chance + tune.nature_chance_step * (state.stage - 1)); }
+function natureShare() { return state.tide === 'void' ? 0.05 : state.tide === 'surge' ? 0.7 : Math.min(0.9, tune.nature_chance + tune.nature_chance_step * (state.stage - 1) + (state.boon.natured || 0)); }
 function rollNature() {
   if (!meta.innate || rng() >= natureShare()) return null;
   if (state.prevail && rng() < (state.tide === 'surge' ? 0.85 : tune.prevailing_share)) return state.prevail;
@@ -270,7 +357,7 @@ function rollNature() {
 }
 function natMult(ns, n) {
   if (!n || !ns || !ns.length) return 1;
-  if (ns.some(x => BASE[x].opposite === n)) return tune.opposite_mult;
+  if (ns.some(x => BASE[x].opposite === n)) return tune.opposite_mult + ((state && state.bo && state.bo.opposite_bonus) || 0);
   return ns.includes(n) ? tune.same_mult : 1;
 }
 function chooseDebut(list) { // never met first, then not yet met this adventure; earliest stage first
@@ -283,6 +370,7 @@ const metOf = (list, fn = () => true) => list.filter(k => state.met.has(k) && fn
 const X = (m = 50) => RL + m + rng() * (RR - RL - 2 * m);
 function pickY(fn) { const l = metOf(MINIONS, fn); return l.length ? pickW(l, k => YB[k].w * (YB[k].fam === 'pod' ? (state.omen.pods || 1) : 1)) : 'pod'; }
 function pickM(fam) { const l = metOf(MATTERS, k => MT[k].fam === fam); return l.length ? pickW(l, k => MT[k].wt * (fam === 'rock' ? (state.omen.rocks || 1) : 1)) : null; }
+const pathOf = () => (state.path && PATHS[state.path]) || {};
 const BEATS = {
   trickle(L, t) { const n = Math.round((3 + state.stage) * 1.4); for (let i = 0; i < n; i++) L.push({ t: t + i * 1.1, k: pickY(), x: X() }); return t + n * 1.1 + 0.6; },
   line(L, t) { const k = pickY(k => ['pod', 'grazer', 'mite'].includes(YB[k].fam)), n = 6 + 2 * (state.stage > 1); for (let i = 0; i < n; i++) L.push({ t, k, x: RL + 70 + i * (RR - RL - 140) / (n - 1) }); return t + 3.2; },
@@ -298,8 +386,8 @@ const BEATS = {
 };
 function beatWeights() {
   const s = state.stage, has = fam => metOf(MATTERS, k => MT[k].fam === fam).length > 0;
-  return { trickle: 3, line: 1.4, vee: 1.1, column: 1, flank: s > 1 ? 1.2 : 0.4, swarm: metOf(MINIONS, k => YB[k].fam === 'mite').length ? 1 : 0,
-    rockfall: 1.2 * (state.omen.rocks || 1), wreckfield: has('wreck') ? 1 : 0, ruinwall: has('ruin') ? 0.8 : 0, elite: 0.4 + 0.4 * s, lull: 0.5 };
+  return { trickle: 3 * (pathOf().hive || 1), line: 1.4, vee: 1.1, column: 1, flank: s > 1 ? 1.2 : 0.4, swarm: metOf(MINIONS, k => YB[k].fam === 'mite').length ? 1 : 0,
+    rockfall: 1.2 * (state.omen.rocks || 1) * (pathOf().rocks || 1), wreckfield: has('wreck') ? 1 : 0, ruinwall: has('ruin') ? 0.8 * (pathOf().ruins || 1) : 0, elite: (0.4 + 0.4 * s) * (pathOf().hive || 1), lull: 0.5 };
 }
 function makeWave(s, w) {
   const L = [], o = state.omen;
@@ -319,7 +407,7 @@ function makeWave(s, w) {
   const boss = s === 2 && w === 3 ? (rng() < 0.5 ? 'choir' : 'hollow') : s === 3 && w === 3 ? 'mother' : null;
   if (boss) { L.push({ t: 1, k: boss, x: RCX, boss: 1 }); return L; } // a boss calls its own escorts
   let t = 0.8;
-  for (let i = 0; i < tune.debuts_per_wave; i++) { // debut: the new kind, alone, so it can be read
+  for (let i = 0; i < tune.debuts_per_wave + (state.boon.debut || 0); i++) { // debut: the new kind, alone, so it can be read
     const k = chooseDebut(MINIONS); if (!k) break;
     state.met.add(k); const n = YB[k].group ? 1 : 2; for (let j = 0; j < n; j++) L.push({ t: t + j * 1.4, k, x: X(120) }); t += 4.5;
   }
@@ -334,6 +422,7 @@ function makeWave(s, w) {
   return L.sort((a, b) => a.t - b.t);
 }
 function startWave() {
+  if (state.waveN === 1 && state.stage > 1 && state.bo.ward_stage) state.ward = Math.min(tune.ward_max, state.ward + state.bo.ward_stage);
   state.wave = { list: makeWave(state.stage, state.waveN), idx: 0, t: 0 };
   state.wave.isBoss = state.wave.list.some(x => x.boss); state.waveBoss = null;
   state.phase = 'wave'; state.waveHurt = false; state.waveLeak = false; rebuildPiles();
@@ -353,7 +442,7 @@ function spawnY(k, x, y, ex) {
   const nature = d.nature || (d.role === 'mini' ? (state.prevail && rng() < 0.6 ? state.prevail : NIDS[Math.floor(rng() * NIDS.length)]) : rollNature());
   const hp = (k === 'mother' ? tune.mother_hp : d.hp) * (big ? state.hpMul : hpScale()) * (nature && !big ? 1.3 : 1);
   const e = { k, fam: d.fam, role: d.role, big, isY: true, x, y: big ? -d.r - 30 : y, vx: 0, vy: d.sp * spScale(), r: d.r, hp, maxhp: hp,
-    drop: d.drop + (nature && !big ? 2 : 0), nature, flash: 0, ph: rng() * 6.28, age: 0, t1: 1 + rng(), t2: 2 + rng() * 2, t3: 3 + rng() * 2, gi: ex.gi || 0, stopY: 140 + rng() * 120 };
+    drop: d.drop + (nature && !big ? (state.path === 'tide' ? 4 : 2) : 0), nature, flash: 0, ph: rng() * 6.28, age: 0, t1: 1 + rng(), t2: 2 + rng() * 2, t3: 3 + rng() * 2, gi: ex.gi || 0, stopY: 140 + rng() * 120 };
   if (e.fam === 'pod') e.vx = (rng() - 0.5) * 20;
   if (k === 'husk' || k === 'warden') e.shell = true;
   if (k === 'blinker') { e.x = X(60); e.y = 110 + rng() * 240; e.vy = 0; }
@@ -396,7 +485,7 @@ function hurt(n, why) {
   if (n <= 0) return;
   if (state.ward > 0) { state.ward--; floatText('Ward!', state.player.x, state.player.y - 40, '#fff0b0', 18, 0.8); tone(900, 0.15, 'sine', 0.12); return; }
   if (state.tr.armor) n = Math.max(1, n - state.tr.armor);
-  state.energy -= n; state.waveHurt = true; state.shake = Math.min(12, state.shake + 4 + n * 2);
+  state.energy -= n; state.waveHurt = true; state.stageHurt = true; state.hitstop = Math.max(state.hitstop, tune.hitstop); SFX.hurt(); state.shake = Math.min(12, state.shake + 4 + n * 2);
   tone(110, 0.25, 'sawtooth', 0.25, 0.5);
   floatText(`-${n}`, state.player.x, state.player.y - 40, '#ff8a8a', 20, 0.8);
 }
@@ -407,10 +496,34 @@ const isEnemy = t => !!t.isY;
 function damage(t, d, src, viaTether) {
   if (t.dead || d <= 0) return;
   if (t.shield > 0) { const a = Math.min(t.shield, d); t.shield -= a; d -= a; t.flash = 0.05; if (d <= 0) return; }
-  if (t.shell && t.hp > t.maxhp * 0.5) d *= 0.5;
+  if (t.shell && t.hp > t.maxhp * 0.5 && !state.bo.shell_break) d *= 0.5;
   t.hp -= d; t.flash = 0.08;
   if (!viaTether && t.tether && t.tether.o && !t.tether.o.dead) damage(t.tether.o, d * 0.5, null, true);
   if (t.hp <= 0) kill(t, src);
+}
+function afterKill(t, src) { // stats for quests, the weight of the blow, and what it leaves behind
+  if (isEnemy(t)) {
+    if (src && t.nature && natMult(src.natures, t.nature) > 1) track('weakkills');
+    if (t.role === 'mini') { track('minis'); state.hitstop = Math.max(state.hitstop, 0.14); state.shake = Math.min(14, state.shake + 8); SFX.boom(); }
+    else if (t.role === 'boss') { track('fell_' + t.k); state.hitstop = 0.32; state.shake = 16; SFX.boom(); }
+    else { SFX.kill(false); if (t.nature) state.hitstop = Math.max(state.hitstop, 0.02); }
+  }
+  state.flashes.push({ x: t.x, y: t.y, r: (t.r || 20) + 6, t: 0.2, max: 0.2 });
+  rollLoot(t);
+}
+function rollLoot(t) {
+  const mul = tune.relic_chance * (1 + (state.bo.relic_find || 0)) * (state.boon.relic || 1) * (pathOf().relic || 1);
+  const rp = ({ idol: 0.25, glyph: 0.12, shrine: 0.12, ruin: 0.06, arch: 0.04, pillar: 0.04, monolith: 0.2 })[t.k] || (t.role === 'mini' ? 0.45 : t.role === 'boss' ? 1 : 0);
+  const lp = ({ cargo: 0.3, hull: 0.25, core: 0.12, ruin: 0.15, idol: 0.2, glyph: 0.2, monolith: 0.35, pillar: 0.08, shrine: 0.1 })[t.k] || 0;
+  const drop = (kind, id) => { const a = rng() * 6.28; state.loot.push({ kind, id, x: t.x, y: t.y, vx: Math.cos(a) * 90, vy: Math.sin(a) * 90 - 40, t: 0 }); };
+  if (rp && rng() < rp * mul) { const left = RELIC_IDS.filter(r => !meta.relics[r] && !state.loot.some(l => l.id === r)); if (left.length) drop('relic', left[Math.floor(rng() * left.length)]); }
+  if (lp && rng() < lp * mul) { const src = t.fam === 'wreck' ? 'wreck' : 'ruin', left = LOG_IDS.filter(l => LOG[l].src === src && !meta.logs[l] && !state.loot.some(x => x.id === l)); if (left.length) drop('log', left[Math.floor(rng() * left.length)]); }
+}
+function collectLoot(l) {
+  l.dead = true; state.foundLoot.push(l);
+  if (l.kind === 'relic') { meta.relics[l.id] = 1; floatText(REL[l.id].name.toUpperCase(), state.player.x, state.player.y - 60, '#ffd27a', 18, 2); SFX.relic(); }
+  else { meta.logs[l.id] = 1; floatText('LOG', state.player.x, state.player.y - 60, '#5ac8b9', 18, 1.6); SFX.relic(); }
+  saveMeta();
 }
 function brood(e, k, n) { for (let i = 0; i < n; i++) spawn(k, e.x + (i - (n - 1) / 2) * 20, e.y + 10, { single: 1, gi: i }); }
 function blast(x, y, r, dmg, hurtsYou, c) {
@@ -429,6 +542,7 @@ function kill(t, src) {
   if (t.stolen) drop += t.stolen;
   if (isEnemy(t)) drop += state.omen.killVoid || 0;
   spawnMotes(t.x, t.y, Math.round(drop));
+  afterKill(t, src);
   if (isEnemy(t)) {
     state.kills++; state.score++; tone(140, 0.18, 'square', 0.1, 0.4);
     track('kills');
@@ -490,7 +604,7 @@ function launch(card, isEcho) {
   if (fx.includes('big')) { sp *= 0.6; r = 12; }
   if (fx.includes('singularity')) sp *= 0.5;
   const b = { x: p.x + Math.cos(a) * 24, y: p.y + Math.sin(a) * 24, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r, color: rec.color, fx, shardFx: rec.shardFx || [],
-    natures: card.natures, level: card.level, dmg: dmg * (fx.includes('stone') ? tune.stone_mult : 1), bounces: tune.bolt_bounces + state.tr.bounces + (state.omen.bounces || 0),
+    natures: card.natures, level: card.level, dmg: dmg * (fx.includes('stone') ? tune.stone_mult : 1), bounces: tune.bolt_bounces + state.tr.bounces + (state.omen.bounces || 0) + (pathOf().bounces || 0),
     shard: false, trail: [], hitSet: new Set(), used: new Set(), bounced: 0, pierce: fx.includes('pierce') ? tune.pierce_count : 0 };
   if (fx.includes('snowball')) b.bounces += 4;
   if (fx.includes('orbit')) { b.orbitT = 1.6; b.orbitA = a + Math.PI; }
@@ -564,7 +678,7 @@ function boltHits(b, t, enemyHit) {
   if (has('leech')) { state.leechAcc += d * tune.leech_share; if (state.leechAcc >= 1) { heal(Math.floor(state.leechAcc)); state.leechAcc %= 1; } }
   if (has('execute') && enemyHit && !t.dead && !t.big && t.hp < t.maxhp * tune.execute_line) { sparks(t.x, t.y, b.color, 10, 260); kill(t, b); }
   if (has('devour')) { b.dmg += tune.devour_grow; b.r = Math.min(14, b.r + 0.6); }
-  sparks(b.x, b.y, b.color, 4, 140);
+  sparks(b.x, b.y, b.color, 4, 140); if (rng() < 0.35) SFX.hit();
   const once = f => { if (b.used.has(f)) return false; b.used.add(f); return true; };
   if (b.shard) { if (has('thorns')) state.fields.push({ k: 'thorns', x: b.x, y: b.y, r: tune.thorns_radius * 0.6, t: tune.thorns_time * sm, max: tune.thorns_time * sm, c: b.color }); return; }
   const F = (k, r, time, extra) => state.fields.push({ k, x: b.x, y: b.y, r, t: time, max: time, c: b.color, ...extra });
@@ -696,16 +810,16 @@ function updatePlay(dt) {
       if (state.energy <= 5) track('lowwave');
       if (tr.wave_heal) heal(tr.wave_heal);
       const stageEnd = state.waveN === 3 && !final;
-      if (stageEnd) heal(tune.stage_heal);
+      if (stageEnd) heal(tune.stage_heal + (state.bo.stage_heal || 0));
       tone(660, 0.3, 'sine', 0.15, 1.5);
       floatText(final ? 'SILENCE' : stageEnd ? 'STAGE CLEAR' : 'CLEAR', RCX, 300, '#e9dcff', 30, 1.6);
     }
   }
-  if (state.phase === 'clear' && (state.clearT -= dt) <= 0 && (!state.motes.length || state.clearT < -2)) {
-    state.motes.length = 0;
+  if (state.phase === 'clear' && (state.clearT -= dt) <= 0 && ((!state.motes.length && !state.loot.length) || state.clearT < -2)) {
+    state.motes.length = 0; for (const l of state.loot) if (!l.dead) collectLoot(l); state.loot = [];
     if (state.stage === 3 && state.waveN === 3) { endRun(true); return; }
-    if (state.waveN < 3) state.waveN++; else { state.stage++; state.waveN = 1; }
-    startWave();
+    if (state.waveN < 3) { state.waveN++; startWave(); } else { if (!state.stageHurt) track('cleanstage'); openRest(); }
+    return;
   }
   if (state.card && (state.card.t -= dt) <= 0) state.card = null;
 
@@ -714,7 +828,7 @@ function updatePlay(dt) {
   const target = () => state.decoys.length ? state.decoys[0] : p;
   const aimAt = e => { const tg = target(); return Math.atan2(tg.y - e.y, tg.x - e.x); };
   const hover = (e, tk, sway) => { if (e.y < e.stopY) e.y += Math.max(e.vy, 30) * tk; else e.x += Math.sin(e.age * 0.8 + e.ph) * sway * tk; };
-  const column = (x, w) => state.warnings.push({ kind: 'column', x: Math.max(RL + w / 2, Math.min(RR - w / 2, x)), w, t: tune.telegraph_time, max: tune.telegraph_time });
+  const column = (x, w) => state.warnings.push({ kind: 'column', x: Math.max(RL + w / 2, Math.min(RR - w / 2, x)), w, t: tune.telegraph_time + (state.bo.telegraph || 0), max: tune.telegraph_time + (state.bo.telegraph || 0) });
   for (const e of state.enemies) {
     e.age += dt; statusTick(e, dt); if (e.dead) continue;
     const f = speedOf(e), tk = dt * f, half = e.hp < e.maxhp / 2;
@@ -808,7 +922,7 @@ function updatePlay(dt) {
         break;
       case 'lasher':
         if (e.y < e.stopY) e.y += e.vy * tk; else if (e.age > 14) e.y += 50 * tk;
-        else if (e.t1 <= 0) { e.t1 = 3.2; state.warnings.push({ kind: 'arc', x: e.x, y: e.y, a: e.side < 0 ? 0.45 : Math.PI - 0.45, spread: 0.9, rad: 440, t: tune.telegraph_time, max: tune.telegraph_time }); }
+        else if (e.t1 <= 0) { e.t1 = 3.2; state.warnings.push({ kind: 'arc', x: e.x, y: e.y, a: e.side < 0 ? 0.45 : Math.PI - 0.45, spread: 0.9, rad: 440, t: tune.telegraph_time + (state.bo.telegraph || 0), max: tune.telegraph_time + (state.bo.telegraph || 0) }); }
         break;
       case 'weaver':
         if (e.y < e.stopY) e.y += e.vy * tk; else { e.x += Math.sin(e.age + e.ph) * 40 * tk; if (e.age > 20) e.y += 40 * tk; }
@@ -1002,8 +1116,16 @@ function updatePlay(dt) {
     if (d < magnet || state.phase === 'clear' || state.magnetT > 0 || m.t > 6) { const s = tune.mote_speed * Math.min(1, 0.4 + m.t); m.vx += (dx / d * s - m.vx) * Math.min(1, dt * 8); m.vy += (dy / d * s - m.vy) * Math.min(1, dt * 8); }
     else { m.vx *= 1 - dt * 2.5; m.vy = m.vy * (1 - dt * 2.5) + 30 * dt; }
     m.x += m.vx * dt; m.y += m.vy * dt;
-    if (d < PR + 6) { m.dead = true; const n = 1 + (tr.mote_bonus && rng() < tr.mote_bonus ? 1 : 0); state.voidE += n; track('motes', n); tone(1200 + (state.voidE % 8) * 60, 0.05, 'sine', 0.035); }
+    if (d < PR + 6) { m.dead = true; const n = 1 + (tr.mote_bonus && rng() < tr.mote_bonus ? 1 : 0) + (pathOf().void && rng() < pathOf().void - 1 ? 1 : 0); state.voidE += n; track('motes', n); tone(1200 + (state.voidE % 8) * 60, 0.05, 'sine', 0.035); }
   }
+  for (const l of state.loot) {
+    l.t += dt; const dx = p.x - l.x, dy = p.y - l.y, d = Math.hypot(dx, dy) || 1;
+    if (l.t > 0.7 || state.phase === 'clear') { l.vx += (dx / d * 460 - l.vx) * Math.min(1, dt * 5); l.vy += (dy / d * 460 - l.vy) * Math.min(1, dt * 5); } else { l.vx *= 0.94; l.vy = l.vy * 0.94 + 20 * dt; }
+    l.x += l.vx * dt; l.y += l.vy * dt; if (d < PR + 12) collectLoot(l);
+  }
+  state.loot = state.loot.filter(l => !l.dead);
+  for (const f of state.flashes) f.t -= dt;
+  state.flashes = state.flashes.filter(f => f.t > 0);
   for (const pt of state.petals) {
     pt.t += dt; const dx = p.x - pt.x, dy = p.y - pt.y, d = Math.hypot(dx, dy) || 1;
     if (d < 160 || pt.t > 1.5) { pt.vx += (dx / d * 400 - pt.vx) * Math.min(1, dt * 6); pt.vy += (dy / d * 400 - pt.vy) * Math.min(1, dt * 6); } else { pt.vx *= 0.96; pt.vy = pt.vy * 0.96 + 20 * dt; }
@@ -1025,6 +1147,68 @@ function updatePlay(dt) {
 }
 function shootGlob(x, y, a, mul = 1, ex = {}) { const s = tune.glob_speed * spScale() * mul; state.globs.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, ...ex }); }
 function choirOrbs(e) { const n = e.hp < e.maxhp / 2 ? 4 : 3; return Array.from({ length: n }, (_, i) => ({ x: e.x + Math.cos(e.orbA + i / n * 6.283) * 92, y: e.y + Math.sin(e.orbA + i / n * 6.283) * 60, r: 16 })); }
+function openRest() {
+  const keys = shuffle(Object.keys(PATHS));
+  state.rest = { actions: tune.rest_actions + (state.bo.rest_actions || 0), sel: [], paths: keys.slice(0, 2), pick: null, msg: '', msgC: '#cfc6e6', t: 0 };
+  scene = 'rest'; SFX.relic(); events.push({ type: 'rest', stage: state.stage });
+}
+function restSay(m, c = '#cfc6e6') { state.rest.msg = m; state.rest.msgC = c; }
+function restMerge() {
+  const R = state.rest, [a, b] = R.sel.map(cardById);
+  if (!a || !b) return restSay('PICK TWO', '#ffd27a');
+  const r = fuseResult(a, b);
+  if (r.kind === 'unstable') return restSay('UNSTABLE', '#ffd27a');
+  if (r.kind === 'maxed') return restSay('ALREADY AT ITS PEAK', '#ffd27a');
+  if (state.deck.length - (r.kind === 'void' ? 2 : 1) < 3) return restSay('THE DECK IS TOO THIN', '#ff9a9a');
+  state.deck = state.deck.filter(c => c !== b);
+  if (r.kind === 'void') { state.deck = state.deck.filter(c => c !== a); state.voidE += tune.void_refund; restSay('ANNULLED', '#b9a6ff'); SFX.boom(); }
+  else {
+    a.natures = r.union; a.level = r.level || 1;
+    const key = keyOf(r.union), first = isFusionKey(key) && !meta.fusions.includes(key);
+    if (first) { meta.fusions.push(key); meta.bank += tune.first_fusion_bonus; saveMeta(); }
+    restSay((first ? 'NEW FUSION: ' : '') + cardName(a).toUpperCase(), cardColor(a)); SFX.rite(first ? 'mythic' : 'rare');
+  }
+  R.actions--; R.sel = [];
+}
+function restTemper() {
+  const R = state.rest, a = cardById(R.sel[0]);
+  if (!a || R.sel.length !== 1) return restSay('PICK ONE', '#ffd27a');
+  if (a.level >= tune.max_level) return restSay('ALREADY AT ITS PEAK', '#ffd27a');
+  a.level++; R.actions--; R.sel = []; restSay(cardName(a).toUpperCase(), cardColor(a)); SFX.rite('rare');
+}
+function leaveRest() {
+  const R = state.rest; if (R.pick === null) return restSay('CHOOSE A PATH', '#ffd27a');
+  state.path = R.paths[R.pick]; state.stage++; state.waveN = 1; state.stageHurt = false; state.rest = null;
+  scene = 'play'; startWave(); floatText(PATHS[state.path].name.toUpperCase(), RCX, 370, '#ffd27a', 18, 2);
+}
+const REST = { cw: 92, ch: 108 };
+function restCardBox(i, n) { const cols = Math.min(7, n), row = Math.floor(i / 7), col = i % 7, rowN = Math.min(7, n - row * 7); return { x: RCX - (rowN * (REST.cw + 12) - 12) / 2 + col * (REST.cw + 12), y: 104 + row * (REST.ch + 16), w: REST.cw, h: REST.ch }; }
+function updateRest(dt) {
+  const R = state.rest, c = mouse.click; R.t += dt;
+  state.deck.forEach((card, i) => { const b = restCardBox(i, state.deck.length); if (inBox(c, b.x, b.y, b.w, b.h) && R.actions > 0) { const k = R.sel.indexOf(card.id); if (k >= 0) R.sel.splice(k, 1); else { R.sel.push(card.id); if (R.sel.length > 2) R.sel.shift(); } SFX.ui(); } });
+  if (inBox(c, RCX - 290, 360, 180, 46) && R.actions > 0) restMerge();
+  if (inBox(c, RCX - 90, 360, 180, 46) && R.actions > 0) restTemper();
+  if (inBox(c, RCX + 110, 360, 180, 46)) R.sel = [];
+  R.paths.forEach((k, i) => { if (inBox(c, RCX - 380 + i * 400, 452, 360, 110)) { R.pick = i; SFX.ui(); } });
+  if (inBox(c, RCX - 140, 600, 280, 56) || pressed('Enter')) leaveRest();
+}
+function drawRest() {
+  const R = state.rest, t = R.t;
+  drawPlay(); ctx.fillStyle = 'rgba(4,2,10,0.86)'; ctx.fillRect(0, 0, W, H);
+  text('RIFT REST', RCX, 44, 30, '#efe6ff', 'center', 'bold');
+  for (let i = 0; i < R.actions; i++) { ctx.save(); ctx.translate(RCX - (R.actions - 1) * 14 + i * 28, 78); ctx.rotate(t * 2); sigil('pride', 0, 0, 8, '#ffd27a'); ctx.restore(); }
+  state.deck.forEach((card, i) => { const b = restCardBox(i, state.deck.length); drawCard(card, b.x, b.y, b.w, b.h, inBox(mouse, b.x, b.y, b.w, b.h), R.sel.includes(card.id)); });
+  let prev = '';
+  if (R.sel.length === 2) { const r = fuseResult(cardById(R.sel[0]), cardById(R.sel[1])); prev = r.kind === 'void' ? 'ANNUL' : r.kind === 'unstable' ? 'UNSTABLE' : r.kind === 'maxed' ? 'AT ITS PEAK' : isFusionKey(keyOf(r.union)) && !meta.fusions.includes(keyOf(r.union)) ? '?' : (RECIPES[keyOf(r.union)].name + roman(r.level || 1)).toUpperCase(); }
+  abutton(RCX - 290, 360, 180, 46, 'MERGE', '', '#ffd27a', R.sel.length === 2 && R.actions > 0);
+  abutton(RCX - 90, 360, 180, 46, 'TEMPER', '', '#9ad7ff', R.sel.length === 1 && R.actions > 0);
+  abutton(RCX + 110, 360, 180, 46, 'CLEAR', '', '#9d92bb', R.sel.length > 0);
+  text(R.msg || prev, RCX, 424, 16, R.msg ? R.msgC : '#cfc6e6', 'center', 'bold');
+  R.paths.forEach((k, i) => { const x = RCX - 380 + i * 400, on = R.pick === i, pd = PATHS[k];
+    roundRect(x, 452, 360, 110, 10); ctx.fillStyle = on ? '#241a3a' : '#0e0a18'; ctx.fill(); ctx.strokeStyle = on ? '#ffd27a' : '#3b3350'; ctx.lineWidth = on ? 3 : 1.5; ctx.stroke();
+    text(pd.name, x + 180, 486, 20, on ? '#ffd27a' : '#efe6ff', 'center', 'bold'); wrapText(pd.says, x + 180, 522, 330, 13, '#cfc6e6'); });
+  abutton(RCX - 140, 600, 280, 56, 'ONWARD', '', '#c8ffe8', R.pick !== null);
+}
 function absorbFirst() { // the very first adventure: the firefly's light becomes the innate nature
   const n = NIDS[Math.floor(rng() * NIDS.length)];
   meta.innate = n; meta.discovered = [n];
@@ -1041,16 +1225,15 @@ function absorbFirst() { // the very first adventure: the firefly's light become
   startWave();
 }
 function endRun(won) {
-  const kept = won ? 1 : tune.loss_keep;
+  const kept = won ? 1 : Math.min(1, tune.loss_keep + (state.bo.loss_keep || 0));
   state.banked = Math.round(state.voidE * state.voidMul * kept) + (won ? tune.win_bonus : 0);
   meta.bank += state.banked; meta.runs++;
-  if (won) { meta.wins++; if (state.depth >= meta.maxDepth) meta.maxDepth = state.depth + 1; }
-  const keys = Object.keys(OMENS); meta.omen = keys[Math.floor(rng() * keys.length)]; meta.prevail = NIDS[Math.floor(rng() * NIDS.length)];
+  if (won) { meta.wins++; if (state.depth >= 1) track('deepwin'); if (state.depth >= meta.maxDepth) meta.maxDepth = state.depth + 1; }
+  meta.rifts = rollRifts(); meta.riftPick = 0; applyRift();
   saveMeta();
   state.won = won;
-  state.gained = won ? 'The Mother falls. The rift is yours.' : `Your light gutters out on stage ${state.stage}, wave ${state.waveN}`;
   scene = won ? 'results' : 'over';
-  tone(won ? 523 : 60, 1, won ? 'sine' : 'sawtooth', 0.22, won ? 1.5 : 0.4);
+  if (won) SFX.relic(); else SFX.boom();
   events.push({ type: won ? 'win' : 'over' });
 }
 
@@ -1211,10 +1394,20 @@ function drawMother(e, t, px, py) {
   }
   ctx.restore();
 }
-function drawGlob(g) {
-  ctx.save(); ctx.translate(g.x, g.y); ctx.rotate(Math.atan2(g.vy, g.vx) - Math.PI / 2);
-  ctx.beginPath(); ctx.moveTo(0, 9); ctx.quadraticCurveTo(7, 0, 0, -12); ctx.quadraticCurveTo(-7, 0, 0, 9); ctx.fillStyle = '#b5c43a'; ctx.fill();
-  ctx.fillStyle = '#4c5a10'; ctx.beginPath(); ctx.arc(0, 3, 2.5, 0, 6.283); ctx.fill(); ctx.restore();
+function drawGlob(g) { // every enemy projectile wears a crimson spiked rim
+  ctx.save(); ctx.translate(g.x, g.y); ctx.rotate(state.t * 4 + g.x * 0.01);
+  const r = g.tear ? 5 : 7;
+  ctx.beginPath(); for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283, rr = i % 2 ? r + 1.5 : r + 4.5; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath();
+  ctx.fillStyle = '#8a1030'; ctx.fill();
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, 6.283); ctx.fillStyle = g.tear ? '#d8f4ff' : '#c8e04a'; ctx.fill();
+  ctx.fillStyle = '#ff4466'; ctx.fillRect(-2, -2, 4, 4);
+  ctx.restore();
+}
+function drawLoot(l, t) {
+  ctx.save(); ctx.translate(l.x, l.y + Math.sin(t * 4 + l.x) * 2);
+  if (l.kind === 'relic') { ctx.rotate(t * 1.5); ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(9, 0); ctx.lineTo(0, 12); ctx.lineTo(-9, 0); ctx.closePath(); ctx.fillStyle = '#e0a040'; ctx.fill(); glowStroke('#ffd27a', 14, 2); ctx.fillStyle = '#fff0b0'; ctx.fillRect(-2, -2, 4, 4); }
+  else { ctx.fillStyle = '#1f3a3a'; ctx.fillRect(-9, -11, 18, 22); ctx.strokeStyle = '#5ac8b9'; ctx.lineWidth = 2; ctx.strokeRect(-9, -11, 18, 22); ctx.beginPath(); for (let i = 0; i < 4; i++) { ctx.moveTo(-5, -6 + i * 4); ctx.lineTo(5, -6 + i * 4); } ctx.lineWidth = 1; ctx.stroke(); }
+  ctx.restore();
 }
 function drawAsteroid(m) {
   ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(m.rot);
@@ -1650,7 +1843,7 @@ function drawCard(c, x, y, w, h, hover, selected, badge) {
   ctx.save(); roundRect(x, yy, w, h, 8); ctx.fillStyle = selected ? '#1d1430' : '#0e0a18'; ctx.fill();
   ctx.strokeStyle = col; ctx.lineWidth = selected ? 3 : c.natures.length > 1 ? 2.2 : 1.4; ctx.shadowColor = col; ctx.shadowBlur = CHEAP ? 0 : (hover || selected ? 14 : c.natures.length > 1 ? 8 : 3); ctx.stroke(); ctx.shadowBlur = 0;
   cardSigil(c, x + w / 2, yy + h * 0.36, Math.min(w, h) * 0.2);
-  text(rec ? rec.name : 'Unstable', x + w / 2, yy + h * 0.7, w > 140 ? 22 : 14, col, 'center', 'bold');
+  if (w >= 70) { const nm = rec ? rec.name : 'Unstable', sz = w > 140 ? 22 : 13, fit = Math.max(3, Math.floor((w - 6) / (6 * fontUnit(sz)))); text(nm.length > fit ? nm.slice(0, fit) : nm, x + w / 2, yy + h * 0.7, sz, col, 'center', 'bold'); }
   for (let i = 0; i < c.level; i++) { ctx.fillStyle = col; ctx.beginPath(); const px = x + w / 2 + (i - (c.level - 1) / 2) * 12; ctx.moveTo(px, yy + h - 14); ctx.lineTo(px + 4, yy + h - 10); ctx.lineTo(px, yy + h - 6); ctx.lineTo(px - 4, yy + h - 10); ctx.fill(); }
   if (badge) { roundRect(x + w - 34, yy - 8, 40, 20, 6); ctx.fillStyle = badge.bg || '#2a1f45'; ctx.fill(); text(badge.s, x + w - 14, yy + 2, 14, badge.c || '#fff', 'center', 'bold'); }
   ctx.restore();
@@ -1673,6 +1866,7 @@ function drawHUD() {
   ctx.save(); ctx.translate(L + 7, 50); ctx.fillStyle = '#d8c8ff'; ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(5.5, 0); ctx.lineTo(0, 9); ctx.lineTo(-5.5, 0); ctx.fill(); ctx.restore();
   text(`${state.voidE}`, L + 20, 51, 22, '#d8c8ff', 'left', 'bold');
   state.found.forEach((n, i) => sigil(n, L + 8 + i * 22, 80, 8, BASE[n].color));
+  state.foundLoot.forEach((l, i) => { ctx.save(); ctx.translate(L + 8 + i * 20, 104); if (l.kind === 'relic') { ctx.beginPath(); ctx.moveTo(0, -7); ctx.lineTo(5, 0); ctx.lineTo(0, 7); ctx.lineTo(-5, 0); ctx.fillStyle = '#ffd27a'; ctx.fill(); } else { ctx.fillStyle = '#5ac8b9'; ctx.fillRect(-5, -7, 10, 14); } ctx.restore(); });
   // top right: stage and wave as pips, the tide as a mark
   for (let s2 = 1; s2 <= 3; s2++) for (let w = 1; w <= 3; w++) {
     const x = Rt - (3 - s2) * 46 - (3 - w) * 12, y = 22, done = s2 < state.stage || (s2 === state.stage && w < state.waveN), now = s2 === state.stage && w === state.waveN;
@@ -1721,6 +1915,8 @@ function drawPlay() {
   for (const g of state.globs) drawGlob(g);
   for (const m of state.motes) drawMote(m, t);
   for (const pt of state.petals) drawPetal(pt, t);
+  for (const l of state.loot) drawLoot(l, t);
+  for (const f of state.flashes) { const k = f.t / f.max; ctx.strokeStyle = `rgba(255,255,255,${k})`; ctx.lineWidth = 3 * k + 1; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (1.6 - k * 0.6), 0, 6.283); ctx.stroke(); }
   for (const m of state.mines) if (m.x !== undefined) { ctx.save(); ctx.strokeStyle = m.c; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(m.x, m.y, 6 + (0.9 - m.t) * 14, 0, 6.283); ctx.stroke(); ctx.restore(); }
   for (const m of state.meteors) { const k = m.t / m.max; ctx.save(); ctx.strokeStyle = m.c; ctx.setLineDash([4, 6]); ctx.beginPath(); ctx.arc(m.x, m.y, tune.meteor_radius, 0, 6.283); ctx.stroke(); ctx.setLineDash([]);
     const cy = m.y - k * 500; ctx.fillStyle = '#ffd27a'; ctx.beginPath(); ctx.moveTo(m.x, cy + 12); ctx.lineTo(m.x + 9, cy - 6); ctx.lineTo(m.x, cy - 40); ctx.lineTo(m.x - 9, cy - 6); ctx.fill(); ctx.restore(); }
@@ -1740,6 +1936,7 @@ function drawPlay() {
   if (!(p.iframe > 0 && Math.floor(t * 20) % 2)) drawForm(state.form ? BASE[state.form].form : 'blob', p.x, p.y, col, t);
   for (const fl of state.floaters) { ctx.globalAlpha = Math.min(1, fl.life / fl.max * 2); text(fl.s, fl.x, fl.y, fl.size, fl.c, 'center', 'bold'); }
   ctx.globalAlpha = 1;
+  { const g = ctx.createRadialGradient(p.x, p.y - 140, 160, RCX, H * 0.5, 820); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(2,1,6,0.6)'); ctx.fillStyle = g; ctx.fillRect(RL, 0, RR - RL, H); }
   state.bigs.filter(e => !e.dead).slice(0, 2).forEach((e, i) => { const c = e.nature ? BASE[e.nature].color : '#d6e25a'; text(YB[e.k].name.toUpperCase(), RCX, 18 + i * 34, 15, c, 'center', 'bold'); if (e.nature) sigil(e.nature, RCX - 130, 18 + i * 34, 7, c); hpBar(RCX, 30 + i * 34, 420, e.hp / e.maxhp, '#c7d84c'); });
   drawDebutCard();
   ctx.restore();
@@ -1747,211 +1944,324 @@ function drawPlay() {
   ctx.restore();
 }
 
-// ---- The Rift Altar: Prepare, Void Rite, Forge, Codex, Discoveries --------------------------------
-const altar = { tab: 'deck', page: 0, sel: [], reveal: [], msg: '', msgC: '#ddd', forgetArm: -9, t: 0, hoverInfo: null };
-const TABS = [['deck', 'Prepare'], ['rite', 'Void Rite'], ['forge', 'Forge'], ['codex', 'Codex'], ['found', 'Discoveries']];
-const COL = { x: 30, y: 170, cw: 92, ch: 104, gap: 8, cols: 6, rows: 4 };
-const R = 680; // the right panel's left edge
-function say(s, c = '#ddd') { altar.msg = s; altar.msgC = c; }
-function colTile(i) { return { x: COL.x + (i % COL.cols) * (COL.cw + COL.gap), y: COL.y + Math.floor(i / COL.cols) * (COL.ch + 26), w: COL.cw, h: COL.ch }; }
-const focusTile = i => ({ cx: R + 36 + (i % 7) * 76, cy: 280 + Math.floor(i / 7) * 58 });
-const loadRow = i => ({ x: R + (i % 2) * 284, y: 182 + Math.floor(i / 2) * 32 });
-function openAltar() { if (!meta.prevail) { meta.prevail = NIDS[(meta.runs * 5 + 3) % NIDS.length]; saveMeta(); } scene = 'altar'; altar.sel = []; altar.reveal = []; altar.t = 0; say(meta.runs ? 'Choose the deck for the next adventure. The omen tells you what waits.' : 'The rift is open. Prepare your deck.'); }
-function riteDraw(n) {
-  const cost = n === 10 ? tune.grand_rite_cost + (meta.focus ? tune.focus_cost * 10 : 0) : tune.rite_cost + (meta.focus ? tune.focus_cost : 0);
-  if (meta.bank < cost) { say(`The rite needs ${cost} void energy.`, '#ff9a9a'); return; }
-  meta.bank -= cost; altar.reveal = [];
-  const pairs = FUSION_KEYS.filter(k => k.split('+').every(x => meta.discovered.includes(x)));
-  for (let i = 0; i < n; i++) {
-    seed = CONFIG.seed * 1000003 + meta.draws * 104729; meta.draws++; meta.pity++;
-    let natures, level = 1, rar = 'common';
-    if (pairs.length && (meta.pity >= tune.mythic_pity || rng() < tune.mythic_chance)) {
-      natures = pairs[Math.floor(rng() * pairs.length)].split('+'); rar = 'mythic'; meta.pity = 0;
-      if (!meta.fusions.includes(keyOf(natures))) meta.fusions.push(keyOf(natures));
-    } else {
-      natures = [meta.focus && rng() < tune.focus_share ? meta.focus : meta.discovered[Math.floor(rng() * meta.discovered.length)]];
-      if (rng() < tune.rare_chance) { level = 2; rar = 'rare'; }
-    }
-    const sk = stackKey(natures, level), isNew = !meta.seen[sk];
-    meta.seen[sk] = true; addCards(sk, 1);
-    altar.reveal.push({ natures, level, rar, isNew });
-  }
-  saveMeta();
-  const best = altar.reveal.some(r => r.rar === 'mythic') ? 'mythic' : altar.reveal.some(r => r.rar === 'rare') ? 'rare' : 'common';
-  tone(best === 'mythic' ? 300 : 400, 0.7, 'triangle', 0.18, best === 'mythic' ? 3 : 2); if (best === 'mythic') tone(600, 0.9, 'sine', 0.12, 2);
-  say(best === 'mythic' ? 'A mythic answers the rite: a fused nature, whole. It is written in your Codex.' : best === 'rare' ? 'A rare card rises from the void.' : 'The void gives what it gives.', best === 'mythic' ? '#ffd27a' : '#d8c8ff');
-}
-function forge() {
-  if (altar.sel.length < 2) { say('Choose two cards from your collection to fuse.', '#ffd27a'); return; }
-  const [ka, kb] = altar.sel, a = parseStack(ka), b = parseStack(kb);
-  if (ka === kb && owned(ka) < 2) { say('You need two of that card to fuse it with itself.', '#ffd27a'); return; }
-  const r = fuseResult(a, b), names = `${cardName(a)} + ${cardName(b)}`;
-  if (r.kind === 'unstable') { say(`${names}: unstable, not yet known.`, '#ffd27a'); return; }
-  if (r.kind === 'maxed') { say(`${names}: already at its highest level.`, '#ffd27a'); return; }
-  if (meta.bank < tune.fuse_cost) { say(`Fusing needs ${tune.fuse_cost} void energy.`, '#ff9a9a'); return; }
-  meta.bank -= tune.fuse_cost; takeCard(ka); takeCard(kb); altar.sel = [];
-  if (r.kind === 'void') { meta.bank += tune.void_refund; say(`${names}: opposites annul. Both return to the void (+${tune.void_refund}).`, '#b9a6ff'); tone(80, 0.8, 'sine', 0.25, 0.3); }
-  else {
-    const key = keyOf(r.union), sk = stackKey(r.union, r.level || 1), first = isFusionKey(key) && !meta.fusions.includes(key);
-    addCards(sk, 1); meta.seen[sk] = true;
-    if (first) { meta.fusions.push(key); meta.bank += tune.first_fusion_bonus; }
-    const c = { natures: r.union, level: r.level || 1 };
-    say(`${first ? 'NEW FUSION! ' : ''}${names} = ${cardName(c)}. ${recipeOf(c).says}${first ? ` (+${tune.first_fusion_bonus})` : ''}`, cardColor(c));
-    tone(330, 0.5, 'sine', 0.2, 2); if (first) tone(660, 0.8, 'sine', 0.15, 1.5);
-  }
-  saveMeta();
-}
-function beginAdventure() {
-  if (deckCount() < tune.deck_min) { say(`An adventure needs at least ${tune.deck_min} cards in the deck.`, '#ff9a9a'); return; }
-  saveMeta(); reset(); scene = 'play';
-}
-function updateAltar(dt) {
-  altar.t += dt; const c = mouse.click;
-  for (let i = 0; i < TABS.length; i++) if (inBox(c, 30 + i * 150, 104, 140, 38) || pressed('Digit' + (i + 1))) { if (altar.tab !== TABS[i][0]) say(''); altar.tab = TABS[i][0]; altar.sel = []; }
-  const list = stacks(meta.cards), per = COL.cols * COL.rows, pages = Math.max(1, Math.ceil(list.length / per));
-  altar.page = Math.min(altar.page, pages - 1);
-  if (inBox(c, 30, 674, 90, 30) && altar.page > 0) altar.page--;
-  if (inBox(c, 530, 674, 90, 30) && altar.page < pages - 1) altar.page++;
-  list.slice(altar.page * per, altar.page * per + per).forEach((s, i) => {
-    const b = colTile(i); if (!inBox(c, b.x, b.y, b.w, b.h)) return;
-    if (altar.tab === 'deck') {
-      const inDeck = meta.loadout[s.sk] || 0;
-      if (inDeck >= s.n) say('All your copies of that card are already in the deck.', '#ffd27a');
-      else if (deckCount() >= tune.deck_max) say(`The deck holds at most ${tune.deck_max} cards.`, '#ffd27a');
-      else { meta.loadout[s.sk] = inDeck + 1; tone(700, 0.04, 'sine', 0.05); saveMeta(); }
-    } else if (altar.tab === 'forge') { altar.sel.push(s.sk); if (altar.sel.length > 2) altar.sel.shift(); tone(700, 0.04, 'sine', 0.05); }
-  });
-  if (altar.tab === 'deck') {
-    stacks(meta.loadout).forEach((s, i) => { const r = loadRow(i); if (inBox(c, r.x, r.y, 274, 28)) { meta.loadout[s.sk]--; if (!meta.loadout[s.sk]) delete meta.loadout[s.sk]; saveMeta(); } });
-    if (inBox(c, 1004, 573, 34, 30) && meta.depth > 0) { meta.depth--; saveMeta(); }
-    if (inBox(c, 1110, 573, 34, 30) && meta.depth < meta.maxDepth) { meta.depth++; saveMeta(); }
-    if (inBox(c, R, 614, 560, 68) || pressed('Enter')) { beginAdventure(); return; }
-  } else if (altar.tab === 'rite') {
-    meta.discovered.forEach((n, i) => { const f = focusTile(i); if (inBox(c, f.cx - 32, f.cy - 26, 64, 52)) { meta.focus = meta.focus === n ? null : n; saveMeta(); } });
-    if (inBox(c, R, 380, 270, 60)) riteDraw(1);
-    if (inBox(c, 970, 380, 270, 60)) riteDraw(10);
-  } else if (altar.tab === 'forge') {
-    if (inBox(c, R, 400, 560, 56)) forge();
-    if (inBox(c, R, 470, 270, 34)) altar.sel = [];
-  } else if (altar.tab === 'found') {
-    if (inBox(c, 980, 664, 260, 34)) { if (altar.t - altar.forgetArm < 3) { meta = freshMeta(); saveMeta(); reset(); scene = 'title'; return; } altar.forgetArm = altar.t; say('Click again within 3 seconds to forget everything.', '#ff9a9a'); }
-  }
-  if (pressed('Escape')) scene = 'title';
+// ---- The hub: the Rift Altar, a place in the void between adventures ----------------------------------
+// Six stations around a floating altar: the Deck, the Void Rite, the Rift Gate, the Sigils, the Relics and the Journal.
+const hub = { open: null, t: 0, sel: [], reveal: [], revealT: 0, shown: 0, msg: '', msgC: '#cfc6e6', page: 0, jtab: 'quests', log: null, forgetArm: -9, hoverRelic: null, hoverCell: null };
+const STATIONS = [
+  { id: 'deck', name: 'Deck', key: 'Digit1', x: 640, y: 318, r: 86 },
+  { id: 'rite', name: 'Void Rite', key: 'Digit2', x: 300, y: 430, r: 86 },
+  { id: 'gate', name: 'Rift Gate', key: 'Digit3', x: 985, y: 410, r: 96 },
+  { id: 'sigils', name: 'Sigils', key: 'Digit4', x: 290, y: 165, r: 80 },
+  { id: 'relics', name: 'Relics', key: 'Digit5', x: 990, y: 172, r: 80 },
+  { id: 'journal', name: 'Journal', key: 'Digit6', x: 640, y: 118, r: 66 },
+];
+const PX = 110, PY = 56, PW = 1060, PH = 628;
+const relicSlots = () => 1 + (unlocked('slot2') ? 1 : 0) + (bonuses().relic_slots || 0);
+const deckMax = () => tune.deck_max + (bonuses().deck_max || 0);
+const questVal = q => ({ natures: meta.discovered.length, logs: Object.keys(meta.logs).length, relics: Object.keys(meta.relics).length, bestiary: Object.keys(YB).filter(k => meta.bestiary[k]).length, codex: meta.fusions.length })[q.stat] ?? (meta.stats[q.stat] || 0);
+const questReady = () => Object.entries(QST).some(([id, q]) => !meta.quests[id] && questVal(q) >= q.n);
+function hubSay(m, c = '#cfc6e6') { hub.msg = m; hub.msgC = c; }
+function openAltar() {
+  if (!meta.rifts) { meta.rifts = rollRifts(); meta.riftPick = 0; applyRift(); saveMeta(); }
+  scene = 'altar'; hub.open = null; hub.t = 0; hub.reveal = []; hub.msg = '';
 }
 function abutton(x, y, w, h, label, sub, color, enabled) {
   const hv = enabled && inBox(mouse, x, y, w, h);
-  roundRect(x, y, w, h, 8); ctx.fillStyle = hv ? '#241a3a' : '#120d1e'; ctx.fill(); ctx.strokeStyle = enabled ? color : '#3b3350'; ctx.lineWidth = 1.6; ctx.stroke();
-  const tx = w < 60 ? x + w / 2 : x + 16, al = w < 60 ? 'center' : 'left';
-  text(label, tx, y + (sub ? h / 2 - 9 : h / 2), w < 60 ? 20 : 18, enabled ? color : '#6d6488', al, 'bold'); if (sub) text(sub, x + 16, y + h / 2 + 12, 14, '#9d92bb', 'left');
+  roundRect(x, y, w, h, 6); ctx.fillStyle = hv ? '#241a3a' : '#120d1e'; ctx.fill(); ctx.strokeStyle = enabled ? color : '#3b3350'; ctx.lineWidth = hv ? 3 : 2; ctx.stroke();
+  text(label, x + w / 2, y + (sub ? h / 2 - 9 : h / 2), 16, enabled ? color : '#6d6488', 'center', 'bold');
+  if (sub) text(sub, x + w / 2, y + h / 2 + 13, 12, '#9d92bb', 'center');
+}
+function panel(title) {
+  ctx.fillStyle = 'rgba(4,2,10,0.7)'; ctx.fillRect(0, 0, W, H);
+  roundRect(PX, PY, PW, PH, 12); ctx.fillStyle = '#0b0814'; ctx.fill(); ctx.strokeStyle = '#4a3a7a'; ctx.lineWidth = 3; ctx.stroke();
+  roundRect(PX + 6, PY + 6, PW - 12, PH - 12, 9); ctx.strokeStyle = '#241a3a'; ctx.lineWidth = 2; ctx.stroke();
+  text(title, PX + 30, PY + 32, 22, '#efe6ff', 'left', 'bold');
+  const hv = inBox(mouse, PX + PW - 54, PY + 12, 40, 36); text('X', PX + PW - 34, PY + 30, 20, hv ? '#ff9a9a' : '#9d92bb', 'center', 'bold');
+}
+// ---- the scene
+const hubStars = (() => { let z = 5; const r = () => (z = z * 16807 % 2147483647) / 2147483647; return Array.from({ length: 220 }, () => ({ x: r() * W, y: r() * H, s: 0.3 + r(), tw: r() * 6 })); })();
+const CONSTELLATION = [[230, 130], [262, 110], [300, 124], [330, 104], [352, 140], [318, 170], [282, 182], [246, 176], [226, 210], [270, 214], [314, 206], [350, 196]];
+function drawHubScene() {
+  const t = hub.t;
+  clear('#07040d');
+  for (const [x, y, rx, ry, c] of [[300, 260, 420, 160, 'rgba(58,23,70,0.45)'], [980, 300, 380, 200, 'rgba(36,26,58,0.6)'], [640, 640, 600, 140, 'rgba(26,18,41,0.8)']]) { ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, 6.283); ctx.fill(); }
+  for (const s2 of hubStars) { const y = (s2.y + t * 4 * s2.s) % H; ctx.fillStyle = `rgba(210,200,255,${0.2 + 0.4 * s2.s * (0.7 + 0.3 * Math.sin(t * 2 + s2.tw))})`; ctx.fillRect(Math.round(s2.x / 2) * 2, Math.round(y / 2) * 2, 2, 2); }
+  // drifting rocks far behind
+  for (let i = 0; i < 5; i++) { ctx.save(); ctx.translate((i * 290 + t * 6) % (W + 200) - 100, 80 + (i * 137) % 560); ctx.rotate(t * 0.05 + i); ctx.fillStyle = '#1a1229'; ctx.beginPath(); for (let k = 0; k < 8; k++) { const a = k / 8 * 6.283, rr = 20 + i * 6 + Math.sin(k * 2.3 + i) * 6; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.fill(); ctx.restore(); }
+  // the floating altar
+  ctx.fillStyle = '#2c2520'; ctx.beginPath(); ctx.moveTo(310, 520); ctx.lineTo(970, 520); ctx.lineTo(820, 640); ctx.lineTo(640, 690); ctx.lineTo(460, 640); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#45404d'; ctx.beginPath(); ctx.ellipse(640, 515, 335, 72, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = '#8a8296'; ctx.lineWidth = 3; ctx.stroke();
+  ctx.strokeStyle = `rgba(90,200,185,${0.45 + 0.25 * Math.sin(t * 1.6)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(640, 515, 270, 52, 0, 0, 6.283); ctx.stroke();
+  for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283 + t * 0.1; ctx.fillStyle = `rgba(90,200,185,${0.5 + 0.3 * Math.sin(t * 2 + i)})`; ctx.fillRect(640 + Math.cos(a) * 300 - 3, 515 + Math.sin(a) * 62 - 3, 6, 6); }
+  for (const [x, h] of [[360, 120], [420, 70], [880, 100], [930, 140]]) { ctx.fillStyle = '#4a4554'; ctx.fillRect(x - 14, 505 - h, 28, h); ctx.fillStyle = '#34303c'; for (let k = 0; k < 3; k++) ctx.fillRect(x - 10 + k * 8, 505 - h + 6, 3, h - 12); ctx.fillStyle = '#5a5464'; ctx.fillRect(x - 18, 505 - h - 6, 36, 8); }
+  // the Deck: a stone lectern with the deck's cards fanned above it
+  const lo = stacks(meta.loadout).slice(0, 5), fanN = Math.max(1, lo.length);
+  ctx.fillStyle = '#4a4554'; ctx.beginPath(); ctx.moveTo(590, 400); ctx.lineTo(690, 400); ctx.lineTo(670, 440); ctx.lineTo(610, 440); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#8a8296'; ctx.lineWidth = 2; ctx.stroke();
+  lo.forEach((c, i) => { ctx.save(); ctx.translate(640 + (i - (fanN - 1) / 2) * 34, 330 + Math.abs(i - (fanN - 1) / 2) * 8 + Math.sin(t * 2 + i) * 3); ctx.rotate((i - (fanN - 1) / 2) * 0.16); drawCard(c, -26, -36, 52, 70, false, false); ctx.restore(); });
+  // the blob, in the shape the deck gives it
+  const n = dominantNature(loadoutCards()), col = n ? BASE[n].color : '#b9a6ff';
+  drawForm(n ? BASE[n].form : 'blob', 640, 478 + Math.sin(t * 2) * 4, col, t, 1.8);
+  // the Void Rite: a ring of stones round a crack of light
+  for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283; ctx.fillStyle = '#5a5464'; ctx.fillRect(300 + Math.cos(a) * 70 - 9, 470 + Math.sin(a) * 20 - 12, 18, 18); }
+  ctx.save(); ctx.translate(300, 410); ctx.beginPath(); ctx.moveTo(0, -60); ctx.lineTo(8, -30); ctx.lineTo(-6, -8); ctx.lineTo(10, 16); ctx.lineTo(-3, 40); ctx.lineTo(2, 62); glowStroke('#fff3c8', 20 + Math.sin(t * 4) * 8, 4); ctx.restore();
+  for (let i = 0; i < 6; i++) { const k = (t * 0.4 + i / 6) % 1; ctx.fillStyle = `rgba(216,200,255,${1 - k})`; ctx.fillRect(300 + Math.sin(i * 2 + t) * 30, 470 - k * 140, 4, 4); }
+  // the Rift Gate: a portal tinted by the chosen rift's prevailing nature
+  const rift = meta.rifts && meta.rifts[meta.riftPick], gc = rift ? BASE[rift.prevail].color : '#b9a6ff';
+  ctx.fillStyle = '#3a3542'; for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(985 + sx * 60, 520); ctx.quadraticCurveTo(985 + sx * 110, 400, 985 + sx * 50, 290); ctx.lineTo(985 + sx * 40, 300); ctx.quadraticCurveTo(985 + sx * 86, 400, 985 + sx * 40, 520); ctx.fill(); }
+  for (let i = 0; i < 6; i++) { ctx.strokeStyle = i % 2 ? gc : '#4a3a7a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(985, 410, 48 - i * 7, 96 - i * 14, 0, t * (1 + i * 0.3), t * (1 + i * 0.3) + 4.2); ctx.stroke(); }
+  ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(985, 410, 10, 22, 0, 0, 6.283); ctx.fill();
+  // the Sigils: a constellation, lit by what has been bought
+  const owned = Object.keys(SIG).map(id => meta.upg[id] || 0);
+  ctx.strokeStyle = '#3b3350'; ctx.lineWidth = 1.5; ctx.beginPath(); CONSTELLATION.forEach(([x, y], i) => { if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.stroke();
+  CONSTELLATION.forEach(([x, y], i) => { const lit = owned[i] > 0; ctx.fillStyle = lit ? '#fff0b0' : '#4a3a7a'; ctx.fillRect(x - 3, y - 3, 6, 6); if (lit) { ctx.fillStyle = 'rgba(255,240,176,0.4)'; ctx.fillRect(x - 6, y - 1, 12, 2); ctx.fillRect(x - 1, y - 6, 2, 12); } });
+  // the Relics: pedestals, with what is equipped glowing above them
+  for (let i = 0; i < 3; i++) { const x = 930 + i * 60, open = i < relicSlots(); ctx.fillStyle = open ? '#4a4554' : '#241a3a'; ctx.fillRect(x - 16, 196, 32, 36); ctx.fillRect(x - 20, 190, 40, 8);
+    const id = meta.equipped[i]; if (id) drawRelicIcon(id, x, 166 + Math.sin(t * 2 + i) * 4, 1.2); }
+  // the Journal: an open tome, floating
+  ctx.save(); ctx.translate(640, 118 + Math.sin(t * 1.5) * 4); ctx.fillStyle = '#3a2a20'; ctx.fillRect(-50, -26, 100, 52); ctx.fillStyle = '#e8e6c0'; ctx.fillRect(-46, -22, 44, 44); ctx.fillRect(2, -22, 44, 44);
+  ctx.fillStyle = '#8a8296'; for (let i = 0; i < 5; i++) { ctx.fillRect(-40, -14 + i * 8, 32, 2); ctx.fillRect(8, -14 + i * 8, 32, 2); } ctx.restore();
+  if (questReady()) { ctx.fillStyle = '#ffd27a'; ctx.fillRect(694, 78 + Math.sin(t * 6) * 3, 6, 16); ctx.fillRect(694, 98 + Math.sin(t * 6) * 3, 6, 6); }
+  // fireflies
+  for (let i = 0; i < 5; i++) drawFirefly(640 + Math.sin(t * 0.4 + i * 1.7) * 420, 300 + Math.cos(t * 0.3 + i * 2.1) * 200, t + i);
+  // station names
+  for (const st of STATIONS) { const hv = !hub.open && Math.hypot(mouse.x - st.x, mouse.y - st.y) < st.r;
+    const ly = st.id === 'journal' ? st.y + 50 : st.id === 'sigils' || st.id === 'relics' ? st.y + 82 : st.id === 'deck' ? 392 : st.y + 118;
+    if (hv) { ctx.strokeStyle = 'rgba(255,240,176,0.35)'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.arc(st.x, st.y, st.r, 0, 6.283); ctx.stroke(); ctx.setLineDash([]); }
+    text(`${STATIONS.indexOf(st) + 1} ${st.name}`, st.x, ly, 14, hv ? '#fff0b0' : '#9d92bb', 'center', 'bold'); }
+  // the bank, and how much is known
+  ctx.save(); ctx.translate(40, 34); ctx.fillStyle = '#d8c8ff'; ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(8, 0); ctx.lineTo(0, 12); ctx.lineTo(-8, 0); ctx.fill(); ctx.restore();
+  text(`${meta.bank}`, 58, 35, 26, '#d8c8ff', 'left', 'bold');
+  const ybN = Object.keys(YB).filter(k => meta.bestiary[k]).length;
+  text(`NATURES ${meta.discovered.length}/14   FUSIONS ${meta.fusions.length}/84   YBASOGS ${ybN}/${Object.keys(YB).length}   RELICS ${Object.keys(meta.relics).length}/16`, W - 30, 35, 13, '#9d92bb', 'right');
+}
+// ---- the stations
+const COL = { x: PX + 26, y: PY + 76, cw: 88, ch: 100, cols: 6, rows: 4 };
+function colTile(i) { return { x: COL.x + (i % COL.cols) * (COL.cw + 8), y: COL.y + Math.floor(i / COL.cols) * (COL.ch + 30), w: COL.cw, h: COL.ch }; }
+const loadRow = i => ({ x: PX + 640 + (i % 2) * 196, y: PY + 82 + Math.floor(i / 2) * 32 });
+function collection(c, onPick) {
+  const list = stacks(meta.cards), per = COL.cols * COL.rows, pages = Math.max(1, Math.ceil(list.length / per));
+  hub.page = Math.min(hub.page, pages - 1);
+  if (c) { if (inBox(c, PX + 26, PY + PH - 50, 80, 34) && hub.page > 0) hub.page--; if (inBox(c, PX + 516, PY + PH - 50, 80, 34) && hub.page < pages - 1) hub.page++; }
+  list.slice(hub.page * per, hub.page * per + per).forEach((st, i) => { const b = colTile(i); if (onPick && inBox(c, b.x, b.y, b.w, b.h)) onPick(st); });
+  return { list, pages, per };
+}
+function drawCollection(markDeck) {
+  const { list, pages, per } = collection(null);
+  list.slice(hub.page * per, hub.page * per + per).forEach((st, i) => { const b = colTile(i), inDeck = meta.loadout[st.sk] || 0;
+    drawCard(st, b.x, b.y, b.w, b.h, inBox(mouse, b.x, b.y, b.w, b.h), markDeck && inDeck > 0, { s: `${st.n}` });
+    if (markDeck && inDeck) text(`${inDeck} IN DECK`, b.x + b.w / 2, b.y + b.h + 11, 12, '#c8ffe8'); });
+  if (pages > 1) { abutton(PX + 26, PY + PH - 50, 80, 34, '<', '', '#d8c8ff', hub.page > 0); text(`${hub.page + 1}/${pages}`, PX + 311, PY + PH - 33, 14, '#9d92bb'); abutton(PX + 516, PY + PH - 50, 80, 34, '>', '', '#d8c8ff', hub.page < pages - 1); }
+}
+const ST = {
+  deck: {
+    update(c) {
+      collection(c, st => { const inDeck = meta.loadout[st.sk] || 0;
+        if (inDeck >= st.n) hubSay('ALL IN THE DECK', '#ffd27a'); else if (deckCount() >= deckMax()) hubSay('THE DECK IS FULL', '#ffd27a'); else { meta.loadout[st.sk] = inDeck + 1; SFX.ui(); saveMeta(); hubSay(''); } });
+      stacks(meta.loadout).forEach((st, i) => { const r = loadRow(i); if (inBox(c, r.x, r.y, 188, 28)) { meta.loadout[st.sk]--; if (!meta.loadout[st.sk]) delete meta.loadout[st.sk]; saveMeta(); SFX.ui(); } });
+    },
+    draw() {
+      panel('DECK');
+      drawCollection(true);
+      text(`${deckCount()} / ${deckMax()}`, PX + 640, PY + 56, 18, deckCount() < tune.deck_min ? '#ff9a9a' : '#efe6ff', 'left', 'bold');
+      stacks(meta.loadout).forEach((st, i) => { const r = loadRow(i), hv = inBox(mouse, r.x, r.y, 188, 28);
+        roundRect(r.x, r.y, 188, 28, 5); ctx.fillStyle = hv ? '#3a1730' : '#120d1e'; ctx.fill(); ctx.strokeStyle = cardColor(st); ctx.lineWidth = 1.5; ctx.stroke();
+        cardSigil(st, r.x + 15, r.y + 14, 8); text(`${cardName(st)} ${st.n > 1 ? 'X' + st.n : ''}`, r.x + 30, r.y + 15, 13, cardColor(st), 'left'); });
+      const n = dominantNature(loadoutCards()), col = n ? BASE[n].color : '#b9a6ff';
+      roundRect(PX + 640, PY + 440, 390, 140, 8); ctx.fillStyle = '#0e0a18'; ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
+      drawForm(n ? BASE[n].form : 'blob', PX + 710, PY + 510, col, hub.t, 1.8);
+      text(n ? BASE[n].formName : 'SHAPELESS', PX + 780, PY + 482, 20, col, 'left', 'bold');
+      wrapText(n ? BASE[n].traitText : 'NO TRAIT', PX + 780, PY + 516, 230, 12, '#cfc6e6', 'left');
+    },
+  },
+  rite: {
+    update(c) {
+      meta.discovered.forEach((n, i) => { const x = PX + 70 + i * 66, y = PY + 100; if (inBox(c, x - 28, y - 26, 56, 52)) { meta.focus = meta.focus === n ? null : n; saveMeta(); SFX.ui(); } });
+      if (inBox(c, PX + 300, PY + 160, 210, 56)) riteDraw(1);
+      if (inBox(c, PX + 550, PY + 160, 210, 56)) riteDraw(10);
+    },
+    draw() {
+      panel('VOID RITE');
+      meta.discovered.forEach((n, i) => { const x = PX + 70 + i * 66, y = PY + 100, on = meta.focus === n;
+        roundRect(x - 28, y - 26, 56, 52, 6); ctx.fillStyle = on ? '#2a1f45' : '#120d1e'; ctx.fill(); ctx.strokeStyle = on ? BASE[n].color : '#3b3350'; ctx.lineWidth = on ? 3 : 1.5; ctx.stroke(); sigil(n, x, y, 13, BASE[n].color); });
+      text('FOCUS', PX + 30, PY + 64, 12, '#9d92bb', 'left');
+      const per = tune.rite_cost + (meta.focus ? tune.focus_cost : 0), ten = tune.grand_rite_cost + (meta.focus ? tune.focus_cost * 10 : 0);
+      abutton(PX + 300, PY + 160, 210, 56, `RITE  ${per}`, '', '#d8c8ff', meta.bank >= per);
+      abutton(PX + 550, PY + 160, 210, 56, `X10  ${ten}`, '', '#ffd27a', meta.bank >= ten);
+      text(`MYTHIC IN ${Math.max(1, tune.mythic_pity - meta.pity)}`, PX + PW - 30, PY + 188, 13, '#9d92bb', 'right');
+      // the ceremony: each card rises out of the crack, flips, and flares by rarity
+      const n2 = hub.reveal.length;
+      hub.reveal.forEach((r, i) => {
+        const start = 0.3 + i * 0.3, k = (hub.revealT - start) / 0.25; if (k <= 0) return;
+        if (hub.shown <= i) { hub.shown = i + 1; SFX.rite(r.rar); if (r.rar === 'mythic') hub.flash = 0.5; }
+        const cols = Math.min(5, n2), x = PX + PW / 2 - (cols * 150 - 20) / 2 + (i % 5) * 150, y = PY + 250 + Math.floor(i / 5) * 180, f = Math.min(1, k), w = 130 * f;
+        const glow = r.rar === 'mythic' ? '#ffd27a' : r.rar === 'rare' ? '#9ad7ff' : null;
+        if (glow) { ctx.save(); ctx.translate(x + 65, y + 80); ctx.rotate(hub.t); ctx.strokeStyle = glow; ctx.lineWidth = 3; ctx.beginPath(); for (let j = 0; j < 8; j++) { const a = j / 8 * 6.283; ctx.moveTo(Math.cos(a) * 60, Math.sin(a) * 60); ctx.lineTo(Math.cos(a) * 100, Math.sin(a) * 100); } ctx.stroke(); ctx.restore(); }
+        drawCard(r, x + 65 - w / 2, y + (1 - f) * 40, Math.max(2, w), 160, false, false, r.isNew && f >= 1 ? { s: 'NEW', bg: '#ffd27a', c: '#1a1229' } : null);
+      });
+      if (hub.flash > 0) { ctx.fillStyle = `rgba(255,240,176,${hub.flash})`; ctx.fillRect(0, 0, W, H); }
+    },
+  },
+  gate: {
+    update(c) {
+      (meta.rifts || []).forEach((r, i) => { const x = PX + 30 + i * 340; if (inBox(c, x, PY + 70, 320, 380)) { meta.riftPick = i; applyRift(); saveMeta(); SFX.ui(); } });
+      if (inBox(c, PX + 330, PY + 470, 46, 40) && meta.depth > 0) { meta.depth--; saveMeta(); }
+      if (inBox(c, PX + 470, PY + 470, 46, 40) && meta.depth < meta.maxDepth) { meta.depth++; saveMeta(); }
+      if (inBox(c, PX + PW / 2 - 170, PY + 540, 340, 64) || pressed('Enter')) beginAdventure();
+    },
+    draw() {
+      panel('RIFT GATE');
+      (meta.rifts || []).forEach((r, i) => { const x = PX + 30 + i * 340, on = meta.riftPick === i, nb = BASE[r.prevail], om = OMENS[r.omen], bn = RIFTS.boons[r.boon];
+        roundRect(x, PY + 70, 320, 380, 10); ctx.fillStyle = on ? '#1d1430' : '#0e0a18'; ctx.fill(); ctx.strokeStyle = on ? nb.color : '#3b3350'; ctx.lineWidth = on ? 3 : 1.5; ctx.stroke();
+        for (let k = 0; k < 4; k++) { ctx.strokeStyle = k % 2 ? nb.color : '#4a3a7a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(x + 160, PY + 140, 28 - k * 6, 46 - k * 9, 0, hub.t * (1 + k * 0.4), hub.t * (1 + k * 0.4) + 4); ctx.stroke(); }
+        wrapText(r.name, x + 160, PY + 214, 290, 16, '#efe6ff');
+        sigil(r.prevail, x + 30, PY + 262, 10, nb.color); text(nb.name, x + 48, PY + 262, 14, nb.color, 'left', 'bold');
+        text(`WEAK TO ${BASE[nb.opposite].name}`, x + 30, PY + 288, 12, '#cfc6e6', 'left');
+        text(om.name, x + 30, PY + 322, 13, '#ffd27a', 'left', 'bold'); text(bn.name, x + 30, PY + 350, 13, '#c8ffe8', 'left', 'bold'); wrapText(bn.says, x + 30, PY + 376, 270, 12, '#9d92bb', 'left'); });
+      text('DEPTH', PX + 230, PY + 490, 16, '#efe6ff', 'left', 'bold');
+      abutton(PX + 330, PY + 470, 46, 40, '-', '', '#d8c8ff', meta.depth > 0); text(`${meta.depth}`, PX + 423, PY + 491, 24, '#ffd27a', 'center', 'bold'); abutton(PX + 470, PY + 470, 46, 40, '+', '', '#d8c8ff', meta.depth < meta.maxDepth);
+      if (meta.depth) text(`+${Math.round(tune.depth_hp * meta.depth * 100)}% LIFE  +${Math.round(tune.depth_void * meta.depth * 100)}% VOID`, PX + 540, PY + 491, 12, '#9d92bb', 'left');
+      abutton(PX + PW / 2 - 170, PY + 540, 340, 64, 'ENTER THE RIFT', deckCount() < tune.deck_min ? `DECK NEEDS ${tune.deck_min}` : '', '#c8ffe8', deckCount() >= tune.deck_min);
+    },
+  },
+  sigils: {
+    update(c) {
+      Object.keys(SIG).forEach((id, i) => { const x = PX + 30 + (i % 4) * 252, y = PY + 70 + Math.floor(i / 4) * 128, lv = meta.upg[id] || 0, cost = SIG[id].costs[lv];
+        if (inBox(c, x, y, 240, 116)) { if (cost === undefined) hubSay('COMPLETE', '#ffd27a'); else if (meta.bank < cost) hubSay(`NEEDS ${cost}`, '#ff9a9a'); else { meta.bank -= cost; meta.upg[id] = lv + 1; saveMeta(); SFX.relic(); hubSay(SIG[id].name.toUpperCase(), '#fff0b0'); } } });
+    },
+    draw() {
+      panel('SIGILS');
+      Object.keys(SIG).forEach((id, i) => { const x = PX + 30 + (i % 4) * 252, y = PY + 70 + Math.floor(i / 4) * 128, sg = SIG[id], lv = meta.upg[id] || 0, cost = sg.costs[lv], hv = inBox(mouse, x, y, 240, 116), can = cost !== undefined && meta.bank >= cost;
+        roundRect(x, y, 240, 116, 8); ctx.fillStyle = hv ? '#1d1430' : '#0e0a18'; ctx.fill(); ctx.strokeStyle = lv ? '#ffd27a' : '#3b3350'; ctx.lineWidth = hv ? 3 : 1.5; ctx.stroke();
+        text(sg.name, x + 16, y + 24, 16, lv ? '#fff0b0' : '#efe6ff', 'left', 'bold');
+        for (let k = 0; k < sg.costs.length; k++) { ctx.fillStyle = k < lv ? '#ffd27a' : '#3b3350'; ctx.beginPath(); ctx.moveTo(x + 200 + k * 14 - 20 * (sg.costs.length - 2), y + 18); ctx.lineTo(x + 205 + k * 14 - 20 * (sg.costs.length - 2), y + 24); ctx.lineTo(x + 200 + k * 14 - 20 * (sg.costs.length - 2), y + 30); ctx.lineTo(x + 195 + k * 14 - 20 * (sg.costs.length - 2), y + 24); ctx.fill(); }
+        wrapText(sg.says, x + 16, y + 56, 210, 12, '#cfc6e6', 'left');
+        text(cost === undefined ? 'MAX' : `${cost}`, x + 224, y + 96, 14, cost === undefined ? '#ffd27a' : can ? '#d8c8ff' : '#6d6488', 'right', 'bold'); });
+      text('UNLOCKS', PX + 30, PY + 470, 14, '#efe6ff', 'left', 'bold');
+      Object.entries(UNL).forEach(([id, u], i) => { const ok = unlocked(id), x = PX + 30 + (i % 2) * 510, y = PY + 500 + Math.floor(i / 2) * 30;
+        ctx.fillStyle = ok ? '#c8ffe8' : '#3b3350'; ctx.fillRect(x, y - 6, 12, 12); text(u.name, x + 22, y, 12, ok ? '#c8ffe8' : '#9d92bb', 'left'); });
+    },
+  },
+  relics: {
+    update(c) {
+      RELIC_IDS.forEach((id, i) => { const x = PX + 40 + (i % 8) * 124, y = PY + 170 + Math.floor(i / 8) * 150; if (!inBox(c, x, y, 112, 130) || !meta.relics[id]) return;
+        const k = meta.equipped.indexOf(id); if (k >= 0) meta.equipped.splice(k, 1); else { if (meta.equipped.length >= relicSlots()) meta.equipped.shift(); meta.equipped.push(id); } saveMeta(); SFX.ui(); });
+    },
+    draw() {
+      panel('RELICS');
+      for (let i = 0; i < 3; i++) { const x = PX + PW / 2 - 150 + i * 110, open = i < relicSlots(), id = meta.equipped[i];
+        roundRect(x - 40, PY + 60, 80, 80, 8); ctx.fillStyle = open ? '#120d1e' : '#07040d'; ctx.fill(); ctx.strokeStyle = open ? (id ? '#ffd27a' : '#4a3a7a') : '#1a1229'; ctx.lineWidth = 2; ctx.stroke();
+        if (id) drawRelicIcon(id, x, PY + 100, 2); else if (!open) text('LOCKED', x, PY + 100, 12, '#3b3350'); }
+      let hv = null;
+      RELIC_IDS.forEach((id, i) => { const x = PX + 40 + (i % 8) * 124, y = PY + 170 + Math.floor(i / 8) * 150, got = meta.relics[id], on = meta.equipped.includes(id);
+        if (inBox(mouse, x, y, 112, 130)) hv = id;
+        roundRect(x, y, 112, 130, 8); ctx.fillStyle = on ? '#2a1f45' : '#0e0a18'; ctx.fill(); ctx.strokeStyle = on ? '#ffd27a' : got ? '#6d6488' : '#241a3a'; ctx.lineWidth = on ? 3 : 1.5; ctx.stroke();
+        if (got) { drawRelicIcon(id, x + 56, y + 50, 1.8); wrapText(REL[id].name, x + 56, y + 100, 104, 12, on ? '#ffd27a' : '#cfc6e6'); } else text('?', x + 56, y + 60, 30, '#3b3350'); });
+      if (hv && meta.relics[hv]) { text(REL[hv].says, PX + PW / 2, PY + 498, 14, '#efe6ff', 'center', 'bold'); wrapText(REL[hv].lore, PX + PW / 2, PY + 530, 800, 12, '#9d92bb'); }
+    },
+  },
+  journal: {
+    update(c) {
+      ['quests', 'logs', 'codex', 'bestiary', 'natures'].forEach((k, i) => { if (inBox(c, PX + 30 + i * 150, PY + 54, 140, 34)) { hub.jtab = k; SFX.ui(); } });
+      if (hub.jtab === 'quests') Object.keys(QST).forEach((id, i) => { const x = PX + 30 + (i % 2) * 505, y = PY + 106 + Math.floor(i / 2) * 82; if (inBox(c, x + 380, y + 22, 100, 34)) { const q = QST[id]; if (!meta.quests[id] && questVal(q) >= q.n) { meta.quests[id] = 'claimed'; if (q.reward.void) meta.bank += q.reward.void; if (q.reward.relic) { const left = RELIC_IDS.filter(r => !meta.relics[r]); if (left.length) meta.relics[left[(meta.runs * 7 + i) % left.length]] = 1; } saveMeta(); SFX.relic(); } } });
+      if (hub.jtab === 'logs') LOG_IDS.forEach((id, i) => { const y = PY + 106 + i * 31; if (inBox(c, PX + 30, y, 400, 28) && meta.logs[id]) { hub.log = id; SFX.ui(); } });
+      if (hub.jtab === 'natures' && inBox(c, PX + PW - 260, PY + PH - 54, 230, 36)) { if (hub.t - hub.forgetArm < 3) { meta = freshMeta(); saveMeta(); reset(); scene = 'title'; return; } hub.forgetArm = hub.t; hubSay('CLICK AGAIN TO FORGET', '#ff9a9a'); }
+    },
+    draw() {
+      panel('JOURNAL');
+      ['quests', 'logs', 'codex', 'bestiary', 'natures'].forEach((k, i) => { const x = PX + 30 + i * 150, on = hub.jtab === k; roundRect(x, PY + 54, 140, 34, 6); ctx.fillStyle = on ? '#241a3a' : '#0e0a18'; ctx.fill(); ctx.strokeStyle = on ? '#d8c8ff' : '#3b3350'; ctx.lineWidth = 2; ctx.stroke(); text(k, x + 70, PY + 72, 13, on ? '#efe6ff' : '#9d92bb', 'center', 'bold'); });
+      const T = hub.jtab;
+      if (T === 'quests') Object.entries(QST).forEach(([id, q], i) => { const x = PX + 30 + (i % 2) * 505, y = PY + 106 + Math.floor(i / 2) * 82, v = Math.min(q.n, questVal(q)), done = meta.quests[id], ready = !done && v >= q.n;
+        roundRect(x, y, 490, 72, 8); ctx.fillStyle = '#0e0a18'; ctx.fill(); ctx.strokeStyle = done ? '#3b3350' : ready ? '#ffd27a' : '#241a3a'; ctx.lineWidth = 2; ctx.stroke();
+        text(q.name, x + 14, y + 20, 14, done ? '#6d6488' : '#efe6ff', 'left', 'bold'); text(q.text, x + 14, y + 42, 12, '#9d92bb', 'left');
+        ctx.fillStyle = '#241a3a'; ctx.fillRect(x + 14, y + 56, 340, 6); ctx.fillStyle = ready || done ? '#ffd27a' : '#7b5bdf'; ctx.fillRect(x + 14, y + 56, 340 * v / q.n, 6);
+        const rw = q.reward.void ? `${q.reward.void}` : 'RELIC';
+        if (done) text('DONE', x + 430, y + 39, 13, '#6d6488', 'center', 'bold'); else abutton(x + 380, y + 22, 100, 34, ready ? 'CLAIM' : rw, '', '#ffd27a', ready); });
+      if (T === 'logs') { LOG_IDS.forEach((id, i) => { const y = PY + 106 + i * 31, got = meta.logs[id], on = hub.log === id;
+          roundRect(PX + 30, y, 400, 28, 5); ctx.fillStyle = on ? '#1f3a3a' : '#0e0a18'; ctx.fill(); ctx.strokeStyle = got ? '#5ac8b9' : '#241a3a'; ctx.lineWidth = 1.5; ctx.stroke();
+          text(got ? LOG[id].title : '- - -', PX + 44, y + 15, 12, got ? '#cfc6e6' : '#3b3350', 'left'); });
+        if (hub.log) { const lg = LOG[hub.log]; roundRect(PX + 460, PY + 106, 570, 300, 8); ctx.fillStyle = '#e8e6c0'; ctx.fill(); text(lg.title, PX + 480, PY + 134, 14, '#3a2a20', 'left', 'bold'); wrapText(lg.text, PX + 480, PY + 176, 530, 13, '#2c2520', 'left'); text(lg.src === 'wreck' ? 'FOUND IN A WRECK' : 'FOUND IN A RUIN', PX + 480, PY + 384, 12, '#6e6156', 'left'); } }
+      if (T === 'codex') { let hc = null;
+        FUSION_KEYS.forEach((k, i) => { const x = PX + 30 + (i % 14) * 72, y = PY + 106 + Math.floor(i / 14) * 62, known = meta.fusions.includes(k), ns = k.split('+'), rec = RECIPES[k];
+          roundRect(x, y, 64, 54, 6); ctx.fillStyle = known ? '#140f22' : '#0a0812'; ctx.fill(); ctx.strokeStyle = known ? rec.color : '#221b33'; ctx.lineWidth = 2; ctx.stroke();
+          if (known) cardSigil({ natures: ns, level: 1 }, x + 32, y + 27, 15); else text('?', x + 32, y + 28, 16, ns.every(n => meta.discovered.includes(n)) ? '#6d6488' : '#241a3a');
+          if (inBox(mouse, x, y, 64, 54)) hc = k; });
+        if (hc) { const rec = RECIPES[hc], ns = hc.split('+'), known = meta.fusions.includes(hc); text(known ? rec.name : '?', PX + 30, PY + 506, 18, known ? rec.color : '#9d92bb', 'left', 'bold'); text(`${BASE[ns[0]].name} + ${BASE[ns[1]].name}`, PX + 30, PY + 534, 13, '#cfc6e6', 'left'); if (known) wrapText(rec.says, PX + 30, PY + 562, 900, 12, '#9d92bb', 'left'); }
+        text(`${meta.fusions.length} / 84`, PX + PW - 30, PY + 506, 16, '#efe6ff', 'right', 'bold'); }
+      if (T === 'bestiary') { let hb = null;
+        const all = [...Object.keys(YB), ...Object.keys(MT).filter(k => !MT[k].only)];
+        all.forEach((k, i) => { const x = PX + 30 + (i % 14) * 72, y = PY + 106 + Math.floor(i / 14) * 82, met = meta.bestiary[k], d = YB[k] || MT[k];
+          roundRect(x, y, 64, 74, 6); ctx.fillStyle = '#0e0a18'; ctx.fill(); ctx.strokeStyle = met ? (YB[k] ? (d.role === 'minion' ? '#6f7a1e' : '#e0a040') : '#6e6156') : '#221b33'; ctx.lineWidth = 2; ctx.stroke();
+          if (met) { const sc = YB[k] ? Math.min(1, 22 / (d.r + 4)) : Math.min(0.5, 26 / Math.max(d.r || 0, (d.w || 0) / 2, (d.h || 0) / 2, 1)); ctx.save(); ctx.translate(x + 32, y + 36); ctx.scale(sc, sc);
+            if (YB[k]) drawY({ k, fam: d.fam, role: d.role, x: 0, y: 0, r: d.r, ph: i, age: 2, vx: 0, vy: 1, hp: 1, maxhp: 1, side: -1, orbA: hub.t }, hub.t, 0, 300); else { const m = figureMatter(k); drawMatter(m, hub.t); } ctx.restore(); }
+          else text('?', x + 32, y + 38, 16, '#241a3a');
+          if (inBox(mouse, x, y, 64, 74)) hb = k; });
+        if (hb && meta.bestiary[hb]) { const d = YB[hb] || MT[hb]; text(d.name, PX + 30, PY + 560, 18, '#efe6ff', 'left', 'bold'); wrapText(d.says, PX + 30, PY + 588, 900, 12, '#9d92bb', 'left'); } }
+      if (T === 'natures') { NIDS.forEach((n, i) => { const x = PX + 30 + (i % 2) * 505, y = PY + 112 + Math.floor(i / 2) * 64, b = BASE[n], got = meta.discovered.includes(n), d = DISCOVER[n], v = Math.min(d.n, meta.stats[d.stat] || 0);
+          roundRect(x, y - 22, 490, 56, 8); ctx.fillStyle = '#0e0a18'; ctx.fill(); ctx.strokeStyle = got ? b.color : '#241a3a'; ctx.lineWidth = 2; ctx.stroke();
+          sigil(n, x + 24, y + 6, 12, got ? b.color : '#3b3350'); text(b.name, x + 48, y - 6, 14, got ? b.color : '#6d6488', 'left', 'bold');
+          if (n === meta.innate) text('INNATE', x + 470, y - 6, 12, '#cfc6e6', 'right'); else if (got) text(b.formName, x + 470, y - 6, 12, '#cfc6e6', 'right');
+          else { text(d.text, x + 48, y + 14, 12, '#9d92bb', 'left'); ctx.fillStyle = '#241a3a'; ctx.fillRect(x + 300, y - 10, 170, 6); ctx.fillStyle = '#7b5bdf'; ctx.fillRect(x + 300, y - 10, 170 * v / d.n, 6); } });
+        abutton(PX + PW - 260, PY + PH - 54, 230, 36, 'FORGET ALL', '', '#ff9a9a', true); }
+    },
+  },
+};
+function riteDraw(n) {
+  const cost = n === 10 ? tune.grand_rite_cost + (meta.focus ? tune.focus_cost * 10 : 0) : tune.rite_cost + (meta.focus ? tune.focus_cost : 0);
+  if (meta.bank < cost) { hubSay(`NEEDS ${cost}`, '#ff9a9a'); return; }
+  meta.bank -= cost; hub.reveal = []; hub.revealT = 0; hub.shown = 0;
+  const pairs = FUSION_KEYS.filter(k => k.split('+').every(x => meta.discovered.includes(x))), myth = tune.mythic_chance + (bonuses().mythic || 0);
+  for (let i = 0; i < n; i++) {
+    seed = CONFIG.seed * 1000003 + meta.draws * 104729; meta.draws++; meta.pity++;
+    let natures, level = 1, rar = 'common';
+    if (pairs.length && (meta.pity >= tune.mythic_pity || rng() < myth)) { natures = pairs[Math.floor(rng() * pairs.length)].split('+'); rar = 'mythic'; meta.pity = 0; if (!meta.fusions.includes(keyOf(natures))) meta.fusions.push(keyOf(natures)); }
+    else { natures = [meta.focus && rng() < tune.focus_share ? meta.focus : meta.discovered[Math.floor(rng() * meta.discovered.length)]]; if (rng() < tune.rare_chance) { level = 2; rar = 'rare'; } }
+    const sk = stackKey(natures, level), isNew = !meta.seen[sk]; meta.seen[sk] = true; addCards(sk, 1);
+    hub.reveal.push({ natures, level, rar, isNew });
+  }
+  saveMeta(); hubSay('');
+}
+function beginAdventure() {
+  if (deckCount() < tune.deck_min) { hubSay(`THE DECK NEEDS ${tune.deck_min}`, '#ff9a9a'); return; }
+  saveMeta(); reset(); scene = 'play';
+}
+function updateAltar(dt) {
+  hub.t += dt; hub.revealT += dt; hub.flash = Math.max(0, (hub.flash || 0) - dt * 1.5); const c = mouse.click;
+  if (pressed('Escape')) { if (hub.open) { hub.open = null; hub.reveal = []; } else scene = 'title'; return; }
+  for (const st of STATIONS) if (pressed(st.key)) { hub.open = st.id; hub.sel = []; hub.msg = ''; SFX.ui(); return; }
+  if (!hub.open) {
+    if (pressed('Enter')) { hub.open = 'gate'; return; }
+    for (const st of STATIONS) if (c && Math.hypot(c.x - st.x, c.y - st.y) < st.r) { hub.open = st.id; hub.sel = []; hub.msg = ''; SFX.ui(); return; }
+    return;
+  }
+  if (inBox(c, PX + PW - 54, PY + 12, 40, 36)) { hub.open = null; hub.reveal = []; return; }
+  ST[hub.open].update(c);
 }
 function drawAltar() {
-  const t = altar.t;
-  clear('#030209');
-  for (const s of stars) { ctx.fillStyle = `rgba(210,200,255,${0.12 + 0.2 * s.z})`; ctx.fillRect(s.x, s.y, s.z * 1.6, s.z * 1.6); }
-  text('THE RIFT ALTAR', 30, 36, 28, '#e9dcff', 'left', 'bold');
-  text(`Adventures ${meta.runs}  ·  Mothers felled ${meta.wins}  ·  Natures ${meta.discovered.length}/14  ·  Fusions ${meta.fusions.length}/${FUSION_KEYS.length}  ·  Ybasogs met ${Object.keys(window.YBASOGS).filter(k => meta.bestiary[k]).length}/${Object.keys(window.YBASOGS).length}`, 30, 72, 15, '#b8acd6', 'left');
-  ctx.save(); ctx.translate(1090, 40); ctx.fillStyle = '#d8c8ff'; ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(7, 0); ctx.lineTo(0, 12); ctx.lineTo(-7, 0); ctx.fill(); ctx.restore();
-  text(`${meta.bank}`, 1106, 40, 28, '#d8c8ff', 'left', 'bold'); text('void energy banked', 1106, 66, 14, '#9d92bb', 'left');
-  TABS.forEach(([k, label], i) => { const x = 30 + i * 150, on = altar.tab === k; roundRect(x, 104, 140, 38, 8); ctx.fillStyle = on ? '#241a3a' : '#0e0a18'; ctx.fill(); ctx.strokeStyle = on ? '#d8c8ff' : '#3b3350'; ctx.lineWidth = on ? 2 : 1; ctx.stroke(); text(`${i + 1}  ${label}`, x + 70, 123, 16, on ? '#efe6ff' : '#9d92bb', 'center', on ? 'bold' : ''); });
-  // the collection, always on the left
-  const list = stacks(meta.cards), per = COL.cols * COL.rows, pages = Math.max(1, Math.ceil(list.length / per));
-  text(`YOUR COLLECTION  (${list.reduce((a, s) => a + s.n, 0)} cards)`, 30, 156, 15, '#e9dcff', 'left', 'bold');
-  text(altar.tab === 'deck' ? 'click to add to the deck' : altar.tab === 'forge' ? 'click two to fuse' : '', 620, 156, 14, '#8f84ad', 'right');
-  list.slice(altar.page * per, altar.page * per + per).forEach((s, i) => {
-    const b = colTile(i), inDeck = meta.loadout[s.sk] || 0, sel = altar.sel.includes(s.sk);
-    drawCard(s, b.x, b.y, b.w, b.h, inBox(mouse, b.x, b.y, b.w, b.h), sel || (altar.tab === 'deck' && inDeck > 0), { s: `x${s.n}` });
-    if (altar.tab === 'deck' && inDeck) text(`${inDeck} in deck`, b.x + b.w / 2, b.y + b.h + 10, 13, '#c8ffe8');
-  });
-  if (!list.length) wrapText('Nothing yet. Adventures and the Void Rite fill your collection.', 320, 300, 520, 17, '#8f84ad');
-  if (pages > 1) { abutton(30, 674, 90, 30, 'Prev', '', '#d8c8ff', altar.page > 0); text(`Page ${altar.page + 1} / ${pages}`, 325, 689, 15, '#b8acd6'); abutton(530, 674, 90, 30, 'Next', '', '#d8c8ff', altar.page < pages - 1); }
-  ctx.strokeStyle = '#2a2140'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(655, 150); ctx.lineTo(655, 705); ctx.stroke();
-  let msgY = 700;
-  if (altar.tab === 'deck') {
-    text(`DECK FOR THE NEXT ADVENTURE  (${deckCount()} / ${tune.deck_max}, at least ${tune.deck_min})`, R, 160, 15, '#e9dcff', 'left', 'bold');
-    stacks(meta.loadout).forEach((s, i) => { const r = loadRow(i), hv = inBox(mouse, r.x, r.y, 274, 28);
-      roundRect(r.x, r.y, 274, 28, 6); ctx.fillStyle = hv ? '#241a3a' : '#0f0b18'; ctx.fill(); ctx.strokeStyle = cardColor(s); ctx.lineWidth = 1; ctx.stroke();
-      cardSigil(s, r.x + 16, r.y + 14, 9); text(`${cardName(s)}  x${s.n}`, r.x + 34, r.y + 14, 15, cardColor(s), 'left'); if (hv) text('remove', r.x + 264, r.y + 14, 13, '#ff9a9a', 'right'); });
-    const n = dominantNature(loadoutCards()), col = n ? BASE[n].color : '#b9a6ff';
-    text('YOUR FORM', R, 418, 15, '#e9dcff', 'left', 'bold');
-    drawForm(n ? BASE[n].form : 'blob', R + 44, 472, col, t, 1.5);
-    text(n ? `${BASE[n].formName}, shaped by ${BASE[n].name}` : 'Shapeless', R + 100, 452, 18, col, 'left', 'bold');
-    wrapText(n ? BASE[n].traitText : 'Add nature cards: the nature most present in the deck shapes you.', R + 100, 478, 440, 15, '#cfc6e6', 'left');
-    const om = OMENS[meta.omen] || OMENS.calm;
-    text('OMEN', R, 512, 15, '#e9dcff', 'left', 'bold'); text(om.name, R + 60, 512, 17, '#ffd27a', 'left', 'bold'); text(om.says, R + 60, 534, 14, '#cfc6e6', 'left');
-    if (meta.prevail) { const pv = BASE[meta.prevail], op = BASE[pv.opposite];
-      text('NATURE', R, 560, 15, '#e9dcff', 'left', 'bold'); sigil(meta.prevail, R + 70, 560, 8, pv.color); text(`${pv.name} prevails`, R + 84, 560, 16, pv.color, 'left', 'bold');
-      text(`${op.name} bolts deal x${tune.opposite_mult} to it, ${pv.name} bolts only x${tune.same_mult}`, R + 220, 560, 13, '#cfc6e6', 'left'); }
-    text('DEPTH', R, 588, 15, '#e9dcff', 'left', 'bold');
-    text(`+${Math.round(tune.depth_hp * meta.depth * 100)}% Ybasog life, +${Math.round(tune.depth_void * meta.depth * 100)}% void energy`, R + 60, 588, 14, '#9d92bb', 'left');
-    abutton(1004, 573, 34, 30, '-', '', '#d8c8ff', meta.depth > 0); text(`${meta.depth}`, 1074, 588, 20, '#efe6ff', 'center', 'bold'); abutton(1110, 573, 34, 30, '+', '', '#d8c8ff', meta.depth < meta.maxDepth);
-    abutton(R, 614, 560, 68, 'Begin the adventure  (Enter)', deckCount() < tune.deck_min ? `Add ${tune.deck_min - deckCount()} more card(s) first` : 'Three stages, the Mother at the end. Void energy you gather is banked.', '#c8ffe8', deckCount() >= tune.deck_min);
-    msgY = 702;
-  } else if (altar.tab === 'rite') {
-    text('THE VOID RITE', R, 160, 18, '#e9dcff', 'left', 'bold');
-    wrapText('Spend banked void energy to call cards from the natures you have discovered. Twins fuse into higher levels at the Forge.', R, 188, 560, 15, '#cfc6e6', 'left');
-    text('FOCUS (optional): click a nature to call it more often', R, 234, 14, '#9d92bb', 'left');
-    meta.discovered.forEach((n, i) => { const f = focusTile(i), on = meta.focus === n;
-      roundRect(f.cx - 32, f.cy - 26, 64, 52, 8); ctx.fillStyle = on ? '#2a1f45' : '#0f0b18'; ctx.fill(); ctx.strokeStyle = on ? BASE[n].color : '#2a2140'; ctx.lineWidth = on ? 2 : 1; ctx.stroke();
-      sigil(n, f.cx, f.cy - 6, 11, BASE[n].color); text(BASE[n].name, f.cx, f.cy + 16, 12, BASE[n].color); });
-    const per = tune.rite_cost + (meta.focus ? tune.focus_cost : 0), grand = tune.grand_rite_cost + (meta.focus ? tune.focus_cost * 10 : 0);
-    abutton(R, 380, 270, 60, `One rite: ${per}`, meta.focus ? `focused on ${BASE[meta.focus].name}` : 'any discovered nature', '#d8c8ff', meta.bank >= per);
-    abutton(970, 380, 270, 60, `Ten rites: ${grand}`, 'ten cards for the price of nine', '#ffd27a', meta.bank >= grand);
-    text(`Rare (level II) ${Math.round(tune.rare_chance * 100)}%  ·  Mythic (already fused) ${Math.round(tune.mythic_chance * 100)}%  ·  a mythic is certain within ${Math.max(1, tune.mythic_pity - meta.pity)} draws`, R, 456, 13, '#9d92bb', 'left');
-    altar.reveal.forEach((r, i) => { const x = R + (i % 5) * 112, y = 476 + Math.floor(i / 5) * 112, w = 100, h = 100;
-      const glow = r.rar === 'mythic' ? '#ffd27a' : r.rar === 'rare' ? '#9ad7ff' : null;
-      if (glow) { ctx.save(); ctx.shadowColor = glow; ctx.shadowBlur = CHEAP ? 0 : 22; roundRect(x - 3, y - 3, w + 6, h + 6, 10); ctx.strokeStyle = glow; ctx.lineWidth = 3; ctx.stroke(); ctx.restore(); }
-      drawCard(r, x, y, w, h, false, false, r.isNew ? { s: 'NEW', bg: '#ffd27a', c: '#1a1229' } : null); });
-    msgY = altar.reveal.length > 5 ? 2000 : 600;
-  } else if (altar.tab === 'forge') {
-    text('THE FORGE', R, 160, 18, '#e9dcff', 'left', 'bold');
-    wrapText('Two cards become one. New fusions fill the Codex and pay a bounty. Twins rise a level. Opposites annul: a way to thin your collection, with a little void energy back.', R, 188, 560, 15, '#cfc6e6', 'left');
-    const sl = [altar.sel[0], altar.sel[1]];
-    sl.forEach((sk, i) => { const x = R + i * 200; roundRect(x, 250, 120, 130, 8); ctx.strokeStyle = '#3b3350'; ctx.lineWidth = 1; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
-      if (sk) drawCard(parseStack(sk), x, 250, 120, 130, false, true); else text('choose', x + 60, 315, 15, '#6d6488'); });
-    text('+', R + 160, 315, 30, '#9d92bb'); text('=', R + 360, 315, 30, '#9d92bb');
-    let sub = 'Choose two cards';
-    if (altar.sel.length === 2) {
-      const a = parseStack(sl[0]), b = parseStack(sl[1]), r = fuseResult(a, b);
-      if (r.kind === 'void') { sub = 'Opposites: both return to the void'; ctx.save(); ctx.translate(R + 460, 315); ctx.beginPath(); for (let i = 0; i <= 14; i++) { const q = i / 14 * 6.283, rr = 34 + Math.sin(q * 3 + t * 3) * 4; ctx.lineTo(Math.cos(q) * rr, Math.sin(q) * rr); } ctx.fillStyle = '#000'; ctx.fill(); glowStroke('#b9a6ff', 14, 2); ctx.restore(); }
-      else if (r.kind === 'new' && isFusionKey(keyOf(r.union)) && !meta.fusions.includes(keyOf(r.union))) { sub = 'An unknown fusion. Forge it to find out.'; roundRect(R + 400, 250, 120, 130, 8); ctx.fillStyle = '#0e0a18'; ctx.fill(); glowStroke(RECIPES[keyOf(r.union)].color, 16, 2); text('?', R + 460, 312, 48, '#efe6ff', 'center', 'bold'); }
-      else if (r.kind === 'new' || r.kind === 'level') { const c = { natures: r.union, level: r.level || 1 }; drawCard(c, R + 400, 250, 120, 130, false, false); sub = `Becomes ${cardName(c)}`; }
-      else sub = r.kind === 'maxed' ? 'Already at its highest level' : 'Unstable: not yet known';
-    }
-    abutton(R, 400, 560, 56, `Fuse: ${tune.fuse_cost} void energy`, sub, '#ffd27a', altar.sel.length === 2 && meta.bank >= tune.fuse_cost);
-    abutton(R, 470, 270, 34, 'Clear the choice', '', '#9d92bb', altar.sel.length > 0);
-    text(`Fusions found: ${meta.fusions.length} / ${FUSION_KEYS.length}`, R, 536, 16, '#e9dcff', 'left', 'bold');
-    text('A Void Bolt melts into any nature card: a way to trim plain bolts.', R, 562, 14, '#9d92bb', 'left');
-    text('Three- and four-nature fusions: not yet known', R, 586, 14, '#6d6488', 'left');
-    msgY = 640;
-  } else if (altar.tab === 'codex') {
-    text(`THE CODEX   ${meta.fusions.length} / ${FUSION_KEYS.length} fusions`, R, 160, 18, '#e9dcff', 'left', 'bold');
-    let hi = null;
-    FUSION_KEYS.forEach((k, i) => { const x = R + (i % 12) * 46, y = 180 + Math.floor(i / 12) * 46, known = meta.fusions.includes(k), ns = k.split('+'), rec = RECIPES[k];
-      roundRect(x, y, 40, 40, 6); ctx.fillStyle = known ? '#140f22' : '#0a0812'; ctx.fill(); ctx.strokeStyle = known ? rec.color : '#221b33'; ctx.lineWidth = known ? 1.6 : 1; ctx.stroke();
-      const canMake = ns.every(n => meta.discovered.includes(n));
-      if (known) cardSigil({ natures: ns, level: 1 }, x + 20, y + 20, 13); else text('?', x + 20, y + 21, 16, canMake ? '#7d7398' : '#3a3150', 'center', 'bold');
-      if (inBox(mouse, x, y, 40, 40)) hi = { k, known, canMake }; });
-    if (hi) { const rec = RECIPES[hi.k], ns = hi.k.split('+');
-      text(hi.known ? rec.name : 'Unknown fusion', R, 524, 20, hi.known ? rec.color : '#9d92bb', 'left', 'bold');
-      text(hi.known ? `${BASE[ns[0]].name} + ${BASE[ns[1]].name}` : hi.canMake ? 'You know both of its natures. Try the Forge.' : 'One of its natures is still undiscovered.', R, 550, 15, '#cfc6e6', 'left');
-      if (hi.known) wrapText(rec.says, R, 574, 560, 15, '#cfc6e6', 'left'); }
-    else text('Point at a cell to read it. A brighter ? can be forged with natures you know.', R, 540, 15, '#8f84ad', 'left');
-    text('Opposites never fuse: Pride and Humility, Greed and Charity, Wrath and Patience,', R, 622, 14, '#b9a6ff', 'left');
-    text('Envy and Kindness, Lust and Chastity, Gluttony and Temperance, Sloth and Diligence.', R, 642, 14, '#b9a6ff', 'left');
-    msgY = 2000;
-  } else if (altar.tab === 'found') {
-    text(`DISCOVERIES   ${meta.discovered.length} / 14 natures`, R, 160, 18, '#e9dcff', 'left', 'bold');
-    NIDS.forEach((n, i) => { const x = R + (i % 2) * 284, y = 200 + Math.floor(i / 2) * 64, b = BASE[n], got = meta.discovered.includes(n), d = DISCOVER[n];
-      roundRect(x, y - 24, 274, 56, 8); ctx.fillStyle = got ? '#130e20' : '#0a0812'; ctx.fill(); ctx.strokeStyle = got ? b.color : '#2a2140'; ctx.lineWidth = 1; ctx.stroke();
-      sigil(n, x + 22, y + 4, 12, got ? b.color : '#4a4060');
-      text(got ? `${b.name}  ·  ${b.element}` : `${b.name}  ·  undiscovered`, x + 44, y - 8, 15, got ? b.color : '#8f84ad', 'left', 'bold');
-      if (n === meta.innate) text(`your innate nature  ·  ${b.formName}`, x + 44, y + 14, 13, '#cfc6e6', 'left');
-      else if (got) wrapText(`${b.formName}: ${b.traitText}`, x + 44, y + 10, 222, 12, '#9d92bb', 'left');
-      else { const have = Math.min(d.n, meta.stats[d.stat] || 0); wrapText(`${d.text} (${have}/${d.n})`, x + 44, y + 12, 222, 12, '#b8acd6', 'left'); } });
-    abutton(980, 664, 260, 34, 'Forget everything', '', '#ff9a9a', true);
-    msgY = 2000; if (altar.msg.startsWith('Click again')) text(altar.msg, R, 681, 14, altar.msgC, 'left');
+  drawHubScene();
+  if (hub.open) { ST[hub.open].draw(); if (hub.msg) text(hub.msg, PX + PW / 2, PY + PH - 22, 14, hub.msgC, 'center', 'bold'); }
+}
+function drawRelicIcon(id, x, y, s = 1) { // each relic its own small figure
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s); ctx.lineWidth = 2; const G = '#ffd27a', D = '#e0a040';
+  const poly = (pts, f, st) => { ctx.beginPath(); pts.forEach(([a, b], i) => i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)); ctx.closePath(); if (f) { ctx.fillStyle = f; ctx.fill(); } if (st) { ctx.strokeStyle = st; ctx.stroke(); } };
+  switch (id) {
+    case 'bell': poly([[-10, 8], [-8, -6], [0, -12], [8, -6], [10, 8]], D, G); ctx.fillStyle = G; ctx.fillRect(-2, 8, 4, 4); break;
+    case 'shard': poly([[0, -14], [8, -2], [3, 12], [-7, 4]], '#9ad7ff', '#d8f4ff'); break;
+    case 'lens': ctx.beginPath(); ctx.arc(0, 0, 10, 0, 6.283); ctx.fillStyle = '#1a1229'; ctx.fill(); ctx.strokeStyle = G; ctx.stroke(); ctx.fillStyle = '#d6e25a'; ctx.fillRect(-3, -3, 6, 6); break;
+    case 'charm': poly([[0, -12], [9, -4], [6, 10], [-6, 10], [-9, -4]], '#4a3a5c', '#b5c43a'); break;
+    case 'ember': poly([[0, -13], [7, -1], [4, 10], [-4, 10], [-7, -1]], '#ff4b3a', '#ffd27a'); break;
+    case 'tide': ctx.fillStyle = '#9ad7ff'; ctx.fillRect(-11, -6, 9, 12); ctx.fillStyle = '#ff4b3a'; ctx.fillRect(2, -6, 9, 12); break;
+    case 'lamp': poly([[-6, -10], [6, -10], [8, 8], [-8, 8]], '#5a4a36', G); ctx.fillStyle = '#fff0b0'; ctx.fillRect(-3, -4, 6, 8); break;
+    case 'crown': poly([[-11, 8], [-11, -6], [-5, 0], [0, -10], [5, 0], [11, -6], [11, 8]], D, G); break;
+    case 'tooth': poly([[-6, -10], [6, -10], [2, 12], [-2, 12]], '#e8e6c0', '#8a8296'); break;
+    case 'salt': poly([[-5, -12], [5, -12], [7, 10], [-7, 10]], '#1a1229', '#cfc6e6'); ctx.fillStyle = '#07040d'; ctx.fillRect(-4, 0, 8, 8); break;
+    case 'scale': poly([[0, -12], [10, 0], [0, 12], [-10, 0]], '#cfc6e6', '#ffffff'); break;
+    case 'nail': ctx.fillStyle = '#8b95a3'; ctx.fillRect(-2, -12, 4, 22); ctx.fillRect(-7, -12, 14, 4); break;
+    case 'orrery': ctx.strokeStyle = G; ctx.beginPath(); ctx.arc(0, 0, 11, 0, 6.283); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, 6, 0, 6.283); ctx.stroke(); ctx.fillStyle = D; ctx.fillRect(-2, -2, 4, 4); ctx.fillRect(9, -2, 4, 4); break;
+    case 'idoleye': poly([[-11, 0], [0, -8], [11, 0], [0, 8]], '#3a3542', '#8a8296'); ctx.fillStyle = '#5ac8b9'; ctx.fillRect(-3, -3, 6, 6); break;
+    case 'psalm': ctx.fillStyle = '#e8e6c0'; ctx.fillRect(-8, -11, 16, 22); ctx.fillStyle = '#8a1030'; ctx.fillRect(-3, -3, 6, 6); break;
+    case 'pearl': ctx.beginPath(); ctx.arc(0, 0, 9, 0, 6.283); ctx.fillStyle = '#07040d'; ctx.fill(); ctx.strokeStyle = '#b9a6ff'; ctx.stroke(); ctx.fillStyle = '#d8c8ff'; ctx.fillRect(-4, -5, 3, 3); break;
   }
-  if (msgY < H) wrapText(altar.msg, R, msgY, 560, 14, altar.msgC, 'left');
+  ctx.restore();
 }
 
 // ---- Scenes ------------------------------------------------------------------------------------
@@ -1961,6 +2271,7 @@ function drawEnd(won) {
   ctx.save(); ctx.translate(RCX - 62, 290); ctx.fillStyle = '#d8c8ff'; ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(10, 0); ctx.lineTo(0, 16); ctx.lineTo(-10, 0); ctx.fill(); ctx.restore();
   text(`+${state.banked}`, RCX - 40, 292, 44, '#d8c8ff', 'left', 'bold');
   state.found.forEach((n, i) => { const x = RCX + (i - (state.found.length - 1) / 2) * 60; sigil(n, x, 380, 16, BASE[n].color); });
+  state.foundLoot.forEach((l, i) => { const x = RCX + (i - (state.foundLoot.length - 1) / 2) * 60; if (l.kind === 'relic') drawRelicIcon(l.id, x, 420, 1.6); else { ctx.fillStyle = '#5ac8b9'; ctx.fillRect(x - 9, 408, 18, 24); } });
   if (won && meta.maxDepth > state.depth) text(`DEPTH ${state.depth + 1}`, RCX, 440, 22, '#ffd27a', 'center', 'bold');
   text('Enter', RCX, 560, 22, '#fff', 'center', 'bold');
 }
@@ -1992,15 +2303,16 @@ const scenes = {
       const t = state.t; drawBackdrop(t, false);
       ctx.fillStyle = 'rgba(2,1,8,0.55)'; ctx.fillRect(0, 0, W, H);
       drawForm(meta.innate ? BASE[meta.innate].form : 'blob', W / 2, 140, meta.innate ? BASE[meta.innate].color : '#b9a6ff', t, 2.2);
-      ctx.save(); ctx.shadowColor = '#8f6bff'; ctx.shadowBlur = CHEAP ? 0 : 20; text(TITLE, W / 2, 240, 72, '#efe6ff', 'center', 'bold'); ctx.restore();
-      text('Hold the rift. Your deck of sins and virtues is your ammo.', W / 2, 292, 20, '#b8acd6');
+      text(TITLE, W / 2, 236, 52, '#efe6ff', 'center', 'bold');
+      text('YOUR DECK IS YOUR AMMO', W / 2, 296, 14, '#9d92bb');
       CONTROLS.forEach((c, i) => text(c, W / 2, 350 + i * 34, 19, '#cfc6e6'));
       NIDS.forEach((n, i) => { const x = W / 2 - 400 + (i % 7) * 120, y = 512 + Math.floor(i / 7) * 34, got = meta.discovered.includes(n); sigil(n, x - 14, y, 9, got ? BASE[n].color : '#4a4060'); text(got ? BASE[n].name : '?', x, y, 16, got ? BASE[n].color : '#6d6488', 'left'); });
       text(meta.innate ? `Natures ${meta.discovered.length}/14  ·  Fusions ${meta.fusions.length}/${FUSION_KEYS.length}  ·  ${meta.bank} void energy banked` : 'Fourteen innate natures wait in the void.', W / 2, 604, 16, '#9d92bb');
       text(meta.innate ? 'Enter or click: to the Rift Altar' : 'Enter or click to begin', W / 2, 656, 24, '#fff', 'center', 'bold');
     },
   },
-  play: { update(dt) { if (pressed('KeyP') || pressed('Escape') || pressed('Space')) { scene = 'pause'; return; } updatePlay(dt); }, draw() { drawPlay(); } },
+  play: { update(dt) { if (pressed('KeyP') || pressed('Escape') || pressed('Space')) { scene = 'pause'; return; } if (state.hitstop > 0) { state.hitstop -= dt; return; } updatePlay(dt); }, draw() { drawPlay(); } },
+  rest: { update(dt) { updateRest(dt); }, draw() { drawRest(); } },
   altar: { update(dt) { updateAltar(dt); }, draw() { drawAltar(); } },
   pause: {
     update() { if (pressed('KeyP') || pressed('Escape') || pressed('Space')) scene = 'play'; },
@@ -2013,6 +2325,7 @@ const scenes = {
 // ---- Loop ----------------------------------------------------------------------------------------
 function step() {
   if (pressed('KeyM')) { setMuted(!muted); hit.delete('KeyM'); }
+  musicTick();
   scenes[scene].update(STEP); hit.clear(); mouse.click = null;
 }
 let last, acc = 0, ALPHA = 1;
@@ -2022,7 +2335,7 @@ function tick() {
   while (acc >= STEP) { step(); acc -= STEP; }
   ALPHA = acc / STEP; drawFrame();
 }
-function drawFrame() { ctx.setTransform(VIEW_R, 0, 0, VIEW_R, 0, 0); scenes[scene].draw(); }
+function drawFrame() { ctx.setTransform(0.5, 0, 0, 0.5, 0, 0); ctx.imageSmoothingEnabled = false; scenes[scene].draw(); ctx.setTransform(1, 0, 0, 1, 0, 0); quantize(); }
 function frame() { tick(); requestAnimationFrame(frame); }
 function timer() { if (document.visibilityState === 'visible' && clock.now() - last > 0.1) tick(); }
 
@@ -2042,8 +2355,9 @@ reset();
 scene = params.get('scene') || 'title';
 if (params.get('stage') && meta.innate) { state.stage = Number(params.get('stage')); state.waveN = Number(params.get('wave')) || 1; for (const k of [...MINIONS, ...MATTERS]) if (canMeet(k) && (YB[k] ? YB[k].from : MT[k].from) < state.stage) state.met.add(k); } // a check can start later in the run
 if (params.get('autofire') === '1') state.autoFire = true;
+if (params.get('rest') === '1' && meta.innate) openRest(); // a check can open a Rift Rest
 if (scene === 'altar') openAltar();
-if (params.get('tab')) altar.tab = params.get('tab');
+if (params.get('tab')) hub.open = params.get('tab'); if (params.get('jtab')) hub.jtab = params.get('jtab');
 last = clock.now();
 if (params.get('manual') === '1') drawFrame();
 else { requestAnimationFrame(frame); setInterval(timer, 50); }
