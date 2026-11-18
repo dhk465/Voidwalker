@@ -18,19 +18,21 @@
 <script src="config.js"></script>
 <script>
 'use strict';
-// Voidwalker: a blob of void holds the bottom of a rift. Its deck of nature cards is its ammo.
+// Voidwalker: a blob of void holds the bottom of a rift; its deck of nature cards is its ammo.
+// Between adventures, at the Rift Altar, the collection grows (Void Rite), cards fuse (Forge),
+// and the next deck is chosen for the omen ahead.
 
 // ---- Built to be checked ----------------------------------------------------------------
 const params = new URLSearchParams(location.search);
-const tune = new Proxy({}, { get: (_, k) => CONFIG[k].value }); // live: tune.speed is CONFIG.speed.value
-const STEP = 1 / 60;            // simulation step in seconds; motion is per second, never per frame
-const W = 1280, H = 720;        // logical size
+const tune = new Proxy({}, { get: (_, k) => CONFIG[k].value });
+const STEP = 1 / 60;
+const W = 1280, H = 720;
 const PIXEL = false;
 const FONT = '"Trebuchet MS", "Segoe UI", sans-serif';
 const TITLE = 'Voidwalker';
 const CONTROLS = ['WASD or Arrows: move along the rift floor', 'Mouse: aim  ·  hold left button: fire',
   'Q: auto-fire on or off', 'Space or P: pause  ·  M: mute'];
-const clock = window.GAME_CLOCK || { now: () => performance.now() / 1000 }; // a check may inject one
+const clock = window.GAME_CLOCK || { now: () => performance.now() / 1000 };
 const CHEAP = params.get('render') === 'cheap';
 let seed;
 function rng() { // mulberry32; every gameplay random call reads this, never Math.random
@@ -47,19 +49,23 @@ const ctx = canvas.getContext('2d');
 let VIEW_R = 1;
 function fit() {
   const k = Math.min(innerWidth / W, innerHeight / H);
-  const s = PIXEL ? Math.max(1, Math.floor(k)) : k;
-  const r = PIXEL ? 1 : s * (devicePixelRatio || 1);
-  VIEW_R = r;
+  const r = k * (devicePixelRatio || 1); VIEW_R = r;
   canvas.width = Math.round(W * r); canvas.height = Math.round(H * r);
-  canvas.style.width = Math.round(W * s) + 'px'; canvas.style.height = Math.round(H * s) + 'px';
-  canvas.style.marginTop = Math.max(0, Math.floor((innerHeight - H * s) / 2)) + 'px';
-  ctx.setTransform(r, 0, 0, r, 0, 0); ctx.imageSmoothingEnabled = !PIXEL;
+  canvas.style.width = Math.round(W * k) + 'px'; canvas.style.height = Math.round(H * k) + 'px';
+  canvas.style.marginTop = Math.max(0, Math.floor((innerHeight - H * k) / 2)) + 'px';
+  ctx.setTransform(r, 0, 0, r, 0, 0);
 }
 addEventListener('resize', fit); fit();
 function clear(c) { ctx.fillStyle = c; ctx.fillRect(0, 0, W, H); }
 function text(s, x, y, size, c, align = 'center', weight = '') {
   ctx.fillStyle = c; ctx.font = `${weight} ${size}px ${FONT}`; ctx.textAlign = align;
   ctx.textBaseline = 'middle'; ctx.fillText(s, x, y);
+}
+function wrapText(s, x, y, maxW, size, c, align = 'center') {
+  ctx.font = `${size}px ${FONT}`; const words = String(s).split(' '); let line = '', yy = y;
+  for (const wd of words) { const tst = line ? line + ' ' + wd : wd; if (ctx.measureText(tst).width > maxW && line) { text(line, x, yy, size, c, align); line = wd; yy += size + 4; ctx.font = `${size}px ${FONT}`; } else line = tst; }
+  if (line) text(line, x, yy, size, c, align);
+  return yy;
 }
 
 // ---- Input ------------------------------------------------------------------------------
@@ -73,19 +79,13 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => down.delete(e.code));
 const mouse = { x: W / 2, y: 0, down: false, moved: false, click: null };
-function toLogical(e) {
-  const r = canvas.getBoundingClientRect();
-  return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H };
-}
+function toLogical(e) { const r = canvas.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; }
 canvas.addEventListener('pointermove', e => { const p = toLogical(e); mouse.x = p.x; mouse.y = p.y; mouse.moved = true; });
-canvas.addEventListener('pointerdown', e => {
-  startAudio(); const p = toLogical(e); mouse.x = p.x; mouse.y = p.y;
-  if (e.button === 0) { mouse.down = true; mouse.click = p; }
-});
+canvas.addEventListener('pointerdown', e => { startAudio(); const p = toLogical(e); mouse.x = p.x; mouse.y = p.y; if (e.button === 0) { mouse.down = true; mouse.click = p; } });
 addEventListener('pointerup', () => { mouse.down = false; });
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('blur', () => { down.clear(); mouse.down = false; });
-const inBox = (p, x, y, w, h) => p && p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h;
+const inBox = (p, x, y, w, h) => !!p && p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h;
 
 // ---- Audio --------------------------------------------------------------------------------
 let audio = null, muted = false;
@@ -107,24 +107,29 @@ function tone(freq, dur, type = 'square', vol = 0.3, slide = 0) {
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
   o.connect(g).connect(audio.out); o.start(t); o.stop(t + dur);
 }
-const SHOT_SOUND = { '': [440, 'square'], wrath: [200, 'sawtooth'], patience: [900, 'sine'], greed: [300, 'triangle'], charity: [660, 'sine'] };
 
-// ---- Layout -------------------------------------------------------------------------------
-const RL = 340, RR = 940;          // the rift's walls
-const RCX = (RL + RR) / 2;
-const PR = 18;                     // the blob's body radius
-
-// ---- Natures, cards and fusion --------------------------------------------------------------
-const BASE = NATURES.base, RECIPES = NATURES.recipes;
-const NATURE_IDS = Object.keys(BASE);
+// ---- Natures, recipes, cards -----------------------------------------------------------------
+const BASE = NATURES.base, RECIPES = NATURES.recipes, DISCOVER = NATURES.discover, OMENS = NATURES.omens;
+const NIDS = Object.keys(BASE);
+const FUSION_KEYS = Object.keys(RECIPES).filter(k => k.split('+').length === 2);
+function hexMix(a, b) {
+  const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const x = p(a), y = p(b); return '#' + x.map((v, i) => Math.round((v + y[i]) / 2).toString(16).padStart(2, '0')).join('');
+}
+for (const [k, r] of Object.entries(RECIPES)) { // a base takes its nature's colour, a fusion blends its two
+  if (r.color) continue;
+  const ns = k.split('+'); r.color = ns.length === 1 ? BASE[ns[0]].color : ns.slice(1).reduce((c, n) => hexMix(c, BASE[n].color), BASE[ns[0]].color);
+}
 const keyOf = natures => [...natures].sort().join('+');
-function recipeOf(card) { return RECIPES[keyOf(card.natures)]; }
-function hasOpposite(natures) { return natures.some(n => natures.includes(BASE[n].opposite)); }
-function makeCard(natures, level = 1) { return { id: state.nextId++, natures: [...natures].sort(), level }; }
-function cardName(c) { const r = recipeOf(c); return (r ? r.name : 'Unstable') + (c.level > 1 ? ' ' + 'I'.repeat(c.level) : ''); }
-function cardColor(c) { const r = recipeOf(c); return r ? r.color : '#ffffff'; }
-// Fusing two cards: the union of their natures. An opposite pair anywhere makes void (both gone).
-// Twins level up. A set with no recipe yet is unstable and nothing changes.
+const hasOpposite = ns => ns.some(n => ns.includes(BASE[n].opposite));
+const stackKey = (natures, level) => keyOf(natures) + '|' + level;
+function parseStack(sk) { const [k, l] = sk.split('|'); return { natures: k ? k.split('+') : [], level: Number(l), key: k }; }
+const recipeOf = c => RECIPES[keyOf(c.natures)];
+const cardColor = c => (recipeOf(c) || { color: '#fff' }).color;
+const roman = n => n <= 1 ? '' : ([, , ' II', ' III', ' IV', ' V', ' VI'][n] || ' ' + n);
+const cardName = c => ((recipeOf(c) || { name: 'Unstable' }).name) + roman(c.level);
+const isFusionKey = k => FUSION_KEYS.includes(k);
+// Fusing: the union of natures. An opposite pair anywhere is void; twins level up; an unknown set is unstable.
 function fuseResult(a, b) {
   const union = [...new Set([...a.natures, ...b.natures])].sort();
   if (hasOpposite(union)) return { kind: 'void', union };
@@ -136,49 +141,126 @@ function fuseResult(a, b) {
   return { kind: 'new', union, level: Math.max(a.level, b.level) };
 }
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-function deckForm() {
-  const count = {}; for (const n of NATURE_IDS) count[n] = 0;
-  for (const c of state.deck) for (const n of c.natures) count[n] += c.level;
+
+// ---- The save: the collection, kept between adventures ---------------------------------------
+const SAVE_KEY = 'voidwalker.save.v1';
+const NOSAVE = params.get('nosave') === '1' || navigator.webdriver; // a check never reads or writes a player's save
+function freshMeta() {
+  return { v: 1, innate: null, discovered: [], cards: {}, loadout: {}, fusions: [], stats: {}, bank: 0,
+    runs: 0, wins: 0, depth: 0, maxDepth: 0, pity: 0, draws: 0, omen: 'calm', focus: null, seen: {} };
+}
+function demoMeta() { // ?demo=1: a collection part-way through, for looking at the Altar
+  const m = freshMeta();
+  m.innate = 'wrath'; m.discovered = ['wrath', 'greed', 'envy', 'charity', 'sloth', 'temperance', 'diligence'];
+  m.cards = { '|1': 4, 'wrath|1': 3, 'wrath|2': 1, 'greed|1': 2, 'envy|1': 2, 'charity|1': 2, 'sloth|1': 1, 'temperance|1': 2, 'diligence|1': 1, 'greed+wrath|1': 1, 'envy+wrath|1': 1, 'charity+diligence|1': 1 };
+  m.loadout = { '|1': 2, 'wrath|1': 3, 'wrath|2': 1, 'greed+wrath|1': 1, 'envy|1': 2 };
+  m.fusions = ['greed+wrath', 'envy+wrath', 'charity+diligence', 'envy+sloth'];
+  m.stats = { kills: 52, motes: 410, asteroids: 5, ricochets: 10, pods: 14, feeders: 6, debris: 8 };
+  m.bank = 340; m.runs = 4; m.wins = 1; m.maxDepth = 1; m.omen = 'rockfall'; m.focus = 'wrath'; m.pity = 6;
+  for (const k in m.cards) m.seen[k] = true;
+  return m;
+}
+let meta;
+function loadMeta() {
+  if (params.get('demo') === '1') return demoMeta();
+  if (NOSAVE) return freshMeta();
+  try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.v === 1) return Object.assign(freshMeta(), s); } catch (e) { /* no save */ }
+  return freshMeta();
+}
+function saveMeta() { if (NOSAVE || params.get('demo') === '1') return; try { localStorage.setItem(SAVE_KEY, JSON.stringify(meta)); } catch (e) { /* storage off */ } }
+const owned = sk => meta.cards[sk] || 0;
+function addCards(sk, n = 1) { meta.cards[sk] = owned(sk) + n; }
+function takeCard(sk) { meta.cards[sk]--; if (meta.cards[sk] <= 0) delete meta.cards[sk]; if ((meta.loadout[sk] || 0) > owned(sk)) { meta.loadout[sk] = owned(sk); if (!meta.loadout[sk]) delete meta.loadout[sk]; } }
+const deckCount = () => Object.values(meta.loadout).reduce((a, b) => a + b, 0);
+function stacks(map) {
+  return Object.entries(map).filter(([, n]) => n > 0).map(([sk, n]) => ({ sk, n, ...parseStack(sk) }))
+    .sort((a, b) => a.natures.length - b.natures.length || (a.key > b.key ? 1 : a.key < b.key ? -1 : 0) || a.level - b.level);
+}
+function dominantNature(cards) {
+  const count = {}; for (const n of NIDS) count[n] = 0;
+  for (const c of cards) for (const n of c.natures) count[n] += c.level;
   let best = null, bestN = 0;
-  for (const n of NATURE_IDS) if (count[n] > bestN || (count[n] === bestN && n === state.firstNature && bestN > 0)) { best = n; bestN = count[n]; }
-  return best ? { form: BASE[best].form, nature: best, color: BASE[best].color } : { form: 'blob', nature: null, color: '#b9a6ff' };
+  for (const n of NIDS) if (count[n] > bestN || (count[n] === bestN && bestN > 0 && n === meta.innate)) { best = n; bestN = count[n]; }
+  return best;
 }
-function rebuildPiles() { state.draw = shuffle(state.deck.map(c => c.id)); state.discard = []; }
-const cardById = id => state.deck.find(c => c.id === id);
+const loadoutCards = () => stacks(meta.loadout).flatMap(s => Array.from({ length: s.n }, () => ({ natures: s.natures, level: s.level })));
+function formTraits(n) {
+  const t = { damage: 1, max_energy: 0, magnet: 0, mote_bonus: 0, fire_rate: 1, bite: 0, bounces: 0, status: 1, contact_charm: 0,
+    speed: 1, aura: 0, armor: 0, wave_heal: 0, iframes: 0, quick_shuffle: 0, regen: 0, leak_guard: 0, glob_dodge: 0, band: 0 };
+  if (n) Object.assign(t, BASE[n].trait);
+  return t;
+}
 
-// ---- State --------------------------------------------------------------------------------
+// ---- The adventure's state ---------------------------------------------------------------------
+const RL = 340, RR = 940, RCX = (RL + RR) / 2, PR = 18;
 let scene, state;
-function reset() {
-  seed = Number(params.get('seed')) || CONFIG.seed;
+function reset() { // a new adventure from the loadout (or, the first time, the firefly's crack of light)
+  seed = Number(params.get('seed')) || (CONFIG.seed + meta.runs * 7919);
+  const intro = !meta.innate;
+  const omen = OMENS[intro ? 'calm' : meta.omen] || OMENS.calm;
+  const deck = intro ? [] : loadoutCards();
+  const form = intro ? null : dominantNature(deck);
+  const tr = formTraits(form);
   state = {
-    t: 0, score: 0, gained: '', nextId: 1,
-    phase: 'intro', introT: 0, firstNature: null,
-    player: { x: RCX, y: 670, iframe: 0, aim: -Math.PI / 2 },
-    energy: tune.max_energy, voidE: 0, totalVoid: 0, kills: 0,
-    deck: [], draw: [], discard: [], fireCd: 0, reshuffleT: 0, autoFire: false,
-    stage: 1, waveN: 1, wave: null, clearT: 0,
-    enemies: [], matter: [], bolts: [], globs: [], motes: [], fields: [], parts: [], floaters: [],
-    gachaCost: tune.gacha_cost, msg: '', msgC: '#ddd', sel: [], reveal: null, pick: null,
-    shake: 0, leakFlash: 0, mother: null,
+    t: 0, score: 0, gained: '', phase: intro ? 'intro' : 'start', introT: 0, startT: 1.2,
+    omen, depth: intro ? 0 : meta.depth, form, tr,
+    statusMul: tr.status * (omen.status || 1),
+    voidMul: (omen.void || 1) * (1 + tune.depth_void * (intro ? 0 : meta.depth)),
+    hpMul: (omen.hp || 1) * (1 + tune.depth_hp * (intro ? 0 : meta.depth)),
+    player: { x: RCX, y: 670, iframe: 0, aim: -Math.PI / 2, still: true },
+    maxEnergy: tune.max_energy + tr.max_energy, energy: tune.max_energy + tr.max_energy, voidE: 0, kills: 0, ward: 0,
+    deck: [], draw: [], discard: [], fireCd: 0, reshuffleT: 0, autoFire: false, nextId: 1,
+    stage: 1, waveN: 1, wave: null, clearT: 0, waveHurt: false, waveLeak: false,
+    enemies: [], matter: [], bolts: [], globs: [], motes: [], petals: [], fields: [], parts: [], floaters: [],
+    walls: [], decoys: [], allies: [], meteors: [], mines: [], beams: [], arcs: [], echoes: [],
+    timewarp: 0, frenzy: 0, magnetT: 0, leechAcc: 0, recentKills: [],
+    shake: 0, leakFlash: 0, mother: null, found: [], banked: 0, won: false,
   };
+  for (const c of deck) state.deck.push({ id: state.nextId++, natures: c.natures, level: c.level });
+  if (!intro) { floatText(omen.name, RCX, 260, '#e9dcff', 30, 2.4); floatText(omen.says, RCX, 300, '#b8acd6', 17, 2.4); }
+}
+const cardById = id => state.deck.find(c => c.id === id);
+function rebuildPiles() { state.draw = shuffle(state.deck.map(c => c.id)); state.discard = []; }
+
+// ---- Discoveries: achievements kept between adventures ------------------------------------------
+function track(stat, n = 1) {
+  meta.stats[stat] = (meta.stats[stat] || 0) + n;
+  for (const [nat, d] of Object.entries(DISCOVER)) {
+    if (d.stat !== stat || meta.discovered.includes(nat) || !meta.innate) continue;
+    if (meta.stats[stat] >= d.n) discover(nat);
+  }
+}
+function discover(nat) {
+  meta.discovered.push(nat);
+  addCards(stackKey([nat], 1), tune.discovery_copies);
+  meta.bank += tune.discovery_bonus;
+  if (state) state.found.push(nat);
+  saveMeta();
+  floatText(`Discovered ${BASE[nat].name}!`, RCX, 210, BASE[nat].color, 30, 3.2);
+  floatText(`${tune.discovery_copies} cards join your collection at the Altar  ·  +${tune.discovery_bonus} void`, RCX, 246, '#e9dcff', 15, 3.2);
+  tone(392, 0.25, 'sine', 0.2); tone(588, 0.5, 'sine', 0.15, 1.5);
+  events.push({ type: 'discover', nature: nat });
 }
 
-// ---- Waves ----------------------------------------------------------------------------------
+// ---- Waves -------------------------------------------------------------------------------------------
 function makeWave(s, w) {
-  if (s === 1 && w === 1) return [ // the first minute, by hand
-    { t: 0.6, k: 'asteroid', x: 560 }, { t: 1.6, k: 'pod', x: 520 }, { t: 2.6, k: 'pod', x: 760 }, { t: 3.6, k: 'pod', x: 640 },
-    { t: 9, k: 'pod', x: 450 }, { t: 11, k: 'pod', x: 830 }, { t: 13, k: 'asteroid', x: 720 },
-    { t: 27, k: 'slab', x: 640 }, { t: 28.4, k: 'grazer', x: 600 }, { t: 29, k: 'grazer', x: 680 }, { t: 29.6, k: 'grazer', x: 640 },
-    { t: 18, k: 'pod', x: 500 }, { t: 21, k: 'pod', x: 780 }, { t: 34, k: 'pod', x: 560 }, { t: 35, k: 'pod', x: 720 },
-  ];
+  const o = state.omen;
+  if (s === 1 && w === 1) { // the first minute, by hand
+    const l = [{ t: 0.6, k: 'asteroid', x: 560 }, { t: 1.6, k: 'pod', x: 520 }, { t: 2.6, k: 'pod', x: 760 }, { t: 3.6, k: 'pod', x: 640 },
+      { t: 9, k: 'pod', x: 450 }, { t: 11, k: 'pod', x: 830 }, { t: 13, k: 'asteroid', x: 720 }, { t: 18, k: 'pod', x: 500 }, { t: 21, k: 'pod', x: 780 },
+      { t: 27, k: 'slab', x: 640 }, { t: 28.4, k: 'grazer', x: 600 }, { t: 29, k: 'grazer', x: 680 }, { t: 29.6, k: 'grazer', x: 640 },
+      { t: 34, k: 'pod', x: 560 }, { t: 35, k: 'pod', x: 720 }];
+    if (o.rocks) l.push({ t: 6, k: 'asteroid', x: 450 }, { t: 16, k: 'asteroid', x: 820 });
+    if (o.ruinsEarly) l.push({ t: 20, k: 'ruin', x: 640 });
+    if (o.pods) l.push({ t: 5, k: 'pod', x: 600 }, { t: 14, k: 'pod', x: 700 }, { t: 24, k: 'pod', x: 460 });
+    return l.sort((a, b) => a.t - b.t);
+  }
   if (s === 3 && w === 3) return [{ t: 1, k: 'mother', x: RCX }];
-  const pool = [['pod', 3], ['grazer', 2.5], ['asteroid', 2], ['debris', 1.2]];
-  if (s > 1 || w >= 2) pool.push(['feeder', 1.6], ['bigasteroid', 1]);
-  if (s >= 2) pool.push(['ruin', 0.9]);
+  const pool = [['pod', 3 * (o.pods || 1)], ['grazer', 2.5], ['asteroid', 2 * (o.rocks || 1)], ['debris', 1.2]];
+  if (s > 1 || w >= 2) pool.push(['feeder', 1.6], ['bigasteroid', 1 * (o.rocks || 1)]);
+  if (s >= 2 || o.ruinsEarly) pool.push(['ruin', 0.9]);
   const count = tune.wave_base_count + (w - 1) * tune.wave_count_step + (s - 1) * tune.stage_count_step;
-  const dur = 22 + 4 * w + 3 * s;
-  const total = pool.reduce((a, p) => a + p[1], 0);
-  const list = [];
+  const dur = 22 + 4 * w + 3 * s, total = pool.reduce((a, p) => a + p[1], 0), list = [];
   for (let i = 0; i < count; i++) {
     let r = rng() * total, k = pool[0][0];
     for (const [name, wt] of pool) { r -= wt; if (r <= 0) { k = name; break; } }
@@ -190,45 +272,40 @@ function makeWave(s, w) {
 }
 function startWave() {
   state.wave = { list: makeWave(state.stage, state.waveN), idx: 0, t: 0 };
-  state.phase = 'wave'; rebuildPiles();
-  floatText(`Stage ${state.stage}  ·  Wave ${state.waveN}`, RCX, 300, '#e9dcff', 26, 2);
+  state.phase = 'wave'; state.waveHurt = false; state.waveLeak = false; rebuildPiles();
+  floatText(`Stage ${state.stage}  ·  Wave ${state.waveN}`, RCX, 340, '#e9dcff', 26, 2);
   events.push({ type: 'wave', stage: state.stage, wave: state.waveN });
 }
-const hpScale = () => 1 + tune.stage_hp_scale * (state.stage - 1);
+const hpScale = () => (1 + tune.stage_hp_scale * (state.stage - 1)) * state.hpMul;
 const spScale = () => 1 + tune.stage_speed_scale * (state.stage - 1);
 function spawn(k, x, y = -50) {
-  const ph = rng() * 6.28;
-  const base = { x, y, vx: 0, vy: 0, burn: null, slow: null, flash: 0, ph, age: 0 };
-  if (k === 'pod') state.enemies.push({ ...base, k, r: 15, hp: tune.pod_hp * hpScale(), maxhp: tune.pod_hp * hpScale(), vy: tune.pod_speed * spScale(), vx: (rng() - 0.5) * 20, drop: 2 });
-  else if (k === 'grazer') state.enemies.push({ ...base, k, r: 15, hp: tune.grazer_hp * hpScale(), maxhp: tune.grazer_hp * hpScale(), vy: tune.grazer_speed * spScale(), dive: false, drop: 3 });
-  else if (k === 'feeder') state.enemies.push({ ...base, k, r: 22, hp: tune.feeder_hp * hpScale(), maxhp: tune.feeder_hp * hpScale(), vy: tune.feeder_speed * spScale(), stopY: 150 + rng() * 110, spit: 1 + rng(), drop: 5 });
+  const base = { x, y, vx: 0, vy: 0, flash: 0, ph: rng() * 6.28, age: 0 };
+  const E = o => { o.maxhp = o.hp; state.enemies.push(o); return o; };
+  if (k === 'pod') E({ ...base, k, r: 15, hp: tune.pod_hp * hpScale(), vy: tune.pod_speed * spScale(), vx: (rng() - 0.5) * 20, drop: 2 });
+  else if (k === 'grazer') E({ ...base, k, r: 15, hp: tune.grazer_hp * hpScale(), vy: tune.grazer_speed * spScale(), dive: false, drop: 3 });
+  else if (k === 'feeder') E({ ...base, k, r: 22, hp: tune.feeder_hp * hpScale(), vy: tune.feeder_speed * spScale(), stopY: 150 + rng() * 110, spit: 1 + rng(), drop: 5 });
   else if (k === 'mother') {
-    const m = { ...base, k, r: 66, y: -90, hp: tune.mother_hp, maxhp: tune.mother_hp, spawnT: 2, spreadT: 3, debrisT: 6, drop: 30 };
-    state.enemies.push(m); state.mother = m;
+    state.mother = E({ ...base, k, r: 66, y: -90, hp: tune.mother_hp * state.hpMul, spawnT: 2, spreadT: 3, debrisT: 6, drop: 30 });
     floatText('The Mother descends', RCX, 300, '#d9a7ff', 30, 2.5); tone(70, 1.4, 'sawtooth', 0.25, 0.5);
-  }
-  else if (k === 'asteroid' || k === 'bigasteroid' || k === 'chunk') {
-    const big = k === 'bigasteroid', chunk = k === 'chunk';
-    const r = big ? 42 : chunk ? 20 : 26;
-    const n = 9 + Math.floor(rng() * 4), verts = [];
-    for (let i = 0; i < n; i++) verts.push(r * (0.72 + rng() * 0.3));
+  } else if (k === 'asteroid' || k === 'bigasteroid' || k === 'chunk') {
+    const big = k === 'bigasteroid', chunk = k === 'chunk', r = big ? 42 : chunk ? 20 : 26;
+    const n = 9 + Math.floor(rng() * 4), verts = []; for (let i = 0; i < n; i++) verts.push(r * (0.72 + rng() * 0.3));
     const hp = (big ? tune.big_asteroid_hp : chunk ? tune.asteroid_hp * 0.6 : tune.asteroid_hp) * hpScale();
     state.matter.push({ ...base, k: 'asteroid', big, r, verts, hp, maxhp: hp, rot: rng() * 6, spin: (rng() - 0.5) * 0.8,
-      vy: tune.asteroid_speed * (0.8 + rng() * 0.4) * spScale(), vx: (rng() - 0.5) * 16, drop: big ? 5 : chunk ? 1 : 3 });
-  }
-  else if (k === 'debris' || k === 'slab') {
-    const slab = k === 'slab';
+      vy: tune.asteroid_speed * (0.8 + rng() * 0.4) * spScale(), vx: (rng() - 0.5) * 16, drop: (big ? 5 : chunk ? 1 : 3) * (state.omen.rockVoid || 1) });
+  } else if (k === 'debris' || k === 'slab') {
+    const slab = k === 'slab', hp = tune.debris_hp * hpScale() * (slab ? 2 : 1);
     state.matter.push({ ...base, k: 'debris', rect: true, w: slab ? 150 : 78, h: slab ? 22 : 16, a: slab ? 0 : rng() * 3, spin: slab ? 0.05 : (rng() - 0.5) * 1.6,
-      hp: tune.debris_hp * hpScale() * (slab ? 2 : 1), maxhp: tune.debris_hp * hpScale() * (slab ? 2 : 1), vy: slab ? 40 : tune.debris_speed * spScale(), vx: slab ? 0 : (rng() - 0.5) * 60, drop: 2, r: slab ? 75 : 40 });
-  }
-  else if (k === 'ruin') {
-    state.matter.push({ ...base, k: 'ruin', rect: true, w: 150, h: 46, a: (rng() - 0.5) * 0.2, spin: 0, hp: tune.ruin_hp * hpScale(), maxhp: tune.ruin_hp * hpScale(),
-      vy: tune.ruin_speed * spScale(), vx: 0, drop: 8, r: 78, glyphs: Array.from({ length: 6 }, () => Math.floor(rng() * 5)) });
+      hp, maxhp: hp, vy: slab ? 40 : tune.debris_speed * spScale(), vx: slab ? 0 : (rng() - 0.5) * 60, drop: 2, r: slab ? 75 : 40 });
+  } else if (k === 'ruin') {
+    const hp = tune.ruin_hp * hpScale();
+    state.matter.push({ ...base, k: 'ruin', rect: true, w: 150, h: 46, a: (rng() - 0.5) * 0.2, spin: 0, hp, maxhp: hp, vy: tune.ruin_speed * spScale(), vx: 0,
+      drop: 8 * (state.omen.ruinVoid || 1), r: 78, glyphs: Array.from({ length: 6 }, () => Math.floor(rng() * 5)) });
     spawn('pod', x - 30, y - 70); spawn('pod', x + 30, y - 80); // the ruin shields the brood behind it
   }
 }
 
-// ---- Effects --------------------------------------------------------------------------------
+// ---- Small effects ----------------------------------------------------------------------------------
 function floatText(s, x, y, c, size = 18, life = 1) { state.floaters.push({ s, x, y, c, size, life, max: life }); }
 function sparks(x, y, c, n = 6, sp = 160) {
   for (let i = 0; i < n; i++) { const a = rng() * 6.283, v = sp * (0.4 + rng() * 0.8); state.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.35 + rng() * 0.3, max: 0.6, c }); }
@@ -238,65 +315,201 @@ function spawnMotes(x, y, n) {
 }
 function hurt(n, why) {
   if (n <= 0) return;
-  state.energy -= n; state.shake = Math.min(12, state.shake + 4 + n * 2);
+  if (state.ward > 0) { state.ward--; floatText('Ward!', state.player.x, state.player.y - 40, '#fff0b0', 18, 0.8); tone(900, 0.15, 'sine', 0.12); return; }
+  if (state.tr.armor) n = Math.max(1, n - state.tr.armor);
+  state.energy -= n; state.waveHurt = true; state.shake = Math.min(12, state.shake + 4 + n * 2);
   tone(110, 0.25, 'sawtooth', 0.25, 0.5);
   floatText(`-${n} ${why}`, state.player.x, state.player.y - 40, '#ff8a8a', 16, 0.9);
 }
-function heal(n) { if (n > 0) { state.energy = Math.min(tune.max_energy, state.energy + n); floatText(`+${n}`, state.player.x + 20, state.player.y - 30, '#bfffd2', 16, 0.8); } }
-function damage(t, dmg, color) {
-  t.hp -= dmg; t.flash = 0.08;
-  if (t.hp <= 0 && !t.dead) kill(t, color);
+function heal(n) { if (n > 0 && state.energy < state.maxEnergy) { state.energy = Math.min(state.maxEnergy, state.energy + n); floatText(`+${Math.round(n * 10) / 10}`, state.player.x + 20, state.player.y - 30, '#c8ffe8', 15, 0.7); } }
+
+// ---- Damage and kills --------------------------------------------------------------------------------
+const isEnemy = t => t.k === 'pod' || t.k === 'grazer' || t.k === 'feeder' || t.k === 'mother';
+function damage(t, d, src, viaTether) {
+  if (t.dead || d <= 0) return;
+  t.hp -= d; t.flash = 0.08;
+  if (!viaTether && t.tether && t.tether.o && !t.tether.o.dead) damage(t.tether.o, d * 0.5, null, true);
+  if (t.hp <= 0) kill(t, src);
 }
-function kill(t, color) {
-  t.dead = true; sparks(t.x, t.y, color || '#d9b8ff', 12, 220);
-  spawnMotes(t.x, t.y, t.drop || 1);
-  if (state.enemies.includes(t)) { state.kills++; state.score++; tone(140, 0.18, 'square', 0.12, 0.4); if (t.healOnKill) heal(t.healOnKill); }
-  else tone(90, 0.2, 'triangle', 0.15, 0.6);
-  if (t.k === 'asteroid' && t.big) { const s = t.x; spawn('chunk', s - 18, t.y); spawn('chunk', s + 18, t.y); state.matter.slice(-2).forEach((c, i) => { c.vx = i ? 50 : -50; }); }
-  if (t.k === 'mother') { state.enemies.forEach(e => { if (e !== t && !e.dead) { e.dead = true; sparks(e.x, e.y, '#d9b8ff', 6); } }); }
+function kill(t, src) {
+  if (t.dead) return;
+  t.dead = true; sparks(t.x, t.y, '#d9b8ff', 12, 220);
+  let drop = t.drop || 1;
+  if (t.hoard) drop *= 3;
+  if (t.gild) drop += 2;
+  if (t.devoured) drop += 1;
+  if (isEnemy(t)) drop += state.omen.killVoid || 0;
+  spawnMotes(t.x, t.y, Math.round(drop));
+  if (isEnemy(t)) {
+    state.kills++; state.score++; tone(140, 0.18, 'square', 0.1, 0.4);
+    track('kills');
+    if (t.k === 'pod') track('pods');
+    if (t.k === 'feeder') track('feeders');
+    const p = state.player;
+    if (Math.hypot(t.x - p.x, t.y - p.y) < 140) track('closekills');
+    if (p.still) track('stillkills');
+    if (src && src.bounced >= 2) track('ricochets');
+    state.recentKills.push(state.t); state.recentKills = state.recentKills.filter(x => state.t - x <= 0.5);
+    if (state.recentKills.length >= 3) { track('multikill'); state.recentKills = []; }
+    if (t.healOnKill) heal(t.healOnKill);
+    if (t.aegis && state.ward < tune.ward_max) { state.ward++; floatText('+ward', p.x, p.y - 50, '#fff0b0', 15, 0.8); }
+    if (t.frenzy) state.frenzy = tune.frenzy_time;
+    if (t.thrall && t.charm > 0) state.allies.push({ x: t.x, y: t.y, t: tune.thrall_time, ph: rng() * 6 });
+    if (t.gild) radial(t.x, t.y, 5, '#f2c94c', ['radiant']);
+    if (t.burst) radial(t.x, t.y, 8, '#ff7a3a', t.burst);
+    if (t.spore) state.fields.push({ k: 'spore', x: t.x, y: t.y, r: 70, t: 3, max: 3, c: '#8be04e' });
+    if (t.bloom) for (let i = 0; i < 2; i++) { const a = rng() * 6.28; state.petals.push({ x: t.x, y: t.y, vx: Math.cos(a) * 80, vy: Math.sin(a) * 80, t: 0 }); }
+    if (t.k === 'mother') state.enemies.forEach(e => { if (e !== t && !e.dead) { e.dead = true; sparks(e.x, e.y, '#d9b8ff', 6); } });
+  } else {
+    tone(90, 0.2, 'triangle', 0.15, 0.6);
+    if (t.k === 'asteroid') track('asteroids');
+    if (t.k === 'debris') track('debris');
+    if (t.k === 'ruin') track('ruins');
+    if (t.k === 'asteroid' && t.big) { spawn('chunk', t.x - 18, t.y); spawn('chunk', t.x + 18, t.y); const n = state.matter.length; state.matter[n - 2].vx = -50; state.matter[n - 1].vx = 50; }
+  }
 }
 
-// ---- Firing ---------------------------------------------------------------------------------
+// ---- Firing -------------------------------------------------------------------------------------------
+function cardDamage(card) {
+  return tune.bolt_damage * state.tr.damage * (1 + tune.level_bonus * (card.level - 1)) * (card.natures.length >= 2 ? 1 + tune.fused_bonus : 1);
+}
 function fire() {
   if (!state.draw.length) {
     if (!state.discard.length) return;
-    state.draw = shuffle(state.discard); state.discard = []; state.reshuffleT = tune.reshuffle_time;
+    state.draw = shuffle(state.discard); state.discard = []; state.reshuffleT = state.tr.quick_shuffle ? 0 : tune.reshuffle_time;
     tone(520, 0.12, 'triangle', 0.08, 1.6); return;
   }
   const id = state.draw.shift(); state.discard.push(id);
-  const card = cardById(id); if (!card) return;
-  const rec = recipeOf(card) || RECIPES[''];
-  const p = state.player, a = p.aim, sp = tune.bolt_speed;
-  const dmg = tune.bolt_damage * (1 + tune.level_bonus * (card.level - 1)) * (card.natures.length >= 2 ? 1 + tune.fused_bonus : 1);
-  state.bolts.push({ x: p.x + Math.cos(a) * 24, y: p.y + Math.sin(a) * 24, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 6,
-    color: rec.color, effects: rec.effects, natures: card.natures, level: card.level, dmg, bounces: tune.bolt_bounces, shard: false, trail: [], last: null });
-  const snd = SHOT_SOUND[card.natures[0] || ''];
-  tone(snd[0] * (1 + 0.05 * card.natures.length), 0.07, snd[1], 0.035);
+  const card = cardById(id); if (card) launch(card, false);
 }
-function shards(b, n, spread, effects) {
+const SHOT_PITCH = { '': 440, pride: 700, greed: 300, wrath: 200, envy: 360, lust: 520, gluttony: 160, sloth: 240, humility: 180, charity: 660, patience: 900, kindness: 600, chastity: 1000, temperance: 800, diligence: 1200 };
+function launch(card, isEcho) {
+  const rec = recipeOf(card) || RECIPES[''], fx = rec.fx, p = state.player, a = p.aim;
+  const dmg = cardDamage(card);
+  if (fx.includes('beam')) { beam(p.x, p.y, a, dmg * 1.5, rec); return; }
+  let sp = tune.bolt_speed, r = 6;
+  if (fx.includes('stone')) { sp *= 0.8; r = 8; }
+  if (fx.includes('big')) { sp *= 0.6; r = 12; }
+  if (fx.includes('singularity')) sp *= 0.5;
+  const b = { x: p.x + Math.cos(a) * 24, y: p.y + Math.sin(a) * 24, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r, color: rec.color, fx, shardFx: rec.shardFx || [],
+    natures: card.natures, level: card.level, dmg: dmg * (fx.includes('stone') ? tune.stone_mult : 1), bounces: tune.bolt_bounces + state.tr.bounces + (state.omen.bounces || 0),
+    shard: false, trail: [], hitSet: new Set(), used: new Set(), bounced: 0, pierce: fx.includes('pierce') ? tune.pierce_count : 0 };
+  if (fx.includes('snowball')) b.bounces += 4;
+  if (fx.includes('orbit')) { b.orbitT = 1.6; b.orbitA = a + Math.PI; }
+  if (fx.includes('boomerang')) b.boomT = 0.55;
+  if (fx.includes('singularity')) b.singT = 1.0;
+  if (fx.includes('homing')) b.homing = true;
+  state.bolts.push(b);
+  if (fx.includes('echo') && !isEcho) state.echoes.push({ t: 0.12, card });
+  tone(SHOT_PITCH[card.natures[0] || ''] * (1 + 0.05 * card.natures.length), 0.07, card.natures.length > 1 ? 'triangle' : 'square', 0.03);
+}
+function shardBolt(x, y, a, color, fx, level, sp = tune.bolt_speed * 0.85) {
+  const b = { x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 4, color, fx, shardFx: [], natures: [], level, dmg: tune.shard_damage * (1 + tune.level_bonus * (level - 1)) * state.tr.damage,
+    bounces: 1, shard: true, trail: [], hitSet: new Set(), used: new Set(), bounced: 0, pierce: 0, homing: fx.includes('homing') };
+  state.bolts.push(b); return b;
+}
+function shards(b, n, spread, fx, from) {
   const base = Math.atan2(b.vy, b.vx);
-  for (let i = 0; i < n; i++) {
-    const a = base + (n === 1 ? 0 : (i / (n - 1) - 0.5) * spread);
-    const sp = tune.bolt_speed * 0.85;
-    state.bolts.push({ x: b.x, y: b.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 4, color: b.color, effects, natures: b.natures,
-      level: b.level, dmg: tune.shard_damage * (1 + tune.level_bonus * (b.level - 1)), bounces: 1, shard: true, trail: [], last: b.last });
-  }
+  for (let i = 0; i < n; i++) { const a = base + (n === 1 ? 0 : (i / (n - 1) - 0.5) * spread); const s = shardBolt(b.x, b.y, a, b.color, fx, b.level); if (from) s.hitSet.add(from); }
 }
-function boltHits(b, t, isEnemy) {
-  const lv = 1 + tune.level_bonus * (b.level - 1);
-  const fx = b.effects;
-  if (fx.includes('burn')) t.burn = { t: tune.burn_time, dps: tune.burn_dps * lv };
-  if (fx.includes('chill')) t.slow = { t: tune.chill_time, f: tune.chill_slow };
-  if (fx.includes('heal') && isEnemy) t.healOnKill = tune.heal_on_kill;
-  damage(t, b.dmg, b.color);
+function radial(x, y, n, color, fx) { for (let i = 0; i < n; i++) shardBolt(x, y, i / n * 6.283, color, fx, 1, tune.bolt_speed * 0.6); }
+function beam(x, y, a, dmg, rec) { // Clarity: an instant line of light to the rift's edge
+  const dx = Math.cos(a), dy = Math.sin(a); let len = 2000;
+  if (dx < 0) len = Math.min(len, (RL - x) / dx);
+  if (dx > 0) len = Math.min(len, (RR - x) / dx);
+  if (dy < 0) len = Math.min(len, -y / dy);
+  const x2 = x + dx * len, y2 = y + dy * len;
+  for (const list of [state.enemies, state.matter]) for (const t of list) {
+    if (t.charm > 0) continue;
+    const px = t.x - x, py = t.y - y, along = px * dx + py * dy; if (along < 0 || along > len) continue;
+    const off = Math.abs(px * dy - py * dx); if (off < (t.r || 30) + 8) damage(t, dmg, null);
+  }
+  state.beams.push({ x1: x, y1: y, x2, y2, t: 0.18, c: rec.color });
+  tone(1400, 0.15, 'sine', 0.05, 0.5);
+}
+function nearestEnemy(x, y, maxD, skip) {
+  let best = null, bd = maxD;
+  for (const e of state.enemies) { if (e.dead || (skip && skip.has(e)) || e.charm > 0) continue; const d = Math.hypot(e.x - x, e.y - y); if (d < bd) { bd = d; best = e; } }
+  return best;
+}
+function boltHits(b, t, enemyHit) {
+  const fx = b.fx, sm = state.statusMul, lv = 1 + tune.level_bonus * (b.level - 1), has = f => fx.includes(f);
+  let d = b.dmg;
+  if (has('radiant') && t.hp >= t.maxhp * 0.999) d *= tune.radiant_mult;
+  if (has('stone') && !enemyHit) d *= tune.stone_matter;
+  if (has('tithe')) d += Math.max(0.3, t.hp * 0.1);
+  if (has('burn')) t.burn = { t: tune.burn_time * sm, dps: tune.burn_dps * lv };
+  if (has('chill')) t.slow = { t: tune.chill_time * sm, f: tune.chill_slow };
+  if (has('venom')) t.venom = { n: Math.min(tune.venom_stacks, (t.venom ? t.venom.n : 0) + 1), t: tune.venom_time * sm };
+  if (enemyHit && t.k !== 'mother') {
+    if (has('sleep')) t.sleep = tune.sleep_time * sm;
+    if (has('charm')) { t.charm = tune.charm_time * sm * (has('long') ? 2 : 1); if (has('thrall')) t.thrall = true; }
+    if (has('tether')) { const o = nearestEnemy(t.x, t.y, 260, new Set([t])); if (o) { t.tether = { o, t: 4 }; o.tether = { o: t, t: 4 }; } }
+    if (has('gust')) { t.y -= tune.gust_push; if (t.k === 'grazer') { t.dive = false; t.vx = 0; t.vy = tune.grazer_speed * spScale(); } }
+  }
+  if (enemyHit && has('doom') && !t.doom) t.doom = { t: tune.doom_time, dmg: d * tune.doom_mult };
+  if (!enemyHit && has('gust')) t.y -= tune.gust_push * 0.4;
+  if (enemyHit) {
+    if (has('heal')) t.healOnKill = tune.heal_on_kill;
+    if (has('hoard')) t.hoard = true;
+    if (has('gild')) t.gild = true;
+    if (has('killburst')) t.burst = b.shardFx.length ? b.shardFx : ['burn'];
+    if (has('spore')) t.spore = true;
+    if (has('bloom')) t.bloom = true;
+    if (has('frenzy')) t.frenzy = true;
+    if (has('aegis')) t.aegis = true;
+    if (has('devour')) t.devoured = true;
+  }
+  damage(t, d, b);
+  if (has('leech')) { state.leechAcc += d * tune.leech_share; if (state.leechAcc >= 1) { heal(Math.floor(state.leechAcc)); state.leechAcc %= 1; } }
+  if (has('execute') && enemyHit && !t.dead && t.k !== 'mother' && t.hp < t.maxhp * tune.execute_line) { sparks(t.x, t.y, b.color, 10, 260); kill(t, b); }
+  if (has('devour')) { b.dmg += tune.devour_grow; b.r = Math.min(14, b.r + 0.6); }
   sparks(b.x, b.y, b.color, 4, 140);
-  if (b.shard) return;
-  if (fx.includes('pull')) state.fields.push({ k: 'pull', x: b.x, y: b.y, r: tune.pull_radius * lv, t: tune.pull_time, max: tune.pull_time, c: b.color });
-  if (fx.includes('well')) state.fields.push({ k: 'well', x: b.x, y: b.y, r: tune.well_radius * lv, t: tune.well_time, max: tune.well_time, c: b.color });
-  if (fx.includes('field')) state.fields.push({ k: 'stasis', x: b.x, y: b.y, r: tune.field_radius * lv, t: tune.field_time, max: tune.field_time, c: b.color });
-  if (fx.includes('split')) shards(b, tune.split_count, 0.9, []);
-  if (fx.includes('split3')) shards(b, 3, 1.1, ['burn']);
-  if (fx.includes('shatter')) shards(b, 4, 2.2, ['chill']);
+  const once = f => { if (b.used.has(f)) return false; b.used.add(f); return true; };
+  if (b.shard) { if (has('thorns')) state.fields.push({ k: 'thorns', x: b.x, y: b.y, r: tune.thorns_radius * 0.6, t: tune.thorns_time * sm, max: tune.thorns_time * sm, c: b.color }); return; }
+  const F = (k, r, time, extra) => state.fields.push({ k, x: b.x, y: b.y, r, t: time, max: time, c: b.color, ...extra });
+  if (has('pull')) F('pull', tune.pull_radius * lv, tune.pull_time);
+  if (has('lure')) F('pull', tune.pull_radius * 1.8 * lv, tune.pull_time * 1.5, { strong: 1.5, charm: has('charm') });
+  if (has('well')) F('well', tune.well_radius * lv, tune.well_time);
+  if (has('vortex')) F('vortex', tune.well_radius * lv, tune.well_time);
+  if (has('field')) F('stasis', tune.field_radius * lv, tune.field_time * sm);
+  if (has('thorns')) F('thorns', tune.thorns_radius * lv * (has('wide') ? 1.7 : 1), tune.thorns_time * sm, { fx: fx.filter(f => f === 'chill' || f === 'burn' || f === 'charm' || f === 'sleep') });
+  if (has('split')) shards(b, tune.split_count, 0.9, b.shardFx, t);
+  if (has('split3')) shards(b, 3, 1.1, b.shardFx, t);
+  if (has('shatter')) shards(b, 4, 2.2, b.shardFx, t);
+  if (has('nova') && once('nova')) { for (let i = 0; i < 6; i++) { const s = shardBolt(b.x, b.y, i / 6 * 6.283, b.color, b.shardFx, b.level); s.hitSet.add(t); } }
+  if (has('mirror') && once('mirror')) { const m = shardBolt(RL + RR - b.x, Math.min(H - 60, b.y + 40), Math.atan2(b.vy, -b.vx), b.color, fx.filter(f => f !== 'mirror'), b.level, tune.bolt_speed); m.shard = false; m.r = 6; m.dmg = b.dmg; m.bounces = 2; m.used.add('mirror'); }
+  if (has('chain')) chain(t, d * tune.chain_share, b);
+  if (has('lullaby') && once('lullaby')) { for (const e of state.enemies) if (e.k !== 'mother' && Math.hypot(e.x - b.x, e.y - b.y) < 150) e.sleep = tune.sleep_time * 1.3 * sm; F('lull', 150, 0.6); }
+  if (has('quake') && once('quake')) {
+    for (const list of [state.enemies, state.matter]) for (const e of list) if (e !== t && !(e.charm > 0) && Math.abs(e.y - b.y) < 38) { damage(e, d * tune.quake_damage, null); if (has('chill')) e.slow = { t: tune.chill_time * sm, f: tune.chill_slow }; }
+    state.beams.push({ x1: RL, y1: b.y, x2: RR, y2: b.y, t: 0.25, c: b.color, wide: 1 });
+  }
+  if (has('wall') && once('wall')) state.walls.push({ x: Math.max(RL + 70, Math.min(RR - 70, b.x)), y: Math.min(tune.band_top - 80, Math.max(200, b.y + 40)), w: 140, h: 16, t: tune.wall_time });
+  if (has('storm') && once('storm')) F('storm', tune.storm_radius, tune.storm_time, { zap: 0, fx: fx.filter(f => f === 'burn' || f === 'chill' || f === 'venom') });
+  if (has('meteor') && once('meteor')) state.meteors.push({ x: b.x, y: b.y, t: 0.55, max: 0.55, c: b.color });
+  if (has('cleanse')) { for (const g of state.globs) if (Math.hypot(g.x - b.x, g.y - b.y) < 140) { g.dead = true; sparks(g.x, g.y, '#ffffff', 3); } }
+  if (has('timewarp') && once('timewarp')) { state.timewarp = tune.timewarp_time * sm; tone(200, 0.6, 'sine', 0.1, 0.5); }
+  if (has('decoy') && once('decoy')) state.decoys.push({ x: b.x, y: Math.max(160, Math.min(tune.band_top - 60, b.y)), t: tune.decoy_time, charm: has('lure') });
+  if (has('magnet')) state.magnetT = 2;
+  if (has('prism') && once('prism')) {
+    const pool = meta.discovered.length ? meta.discovered : NIDS;
+    for (let i = 0; i < 3; i++) { const n = pool[Math.floor(rng() * pool.length)]; const s = shardBolt(b.x, b.y, Math.atan2(b.vy, b.vx) + (i - 1) * 0.5, BASE[n].color, RECIPES[n].fx, b.level); s.dmg = b.dmg * 0.7; s.hitSet.add(t); }
+  }
+  if (has('mine') && once('mine')) { state.mines.push({ tg: t, ox: b.x - t.x, oy: b.y - t.y, t: 0.9, c: b.color, burn: has('burn') }); b.dead = true; }
+  if (has('singularity') && !b.dead) { F('hole', 130, 1.6); b.dead = true; tone(60, 0.8, 'sine', 0.2, 0.5); }
+}
+function chain(from, dmg, b) {
+  const skip = new Set([from]); let cur = from; const pts = [[from.x, from.y]];
+  for (let i = 0; i < tune.chain_count; i++) {
+    const n = nearestEnemy(cur.x, cur.y, tune.chain_range, skip); if (!n) break;
+    skip.add(n); pts.push([n.x, n.y]);
+    if (b.fx.includes('burn')) n.burn = { t: tune.burn_time * state.statusMul, dps: tune.burn_dps };
+    if (b.fx.includes('heal')) n.healOnKill = tune.heal_on_kill;
+    if (b.fx.includes('frenzy')) n.frenzy = true;
+    damage(n, dmg, null); cur = n;
+  }
+  if (pts.length > 1) { state.arcs.push({ pts, t: 0.2, c: b.color }); tone(1500, 0.06, 'sawtooth', 0.04, 0.6); }
 }
 // Collision helpers: a circle, and an oriented box (debris and ruins).
 function circleNormal(b, t) {
@@ -304,297 +517,419 @@ function circleNormal(b, t) {
   if (d >= b.r + t.r || d === 0) return null;
   return { nx: dx / d, ny: dy / d, push: b.r + t.r - d };
 }
-function boxNormal(b, t, extra = 0) {
+function boxNormal(b, t) {
   const c = Math.cos(-t.a), s = Math.sin(-t.a), dx = b.x - t.x, dy = b.y - t.y;
-  const lx = dx * c - dy * s, ly = dx * s + dy * c, hw = t.w / 2, hh = t.h / 2, r = b.r + extra;
+  const lx = dx * c - dy * s, ly = dx * s + dy * c, hw = t.w / 2, hh = t.h / 2, r = b.r;
   const cx = Math.max(-hw, Math.min(hw, lx)), cy = Math.max(-hh, Math.min(hh, ly));
   let nx = lx - cx, ny = ly - cy, d = Math.hypot(nx, ny), push;
   if (d > r) return null;
-  if (d === 0) { // centre inside: leave by the nearest face
-    const px = hw - Math.abs(lx), py = hh - Math.abs(ly);
-    if (px < py) { nx = Math.sign(lx) || 1; ny = 0; push = px + r; } else { nx = 0; ny = Math.sign(ly) || 1; push = py + r; }
-  } else { nx /= d; ny /= d; push = r - d; }
+  if (d === 0) { const px = hw - Math.abs(lx), py = hh - Math.abs(ly); if (px < py) { nx = Math.sign(lx) || 1; ny = 0; push = px + r; } else { nx = 0; ny = Math.sign(ly) || 1; push = py + r; } }
+  else { nx /= d; ny /= d; push = r - d; }
   const C = Math.cos(t.a), S = Math.sin(t.a);
   return { nx: nx * C - ny * S, ny: nx * S + ny * C, push };
 }
-const hitNormal = (b, t, extra) => t.rect ? boxNormal(b, t, extra) : circleNormal(b, t);
+const hitNormal = (b, t) => t.rect ? boxNormal(b, t) : circleNormal(b, t);
 function reflect(b, n) {
   b.x += n.nx * n.push; b.y += n.ny * n.push;
   const dot = b.vx * n.nx + b.vy * n.ny;
   if (dot < 0) { b.vx -= 2 * dot * n.nx; b.vy -= 2 * dot * n.ny; }
 }
+function steer(b, tx, ty, rate, dt) {
+  const a = Math.atan2(b.vy, b.vx), want = Math.atan2(ty - b.y, tx - b.x), sp = Math.hypot(b.vx, b.vy);
+  let da = want - a; while (da > Math.PI) da -= 6.283; while (da < -Math.PI) da += 6.283;
+  const na = a + Math.max(-rate * dt, Math.min(rate * dt, da)); b.vx = Math.cos(na) * sp; b.vy = Math.sin(na) * sp;
+}
 
-// ---- The play update ------------------------------------------------------------------------
+// ---- The play update --------------------------------------------------------------------------------
+function speedOf(e) {
+  if (e.sleep > 0) return 0;
+  let f = e.slow ? 1 - e.slow.f : 1;
+  if (state.timewarp > 0 && e.k !== 'mother') f *= 1 - tune.timewarp_slow;
+  if (state.tr.aura && Math.hypot(e.x - state.player.x, e.y - state.player.y) < 160) f *= 1 - state.tr.aura;
+  return f;
+}
+function statusTick(e, dt) {
+  e.flash = Math.max(0, e.flash - dt);
+  if (e.slow && (e.slow.t -= dt) <= 0) e.slow = null;
+  if (e.burn) { damage(e, e.burn.dps * dt, null); if (e.burn && (e.burn.t -= dt) <= 0) e.burn = null; }
+  if (e.venom) { damage(e, tune.venom_dps * e.venom.n * dt, null); if (e.venom && (e.venom.t -= dt) <= 0) e.venom = null; }
+  if (e.sleep > 0) e.sleep -= dt;
+  if (e.doom && (e.doom.t -= dt) <= 0) { const dd = e.doom.dmg; e.doom = null; sparks(e.x, e.y, '#ff6fa0', 14, 260); damage(e, dd, null); tone(180, 0.2, 'square', 0.1, 0.5); }
+  if (e.tether && ((e.tether.t -= dt) <= 0 || e.tether.o.dead)) e.tether = null;
+}
 function updatePlay(dt) {
-  const p = state.player;
+  const p = state.player, tr = state.tr;
   state.t += dt;
-  // move
   let mx = 0, my = 0;
-  if (held('KeyA', 'ArrowLeft')) mx -= 1; if (held('KeyD', 'ArrowRight')) mx += 1;
-  if (held('KeyW', 'ArrowUp')) my -= 1; if (held('KeyS', 'ArrowDown')) my += 1;
-  const ml = Math.hypot(mx, my) || 1;
-  p.x += mx / ml * tune.player_speed * dt; p.y += my / ml * tune.player_speed * dt;
-  p.x = Math.max(RL + PR, Math.min(RR - PR, p.x)); p.y = Math.max(tune.band_top, Math.min(H - PR - 6, p.y));
-  // aim: at the pointer, kept upward; straight up with no pointer
-  if (mouse.moved) {
-    let a = Math.atan2(mouse.y - p.y, mouse.x - p.x);
-    if (a > 0) a = a > Math.PI / 2 ? -Math.PI + 0.12 : -0.12;
-    p.aim = Math.max(-Math.PI + 0.12, Math.min(-0.12, a));
-  }
+  if (held('KeyA', 'ArrowLeft')) mx -= 1;
+  if (held('KeyD', 'ArrowRight')) mx += 1;
+  if (held('KeyW', 'ArrowUp')) my -= 1;
+  if (held('KeyS', 'ArrowDown')) my += 1;
+  p.still = !mx && !my;
+  const ml = Math.hypot(mx, my) || 1, sp = tune.player_speed * tr.speed, top = tune.band_top - tr.band;
+  p.x += mx / ml * sp * dt; p.y += my / ml * sp * dt;
+  p.x = Math.max(RL + PR, Math.min(RR - PR, p.x)); p.y = Math.max(top, Math.min(H - PR - 6, p.y));
+  if (mouse.moved) { let a = Math.atan2(mouse.y - p.y, mouse.x - p.x); if (a > 0) a = a > Math.PI / 2 ? -Math.PI + 0.12 : -0.12; p.aim = Math.max(-Math.PI + 0.12, Math.min(-0.12, a)); }
   if (pressed('KeyQ')) { state.autoFire = !state.autoFire; floatText(state.autoFire ? 'Auto-fire on' : 'Auto-fire off', p.x, p.y - 50, '#e9dcff', 16, 1); }
   p.iframe = Math.max(0, p.iframe - dt);
-  state.fireCd -= dt; state.reshuffleT -= dt;
-  const wantFire = (mouse.down || state.autoFire) && state.phase !== 'intro';
-  if (wantFire && state.fireCd <= 0 && state.reshuffleT <= 0) { fire(); state.fireCd = tune.fire_interval; }
-
-  // the intro: a firefly beside a crack of light
-  if (state.phase === 'intro') {
-    state.introT += dt;
-    const crack = { x: RCX, y: 575 };
-    if (Math.hypot(p.x - crack.x, p.y - crack.y) < 40 || state.introT > 14) absorbFirst();
+  if (tr.regen) state.energy = Math.min(state.maxEnergy, state.energy + tr.regen * dt);
+  state.fireCd -= dt; state.reshuffleT -= dt; state.frenzy -= dt; state.timewarp -= dt; state.magnetT -= dt;
+  const live = state.phase === 'wave' || state.phase === 'clear';
+  if ((mouse.down || state.autoFire) && live && state.fireCd <= 0 && state.reshuffleT <= 0) {
+    fire(); state.fireCd = tune.fire_interval / tr.fire_rate * (state.frenzy > 0 ? tune.frenzy_rate : 1);
   }
+  for (const e of state.echoes) if ((e.t -= dt) <= 0) { launch(e.card, true); e.done = true; }
+  state.echoes = state.echoes.filter(e => !e.done);
 
-  // the wave
+  if (state.phase === 'intro') { state.introT += dt; if (Math.hypot(p.x - RCX, p.y - 575) < 40 || state.introT > 14) absorbFirst(); }
+  if (state.phase === 'start' && (state.startT -= dt) <= 0) startWave();
   const wv = state.wave;
   if (state.phase === 'wave' && wv) {
     wv.t += dt;
     while (wv.idx < wv.list.length && wv.list[wv.idx].t <= wv.t) { const s = wv.list[wv.idx++]; spawn(s.k, s.x); }
-    const bossWave = state.stage === 3 && state.waveN === 3;
-    const done = bossWave ? (state.mother && state.mother.dead) : (wv.idx >= wv.list.length && !state.enemies.length && !state.matter.length);
-    if (done) { state.phase = 'clear'; state.clearT = bossWave ? 2.2 : 1.4; tone(660, 0.3, 'sine', 0.15, 1.5); floatText(bossWave ? 'The rift falls quiet' : 'Wave cleared', RCX, 300, '#e9dcff', 28, 1.4); }
+    const boss = state.stage === 3 && state.waveN === 3;
+    const done = boss ? (state.mother && state.mother.dead) : (wv.idx >= wv.list.length && !state.enemies.length && !state.matter.length);
+    if (done) {
+      state.phase = 'clear'; state.clearT = boss ? 2.4 : 2;
+      if (!state.waveHurt) track('cleanwave');
+      if (!state.waveLeak) track('sealedwave');
+      if (state.energy <= 5) track('lowwave');
+      if (tr.wave_heal) heal(tr.wave_heal);
+      const stageEnd = state.waveN === 3 && !boss;
+      if (stageEnd) heal(tune.stage_heal);
+      tone(660, 0.3, 'sine', 0.15, 1.5);
+      floatText(boss ? 'The rift falls quiet' : stageEnd ? `Stage ${state.stage} cleared  ·  +${tune.stage_heal} energy` : 'Wave cleared', RCX, 300, '#e9dcff', 28, 1.8);
+    }
   }
-  if (state.phase === 'clear') {
-    state.clearT -= dt;
-    if (state.clearT <= 0 && !state.motes.length) afterWave();
-    else if (state.clearT < -2) { state.motes.length = 0; afterWave(); }
+  if (state.phase === 'clear' && (state.clearT -= dt) <= 0 && (!state.motes.length || state.clearT < -2)) {
+    state.motes.length = 0;
+    if (state.stage === 3 && state.waveN === 3) { endRun(true); return; }
+    if (state.waveN < 3) state.waveN++; else { state.stage++; state.waveN = 1; }
+    startWave();
   }
 
-  // enemies
+  // Ybasogs
   const diveY = H * tune.grazer_dive_line;
+  const target = () => state.decoys.length ? state.decoys[0] : p;
   for (const e of state.enemies) {
-    e.age += dt; e.flash = Math.max(0, e.flash - dt);
-    const slowF = e.slow ? 1 - e.slow.f : 1;
-    if (e.slow && (e.slow.t -= dt) <= 0) e.slow = null;
-    if (e.burn) { damage(e, e.burn.dps * dt, '#ff5a36'); if ((e.burn.t -= dt) <= 0) e.burn = null; }
+    e.age += dt; statusTick(e, dt); if (e.dead) continue;
+    const f = speedOf(e);
+    if (e.charm > 0) { // charmed: turns on its kin
+      e.charm -= dt;
+      const o = nearestEnemy(e.x, e.y, 400, new Set([e]));
+      if (o) { const dx = o.x - e.x, dy = o.y - e.y, d = Math.hypot(dx, dy) || 1; e.x += dx / d * 110 * dt * f; e.y += dy / d * 110 * dt * f; if (d < e.r + o.r + 4) damage(o, tune.charm_dps * dt, null); }
+      else e.y -= 40 * dt;
+      if (e.charm <= 0 && e.k === 'grazer') { e.dive = false; e.vx = 0; e.vy = tune.grazer_speed * spScale(); }
+      continue;
+    }
     if (e.k === 'pod') {
-      e.x += e.vx * dt * slowF; e.y += e.vy * dt * slowF;
-      if (e.age > tune.pod_hatch && !e.dead) { e.dead = true; e.hatched = true; spawn('grazer', e.x, e.y); sparks(e.x, e.y, '#b5c43a', 8); }
+      e.x += e.vx * dt * f; e.y += e.vy * dt * f;
+      if (e.age > tune.pod_hatch && !(e.sleep > 0)) { e.dead = true; spawn('grazer', e.x, e.y); sparks(e.x, e.y, '#b5c43a', 8); }
     } else if (e.k === 'grazer') {
-      if (!e.dive && e.y > diveY) {
-        e.dive = true; const dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy) || 1;
-        e.vx = dx / d * tune.grazer_dive_speed * spScale(); e.vy = dy / d * tune.grazer_dive_speed * spScale(); tone(300, 0.2, 'sawtooth', 0.06, 2);
-      }
-      e.x += e.vx * dt * slowF; e.y += e.vy * dt * slowF;
+      if (!e.dive && e.y > diveY) { e.dive = true; const tg = target(), dx = tg.x - e.x, dy = tg.y - e.y, d = Math.hypot(dx, dy) || 1; e.vx = dx / d * tune.grazer_dive_speed * spScale(); e.vy = dy / d * tune.grazer_dive_speed * spScale(); }
+      e.x += e.vx * dt * f; e.y += e.vy * dt * f;
     } else if (e.k === 'feeder') {
-      if (e.y < e.stopY || e.age > 16) e.y += e.vy * dt * slowF;
-      else e.x += Math.sin(e.age * 0.8 + e.ph) * 50 * dt * slowF;
-      e.spit -= dt * slowF;
-      if (e.spit <= 0 && e.y > 20) { e.spit = tune.feeder_spit; shootGlob(e.x, e.y + 18, Math.atan2(p.y - e.y, p.x - e.x)); }
+      if (e.y < e.stopY || e.age > 16) e.y += e.vy * dt * f; else e.x += Math.sin(e.age * 0.8 + e.ph) * 50 * dt * f;
+      e.spit -= dt * f;
+      if (e.spit <= 0 && e.y > 20) { e.spit = tune.feeder_spit * (state.omen.spit || 1); const tg = target(); shootGlob(e.x, e.y + 18, Math.atan2(tg.y - e.y, tg.x - e.x)); }
     } else if (e.k === 'mother') {
-      const hurtHalf = e.hp < e.maxhp / 2;
+      const half = e.hp < e.maxhp / 2, k = half ? 0.7 : 1;
       if (e.y < 135) e.y += 40 * dt; else e.x = RCX + Math.sin(e.age * 0.45) * 190;
-      const k = hurtHalf ? 0.7 : 1;
-      e.spawnT -= dt; e.spreadT -= dt; e.debrisT -= dt;
-      if (e.spawnT <= 0) { e.spawnT = tune.mother_spawn * k; spawn(hurtHalf && rng() < 0.5 ? 'grazer' : 'pod', e.x + (rng() - 0.5) * 80, e.y + 50); }
-      if (e.spreadT <= 0) {
-        e.spreadT = tune.mother_spread * k; const n = tune.mother_volley + (hurtHalf ? 2 : 0);
-        for (let i = 0; i < n; i++) shootGlob(e.x, e.y + 50, Math.PI / 2 + (i / (n - 1) - 0.5) * 1.6);
-        tone(90, 0.4, 'sawtooth', 0.12, 0.6);
-      }
+      e.spawnT -= dt * f; e.spreadT -= dt * f; e.debrisT -= dt;
+      if (e.spawnT <= 0) { e.spawnT = tune.mother_spawn * k; spawn(half && rng() < 0.5 ? 'grazer' : 'pod', e.x + (rng() - 0.5) * 80, e.y + 50); }
+      if (e.spreadT <= 0) { e.spreadT = tune.mother_spread * k; const n = tune.mother_volley + (half ? 2 : 0); for (let i = 0; i < n; i++) shootGlob(e.x, e.y + 50, Math.PI / 2 + (i / (n - 1) - 0.5) * 1.6); tone(90, 0.4, 'sawtooth', 0.12, 0.6); }
       if (e.debrisT <= 0) { e.debrisT = 7; spawn(rng() < 0.5 ? 'debris' : 'asteroid', RL + 60 + rng() * (RR - RL - 120)); }
     }
+    for (const w of state.walls) if (Math.abs(e.x - w.x) < w.w / 2 + e.r && e.y + e.r > w.y - w.h / 2 && e.y < w.y) e.y = w.y - w.h / 2 - e.r;
     if (e.x < RL + e.r) { e.x = RL + e.r; e.vx = Math.abs(e.vx); }
     if (e.x > RR - e.r) { e.x = RR - e.r; e.vx = -Math.abs(e.vx); }
-    // touch the blob
-    if (!e.dead && e.k !== 'mother' && Math.hypot(e.x - p.x, e.y - p.y) < e.r + PR) {
-      e.dead = true; sparks(e.x, e.y, '#b5c43a', 10);
-      if (p.iframe <= 0) { hurt(tune.hit_damage, 'bitten'); p.iframe = tune.iframes; }
+    for (const dcy of state.decoys) if (e.k !== 'mother' && !e.dead && Math.hypot(e.x - dcy.x, e.y - dcy.y) < e.r + 16) {
+      if (dcy.charm) e.charm = tune.charm_time; else { e.dead = true; sparks(e.x, e.y, '#3fd08f', 8); state.kills++; track('kills'); spawnMotes(e.x, e.y, e.drop); }
     }
-    if (!e.dead && e.y > H + e.r) { e.dead = true; hurt(tune.leak_enemy, 'slipped past'); state.leakFlash = 0.5; }
+    if (!e.dead && !(e.charm > 0) && e.k !== 'mother' && Math.hypot(e.x - p.x, e.y - p.y) < e.r + PR) {
+      if (tr.contact_charm && rng() < tr.contact_charm) { e.charm = tune.charm_time; floatText('charmed', e.x, e.y - 20, '#ff6fc8', 14, 0.7); }
+      else { e.dead = true; sparks(e.x, e.y, '#b5c43a', 10); if (p.iframe <= 0) { hurt(tune.hit_damage + tr.bite, 'bitten'); p.iframe = tune.iframes + tr.iframes; } }
+    }
+    if (!e.dead && e.y > H + e.r) { e.dead = true; hurt(Math.max(0, tune.leak_enemy - tr.leak_guard), 'slipped past'); state.waveLeak = true; state.leakFlash = 0.5; }
   }
-  // matter
+  // falling matter
   for (const m of state.matter) {
-    m.flash = Math.max(0, m.flash - dt);
-    const slowF = m.slow ? 1 - m.slow.f : 1;
-    if (m.slow && (m.slow.t -= dt) <= 0) m.slow = null;
-    if (m.burn) { damage(m, m.burn.dps * dt, '#ff5a36'); if ((m.burn.t -= dt) <= 0) m.burn = null; }
-    m.x += m.vx * dt * slowF; m.y += m.vy * dt * slowF;
-    if (m.rect) m.a += m.spin * dt * slowF; else m.rot += m.spin * dt;
+    statusTick(m, dt); if (m.dead) continue;
+    const f = m.slow ? 1 - m.slow.f : 1;
+    m.x += m.vx * dt * f; m.y += m.vy * dt * f;
+    if (m.rect) m.a += m.spin * dt * f; else m.rot += m.spin * dt;
     const ext = m.rect ? 20 : m.r;
     if (m.x < RL + ext) { m.x = RL + ext; m.vx = Math.abs(m.vx); }
     if (m.x > RR - ext) { m.x = RR - ext; m.vx = -Math.abs(m.vx); }
-    // body-check the blob
     const n = hitNormal({ x: p.x, y: p.y, r: PR }, m);
-    if (n && !m.dead) {
+    if (n) {
       p.x += n.nx * n.push; p.y += n.ny * n.push + 1;
-      p.x = Math.max(RL + PR, Math.min(RR - PR, p.x)); p.y = Math.max(tune.band_top, Math.min(H - PR - 6, p.y));
-      if (p.iframe <= 0) { hurt(tune.bump_damage, 'struck'); p.iframe = tune.iframes; }
+      p.x = Math.max(RL + PR, Math.min(RR - PR, p.x)); p.y = Math.max(top, Math.min(H - PR - 6, p.y));
+      if (p.iframe <= 0) { hurt(tune.bump_damage, 'struck'); p.iframe = tune.iframes + tr.iframes; }
     }
-    if (!m.dead && m.y > H + m.r + 20) { m.dead = true; hurt(tune.leak_matter, 'slipped past'); state.leakFlash = 0.4; }
+    if (m.y > H + m.r + 20) { m.dead = true; hurt(Math.max(0, tune.leak_matter - tr.leak_guard), 'slipped past'); state.waveLeak = true; state.leakFlash = 0.4; }
   }
   // fields
-  for (const f of state.fields) {
-    f.t -= dt;
+  for (const fd of state.fields) {
+    fd.t -= dt;
+    if (fd.k === 'storm') {
+      fd.zap -= dt;
+      if (fd.zap <= 0) {
+        fd.zap = 0.35;
+        const inside = state.enemies.filter(e => !e.dead && !(e.charm > 0) && Math.hypot(e.x - fd.x, e.y - fd.y) < fd.r);
+        if (inside.length) {
+          const e = inside[Math.floor(rng() * inside.length)]; damage(e, tune.storm_zap, null);
+          if (fd.fx.includes('burn')) e.burn = { t: tune.burn_time, dps: tune.burn_dps };
+          if (fd.fx.includes('chill')) e.slow = { t: tune.chill_time, f: tune.chill_slow };
+          if (fd.fx.includes('venom')) e.venom = { n: Math.min(tune.venom_stacks, (e.venom ? e.venom.n : 0) + 1), t: tune.venom_time };
+          state.arcs.push({ pts: [[fd.x, fd.y - 20], [e.x, e.y]], t: 0.15, c: fd.c });
+        }
+      }
+    }
     for (const e of state.enemies) {
-      if (e.k === 'mother') continue;
-      const dx = f.x - e.x, dy = f.y - e.y, d = Math.hypot(dx, dy);
-      if (d > f.r) continue;
-      if (f.k === 'pull' || f.k === 'well') { const s = tune.pull_strength * dt * (f.k === 'well' ? 0.8 : 1); if (d > 4) { e.x += dx / d * Math.min(s, d); e.y += dy / d * Math.min(s, d); } }
-      if (f.k === 'well') damage(e, tune.well_dps * dt, f.c);
-      if (f.k === 'stasis') e.slow = { t: 0.25, f: tune.field_slow };
+      if (e.dead || e.charm > 0) continue;
+      const dx = fd.x - e.x, dy = fd.y - e.y, d = Math.hypot(dx, dy);
+      if (d > fd.r) continue;
+      const small = e.k === 'pod' || e.k === 'grazer';
+      if (e.k !== 'mother' && (fd.k === 'pull' || fd.k === 'well' || fd.k === 'vortex' || fd.k === 'hole')) {
+        const s = tune.pull_strength * dt * (fd.strong || 1) * (fd.k === 'hole' ? 1.6 : 1); if (d > 4) { e.x += dx / d * Math.min(s, d); e.y += dy / d * Math.min(s, d); }
+        if (fd.charm) e.charm = Math.max(e.charm || 0, 1);
+      }
+      if (fd.k === 'well') { damage(e, tune.well_dps * dt, null); if (!e.burn) e.burn = { t: 0.5, dps: tune.burn_dps }; }
+      if (fd.k === 'vortex') damage(e, tune.well_dps * 0.7 * dt, null);
+      if (fd.k === 'hole') { if (small && d < 26) kill(e, null); else damage(e, 2 * dt, null); }
+      if (fd.k === 'stasis' && e.k !== 'mother') e.slow = { t: 0.25, f: tune.field_slow };
+      if (fd.k === 'thorns') {
+        damage(e, tune.thorns_dps * dt, null);
+        if (fd.fx) {
+          if (fd.fx.includes('chill')) e.slow = { t: 0.4, f: tune.chill_slow };
+          if (fd.fx.includes('burn') && !e.burn) e.burn = { t: 1, dps: tune.burn_dps };
+          if (fd.fx.includes('charm') && e.k !== 'mother' && !(e.charm > 0)) e.charm = 1.2;
+          if (fd.fx.includes('sleep') && e.k !== 'mother') e.sleep = Math.max(e.sleep || 0, 0.3);
+        }
+      }
+      if (fd.k === 'spore') { if (!e.venom) e.venom = { n: 1, t: tune.venom_time }; else e.venom.t = tune.venom_time; }
     }
   }
   // bolts
   for (const b of state.bolts) {
     b.trail.push(b.x, b.y); if (b.trail.length > 12) b.trail.splice(0, 2);
-    b.x += b.vx * dt; b.y += b.vy * dt;
-    if (b.x < RL + b.r) { b.x = RL + b.r; b.vx = Math.abs(b.vx); b.bounces--; b.last = null; }
-    if (b.x > RR - b.r) { b.x = RR - b.r; b.vx = -Math.abs(b.vx); b.bounces--; b.last = null; }
-    if (b.y < b.r) { b.y = b.r; b.vy = Math.abs(b.vy); b.bounces--; b.last = null; }
+    if (b.orbitT > 0) { // circles the blob as a guard, then launches along the aim
+      b.orbitT -= dt; b.orbitA += 7 * dt; b.x = p.x + Math.cos(b.orbitA) * 56; b.y = p.y + Math.sin(b.orbitA) * 56;
+      if (b.orbitT <= 0) { const s = Math.hypot(b.vx, b.vy); b.vx = Math.cos(p.aim) * s; b.vy = Math.sin(p.aim) * s; }
+    } else {
+      if (b.homing) { const e = nearestEnemy(b.x, b.y, 500); if (e) steer(b, e.x, e.y, 6, dt); }
+      if (b.boomT !== undefined) { b.boomT -= dt; if (b.boomT <= 0 && !b.back) { b.back = true; b.hitSet.clear(); } if (b.back) { steer(b, p.x, p.y, 9, dt); if (Math.hypot(b.x - p.x, b.y - p.y) < 26) b.dead = true; } }
+      if (b.singT !== undefined && (b.singT -= dt) <= 0 && !b.dead) { b.dead = true; state.fields.push({ k: 'hole', x: b.x, y: b.y, r: 130, t: 1.6, max: 1.6, c: b.color }); tone(60, 0.8, 'sine', 0.2, 0.5); }
+      b.x += b.vx * dt; b.y += b.vy * dt;
+    }
+    const wallHit = () => { b.bounces--; b.bounced++; b.hitSet.clear(); if (b.fx.includes('snowball')) { b.dmg += 0.35; b.r = Math.min(13, b.r + 0.4); } };
+    if (b.x < RL + b.r) { b.x = RL + b.r; b.vx = Math.abs(b.vx); wallHit(); }
+    if (b.x > RR - b.r) { b.x = RR - b.r; b.vx = -Math.abs(b.vx); wallHit(); }
+    if (b.y < b.r) { b.y = b.r; b.vy = Math.abs(b.vy); wallHit(); }
     if (b.y > H + 20) b.dead = true;
-    for (const list of [state.enemies, state.matter]) {
-      for (const t of list) {
-        if (t.dead || t === b.last || b.dead) continue;
-        const n = hitNormal(b, t);
-        if (!n) continue;
-        reflect(b, n); b.last = t; b.bounces--;
-        boltHits(b, t, list === state.enemies);
-      }
+    for (const list of [state.enemies, state.matter]) for (const t of list) {
+      if (t.dead || b.dead || b.hitSet.has(t) || t.charm > 0) continue;
+      const n = hitNormal(b, t); if (!n) continue;
+      if (b.pierce > 0) { b.pierce--; b.hitSet.add(t); }
+      else if (!(b.orbitT > 0)) { reflect(b, n); b.bounces--; b.bounced++; b.hitSet.clear(); b.hitSet.add(t); }
+      else b.hitSet.add(t);
+      boltHits(b, t, list === state.enemies);
     }
     if (b.bounces < 0) { b.dead = true; sparks(b.x, b.y, b.color, 3, 60); }
   }
-  // globs
+  // globs, walls, decoys, allies, meteors, mines
   for (const g of state.globs) {
-    g.x += g.vx * dt; g.y += g.vy * dt; g.t += dt;
+    g.x += g.vx * dt; g.y += g.vy * dt;
     if (g.y > H + 20 || g.x < RL - 10 || g.x > RR + 10) g.dead = true;
+    for (const w of state.walls) if (Math.abs(g.x - w.x) < w.w / 2 && Math.abs(g.y - w.y) < w.h / 2 + 6) { g.dead = true; sparks(g.x, g.y, '#c8a77a', 3); }
     if (!g.dead && Math.hypot(g.x - p.x, g.y - p.y) < PR + 8) {
-      g.dead = true; sparks(g.x, g.y, '#b5c43a', 6);
-      if (p.iframe <= 0) { hurt(tune.glob_damage, 'spat on'); p.iframe = tune.iframes; }
+      g.dead = true;
+      if (tr.glob_dodge && rng() < tr.glob_dodge) floatText('passed through', p.x, p.y - 40, '#ffffff', 14, 0.6);
+      else { sparks(g.x, g.y, '#b5c43a', 6); if (p.iframe <= 0) { hurt(tune.glob_damage, 'spat on'); p.iframe = tune.iframes + tr.iframes; } }
     }
   }
-  // motes fly to the blob
+  for (const w of state.walls) w.t -= dt;
+  for (const d of state.decoys) d.t -= dt;
+  for (const a of state.allies) {
+    a.t -= dt; const e = nearestEnemy(a.x, a.y, 900);
+    if (e) { const dx = e.x - a.x, dy = e.y - a.y, d = Math.hypot(dx, dy) || 1; a.x += dx / d * 220 * dt; a.y += dy / d * 220 * dt; if (d < e.r + 8) { damage(e, 3, null); sparks(a.x, a.y, '#ff6fc8', 8); a.t = 0; } }
+    else a.y -= 60 * dt;
+  }
+  for (const m of state.meteors) if ((m.t -= dt) <= 0) {
+    m.done = true; sparks(m.x, m.y, '#ffd27a', 20, 320); state.shake = Math.min(12, state.shake + 5); tone(70, 0.4, 'triangle', 0.25, 0.5);
+    for (const list of [state.enemies, state.matter]) for (const t of list) if (!(t.charm > 0) && Math.hypot(t.x - m.x, t.y - m.y) < tune.meteor_radius + (t.r || 20)) { damage(t, tune.meteor_damage * state.tr.damage, null); if (!t.dead) t.burn = { t: tune.burn_time, dps: tune.burn_dps }; }
+  }
+  for (const m of state.mines) {
+    if (!m.tg.dead) { m.x = m.tg.x + m.ox; m.y = m.tg.y + m.oy; } else if (m.x === undefined) { m.x = m.tg.x; m.y = m.tg.y; }
+    if ((m.t -= dt) <= 0) {
+      m.done = true; sparks(m.x, m.y, m.c, 18, 280); tone(100, 0.3, 'square', 0.15, 0.5);
+      for (const list of [state.enemies, state.matter]) for (const t of list) if (!(t.charm > 0) && Math.hypot(t.x - m.x, t.y - m.y) < tune.mine_radius + (t.r || 20)) { damage(t, tune.mine_damage * state.tr.damage, null); if (m.burn && !t.dead) t.burn = { t: tune.burn_time, dps: tune.burn_dps }; }
+    }
+  }
+  // void energy and petals fly to the blob
+  const magnet = tune.magnet_radius + tr.magnet;
   for (const m of state.motes) {
-    m.t += dt;
-    const dx = p.x - m.x, dy = p.y - m.y, d = Math.hypot(dx, dy) || 1;
-    if (d < tune.magnet_radius || state.phase === 'clear' || m.t > 6) {
-      const s = tune.mote_speed * Math.min(1, 0.4 + m.t);
-      m.vx += (dx / d * s - m.vx) * Math.min(1, dt * 8); m.vy += (dy / d * s - m.vy) * Math.min(1, dt * 8);
-    } else { m.vx *= 1 - dt * 2.5; m.vy = m.vy * (1 - dt * 2.5) + 30 * dt; }
+    m.t += dt; const dx = p.x - m.x, dy = p.y - m.y, d = Math.hypot(dx, dy) || 1;
+    if (d < magnet || state.phase === 'clear' || state.magnetT > 0 || m.t > 6) { const s = tune.mote_speed * Math.min(1, 0.4 + m.t); m.vx += (dx / d * s - m.vx) * Math.min(1, dt * 8); m.vy += (dy / d * s - m.vy) * Math.min(1, dt * 8); }
+    else { m.vx *= 1 - dt * 2.5; m.vy = m.vy * (1 - dt * 2.5) + 30 * dt; }
     m.x += m.vx * dt; m.y += m.vy * dt;
-    if (d < PR + 6) { m.dead = true; state.voidE++; state.totalVoid++; tone(1200 + (state.voidE % 8) * 60, 0.05, 'sine', 0.04); }
+    if (d < PR + 6) { m.dead = true; const n = 1 + (tr.mote_bonus && rng() < tr.mote_bonus ? 1 : 0); state.voidE += n; track('motes', n); tone(1200 + (state.voidE % 8) * 60, 0.05, 'sine', 0.035); }
+  }
+  for (const pt of state.petals) {
+    pt.t += dt; const dx = p.x - pt.x, dy = p.y - pt.y, d = Math.hypot(dx, dy) || 1;
+    if (d < 160 || pt.t > 1.5) { pt.vx += (dx / d * 400 - pt.vx) * Math.min(1, dt * 6); pt.vy += (dy / d * 400 - pt.vy) * Math.min(1, dt * 6); } else { pt.vx *= 0.96; pt.vy = pt.vy * 0.96 + 20 * dt; }
+    pt.x += pt.vx * dt; pt.y += pt.vy * dt; if (d < PR + 8) { pt.dead = true; heal(1); }
   }
   for (const q of state.parts) { q.x += q.vx * dt; q.y += q.vy * dt; q.vx *= 0.92; q.vy *= 0.92; q.life -= dt; }
   for (const f of state.floaters) { f.life -= dt; f.y -= 18 * dt; }
-  state.enemies = state.enemies.filter(e => !e.dead);
-  state.matter = state.matter.filter(m => !m.dead);
-  state.bolts = state.bolts.filter(b => !b.dead);
-  if (state.bolts.length > 90) state.bolts.splice(0, state.bolts.length - 90);
-  state.globs = state.globs.filter(g => !g.dead);
-  state.motes = state.motes.filter(m => !m.dead);
-  state.fields = state.fields.filter(f => f.t > 0);
-  state.parts = state.parts.filter(q => q.life > 0);
-  state.floaters = state.floaters.filter(f => f.life > 0);
+  for (const bm of state.beams) bm.t -= dt;
+  for (const a of state.arcs) a.t -= dt;
+  const alive = x => !x.dead && !x.done;
+  state.enemies = state.enemies.filter(alive); state.matter = state.matter.filter(alive);
+  state.bolts = state.bolts.filter(alive); if (state.bolts.length > 120) state.bolts.splice(0, state.bolts.length - 120);
+  state.globs = state.globs.filter(alive); state.motes = state.motes.filter(alive); state.petals = state.petals.filter(alive);
+  state.fields = state.fields.filter(f => f.t > 0); state.parts = state.parts.filter(q => q.life > 0); state.floaters = state.floaters.filter(f => f.life > 0);
+  state.walls = state.walls.filter(w => w.t > 0); state.decoys = state.decoys.filter(d => d.t > 0); state.allies = state.allies.filter(a => a.t > 0);
+  state.meteors = state.meteors.filter(alive); state.mines = state.mines.filter(alive); state.beams = state.beams.filter(b => b.t > 0); state.arcs = state.arcs.filter(a => a.t > 0);
   state.shake = Math.max(0, state.shake - dt * 30); state.leakFlash = Math.max(0, state.leakFlash - dt);
-
-  if (state.energy <= 0) {
-    state.energy = 0;
-    state.gained = `Your light gutters out on stage ${state.stage}, wave ${state.waveN}`;
-    scene = 'over'; tone(60, 1.2, 'sawtooth', 0.25, 0.4); events.push({ type: 'over' });
-  }
+  if (state.energy <= 0) endRun(false);
 }
-function shootGlob(x, y, a) { const s = tune.glob_speed * spScale(); state.globs.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: 0 }); }
-function absorbFirst() {
-  const n = NATURE_IDS[Math.floor(rng() * NATURE_IDS.length)];
-  state.firstNature = n;
-  for (let i = 0; i < tune.start_plain; i++) state.deck.push(makeCard([]));
-  for (let i = 0; i < tune.start_nature; i++) state.deck.push(makeCard([n]));
+function shootGlob(x, y, a) { const s = tune.glob_speed * spScale(); state.globs.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s }); }
+function absorbFirst() { // the very first adventure: the firefly's light becomes the innate nature
+  const n = NIDS[Math.floor(rng() * NIDS.length)];
+  meta.innate = n; meta.discovered = [n];
+  addCards(stackKey([], 1), 4); addCards(stackKey([n], 1), 2);
+  meta.seen[stackKey([], 1)] = true; meta.seen[stackKey([n], 1)] = true;
+  meta.loadout = { [stackKey([], 1)]: 4, [stackKey([n], 1)]: 2 };
+  saveMeta();
+  for (let i = 0; i < 4; i++) state.deck.push({ id: state.nextId++, natures: [], level: 1 });
+  for (let i = 0; i < 2; i++) state.deck.push({ id: state.nextId++, natures: [n], level: 1 });
+  state.form = n; state.tr = formTraits(n); state.statusMul = state.tr.status; state.maxEnergy = tune.max_energy + state.tr.max_energy; state.energy = state.maxEnergy;
   sparks(RCX, 575, BASE[n].color, 30, 300); tone(330, 0.6, 'sine', 0.2, 2.5);
-  floatText(`You absorb ${BASE[n].name}: ${RECIPES[n].says}`, RCX, 470, BASE[n].color, 20, 3);
+  floatText(`Your innate nature: ${BASE[n].name}`, RCX, 430, BASE[n].color, 26, 3.2);
+  floatText(`${RECIPES[n].says}  You take the shape of a ${BASE[n].formName}.`, RCX, 466, '#e9dcff', 16, 3.2);
   events.push({ type: 'absorb', nature: n });
   startWave();
 }
-function afterWave() {
-  if (state.stage === 3 && state.waveN === 3) {
-    state.gained = 'The Mother falls. The rift is yours.';
-    scene = 'results'; events.push({ type: 'win' }); tone(523, 0.8, 'sine', 0.2, 1.5); return;
-  }
-  if (state.waveN < 3) { openPick(); return; }
-  scene = 'altar'; state.sel = []; state.reveal = null;
-  state.msg = 'Spend void energy: draw natures, fuse two cards, or annul opposites.'; state.msgC = '#ddd';
-}
-function nextWave() {
-  if (state.waveN < 3) state.waveN++; else { state.stage++; state.waveN = 1; }
-  scene = 'play'; startWave();
-}
-function openPick() {
-  const ids = shuffle([...NATURE_IDS]).slice(0, 3);
-  state.pick = ids.map(n => makeCard([n], state.stage >= 2 && rng() < 0.2 ? 2 : 1));
-  scene = 'pick';
+function endRun(won) {
+  const kept = won ? 1 : tune.loss_keep;
+  state.banked = Math.round(state.voidE * state.voidMul * kept) + (won ? tune.win_bonus : 0);
+  meta.bank += state.banked; meta.runs++;
+  if (won) { meta.wins++; if (state.depth >= meta.maxDepth) meta.maxDepth = state.depth + 1; }
+  const keys = Object.keys(OMENS); meta.omen = keys[Math.floor(rng() * keys.length)];
+  saveMeta();
+  state.won = won;
+  state.gained = won ? 'The Mother falls. The rift is yours.' : `Your light gutters out on stage ${state.stage}, wave ${state.waveN}`;
+  scene = won ? 'results' : 'over';
+  tone(won ? 523 : 60, 1, won ? 'sine' : 'sawtooth', 0.22, won ? 1.5 : 0.4);
+  events.push({ type: won ? 'win' : 'over' });
 }
 
-// ---- Drawing: the look ------------------------------------------------------------------------
+// ---- Drawing: the void and its figures -----------------------------------------------------------
 const INK = '#07040d';
 const stars = (() => { let s = 7; const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
-  return Array.from({ length: 160 }, () => ({ x: r() * W, y: r() * H, z: 0.2 + r() * 0.8, tw: r() * 6 })); })();
+  return Array.from({ length: 170 }, () => ({ x: r() * W, y: r() * H, z: 0.2 + r() * 0.8, tw: r() * 6 })); })();
 const farShapes = (() => { let s = 11; const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
   return Array.from({ length: 6 }, (_, i) => ({ x: RL + 40 + r() * (RR - RL - 80), y: r() * H, k: i % 3, s: 30 + r() * 50, rot: r() * 6 })); })();
-function drawBackdrop(t) {
+function drawBackdrop(t, clip = true) {
   clear('#020107');
-  ctx.save(); ctx.beginPath(); ctx.rect(RL, 0, RR - RL, H); ctx.clip();
-  ctx.fillStyle = '#000000'; ctx.fillRect(RL, 0, RR - RL, H);
-  for (const f of farShapes) { // drifting silhouettes far away: rock, wreck, ruin
+  ctx.save(); if (clip) { ctx.beginPath(); ctx.rect(RL, 0, RR - RL, H); ctx.clip(); ctx.fillStyle = '#000'; ctx.fillRect(RL, 0, RR - RL, H); }
+  for (const f of farShapes) {
     const y = (f.y + t * 6) % (H + 200) - 100;
-    ctx.save(); ctx.translate(f.x, y); ctx.rotate(f.rot + t * 0.02); ctx.fillStyle = '#0a0910'; ctx.strokeStyle = '#141119'; ctx.lineWidth = 1;
-    ctx.beginPath();
+    ctx.save(); ctx.translate(clip ? f.x : f.x * 1.6 - 300, y); ctx.rotate(f.rot + t * 0.02); ctx.fillStyle = '#0a0910'; ctx.strokeStyle = '#141119'; ctx.lineWidth = 1; ctx.beginPath();
     if (f.k === 0) { for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283, rr = f.s * (0.75 + 0.25 * Math.sin(i * 2.3)); ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } }
     else if (f.k === 1) { ctx.moveTo(-f.s, -f.s * 0.2); ctx.lineTo(f.s * 0.8, -f.s * 0.35); ctx.lineTo(f.s, 0); ctx.lineTo(f.s * 0.3, f.s * 0.3); ctx.lineTo(-f.s * 0.9, f.s * 0.2); }
     else { ctx.moveTo(-f.s, -f.s * 0.3); ctx.lineTo(-f.s * 0.2, -f.s * 0.3); ctx.lineTo(-f.s * 0.1, -f.s * 0.5); ctx.lineTo(f.s * 0.5, -f.s * 0.45); ctx.lineTo(f.s, -f.s * 0.1); ctx.lineTo(f.s * 0.7, f.s * 0.3); ctx.lineTo(-f.s * 0.6, f.s * 0.3); ctx.lineTo(-f.s * 0.8, f.s * 0.1); }
     ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
   }
-  for (const s of stars) {
-    if (s.x < RL || s.x > RR) continue;
-    const y = (s.y + t * 14 * s.z) % H, a = 0.25 + 0.35 * s.z * (0.7 + 0.3 * Math.sin(t * 2 + s.tw));
-    ctx.fillStyle = `rgba(210,200,255,${a})`; ctx.fillRect(s.x, y, s.z * 1.8, s.z * 1.8);
-  }
+  for (const s of stars) { if (clip && (s.x < RL || s.x > RR)) continue; const y = (s.y + t * 14 * s.z) % H, a = 0.25 + 0.35 * s.z * (0.7 + 0.3 * Math.sin(t * 2 + s.tw)); ctx.fillStyle = `rgba(210,200,255,${a})`; ctx.fillRect(s.x, y, s.z * 1.8, s.z * 1.8); }
   ctx.restore();
-  // rift walls: torn glowing edges
-  for (const x of [RL, RR]) {
-    ctx.save(); ctx.strokeStyle = '#6b4bb3'; ctx.shadowColor = '#8f6bff'; ctx.shadowBlur = CHEAP ? 0 : 12; ctx.lineWidth = 2;
-    ctx.beginPath(); for (let y = 0; y <= H; y += 24) ctx.lineTo(x + Math.sin(y * 0.07 + t * 1.3 + x) * 3, y); ctx.stroke(); ctx.restore();
-  }
+  if (clip) for (const x of [RL, RR]) { ctx.save(); ctx.strokeStyle = '#6b4bb3'; ctx.shadowColor = '#8f6bff'; ctx.shadowBlur = CHEAP ? 0 : 12; ctx.lineWidth = 2; ctx.beginPath(); for (let y = 0; y <= H; y += 24) ctx.lineTo(x + Math.sin(y * 0.07 + t * 1.3 + x) * 3, y); ctx.stroke(); ctx.restore(); }
 }
 function glowStroke(color, blur = 12, lw = 2) { ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.shadowColor = color; ctx.shadowBlur = CHEAP ? 0 : blur; ctx.stroke(); ctx.shadowBlur = 0; }
 
-// The blob in each of its forms, facing up. s scales it (1 = play size).
+// The blob's forms, facing up, about 30 px across at scale 1. Inky body, glowing rim. Each returns its eye height.
+const FORM_PATHS = {
+  blob(t) { for (let i = 0; i <= 14; i++) { const a = i / 14 * 6.283, r = 18 + Math.sin(a * 3 + t * 2.4) * 2.5 + Math.sin(a * 5 - t * 1.7) * 1.5; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.closePath(); return -4; },
+  dragon(t, w) {
+    ctx.moveTo(0, -24); ctx.lineTo(5, -18); ctx.lineTo(9, -26); ctx.lineTo(8, -14); ctx.quadraticCurveTo(14, -8, 30, -16 + w); ctx.lineTo(26, -6 + w); ctx.lineTo(34, -2 + w); ctx.lineTo(24, 2 + w); ctx.lineTo(28, 8 + w);
+    ctx.quadraticCurveTo(14, 4, 8, 10); ctx.quadraticCurveTo(6, 22, 12, 30); ctx.quadraticCurveTo(0, 22, -8, 10); ctx.quadraticCurveTo(-14, 4, -28, 8 - w); ctx.lineTo(-24, 2 - w); ctx.lineTo(-34, -2 - w); ctx.lineTo(-26, -6 - w); ctx.lineTo(-30, -16 - w);
+    ctx.quadraticCurveTo(-14, -8, -8, -14); ctx.lineTo(-9, -26); ctx.lineTo(-5, -18); ctx.closePath(); return -17;
+  },
+  bird(t, w) {
+    ctx.moveTo(0, -26); ctx.lineTo(5, -16); ctx.quadraticCurveTo(18, -14, 34, -4 + w * 2); ctx.quadraticCurveTo(20, 0, 9, 4); ctx.lineTo(10, 16); ctx.lineTo(4, 12); ctx.lineTo(0, 22); ctx.lineTo(-4, 12); ctx.lineTo(-10, 16); ctx.lineTo(-9, 4);
+    ctx.quadraticCurveTo(-20, 0, -34, -4 - w * 2); ctx.quadraticCurveTo(-18, -14, -5, -16); ctx.closePath(); return -17;
+  },
+  rat(t, w) {
+    ctx.moveTo(0, -24); ctx.quadraticCurveTo(6, -18, 7, -14); ctx.arc(12, -15, 6, Math.PI * 0.9, Math.PI * 2.4); ctx.quadraticCurveTo(16, 0, 10, 12); ctx.quadraticCurveTo(4, 18, 2, 18);
+    ctx.quadraticCurveTo(14 + w * 3, 26, 4 + w * 3, 34); ctx.quadraticCurveTo(10 + w * 3, 24, -2, 18); ctx.quadraticCurveTo(-8, 18, -10, 12); ctx.quadraticCurveTo(-16, 0, -12, -9); ctx.arc(-12, -15, 6, Math.PI * 0.6, Math.PI * 2.1); ctx.quadraticCurveTo(-6, -18, 0, -24); ctx.closePath(); return -16;
+  },
+  humanoid(t, w) {
+    ctx.moveTo(0, -27); ctx.quadraticCurveTo(8, -27, 7, -19); ctx.quadraticCurveTo(6, -15, 4, -14); ctx.quadraticCurveTo(14, -13, 15, -6); ctx.lineTo(19, 10 + w); ctx.lineTo(14, 10 + w); ctx.lineTo(11, -2); ctx.lineTo(9, 14);
+    ctx.quadraticCurveTo(6, 22, 3, 28 + w); ctx.lineTo(0, 20); ctx.lineTo(-3, 28 - w); ctx.quadraticCurveTo(-6, 22, -9, 14); ctx.lineTo(-11, -2); ctx.lineTo(-14, 10 - w); ctx.lineTo(-19, 10 - w); ctx.lineTo(-15, -6);
+    ctx.quadraticCurveTo(-14, -13, -4, -14); ctx.quadraticCurveTo(-6, -15, -7, -19); ctx.quadraticCurveTo(-8, -27, 0, -27); ctx.closePath(); return -21;
+  },
+  lion(t, w) { // a maned head over a crouched body and a tufted tail
+    ctx.moveTo(-11, 2); ctx.quadraticCurveTo(-15, 18, -8, 26); ctx.lineTo(8, 26); ctx.quadraticCurveTo(15, 18, 11, 2); ctx.closePath();
+    ctx.moveTo(6, 24); ctx.quadraticCurveTo(18 + w * 2, 30, 20 + w * 2, 18); ctx.lineTo(25 + w * 2, 14); ctx.lineTo(18 + w * 2, 13); ctx.quadraticCurveTo(16, 26, 6, 21);
+    ctx.moveTo(19, -12); for (let i = 1; i <= 16; i++) { const a = i / 16 * 6.283, r = i % 2 ? 14 : 20; ctx.lineTo(Math.cos(a) * r, -12 + Math.sin(a) * r); } ctx.closePath();
+    return -14;
+  },
+  serpent(t) { // a swaying S of a body under a diamond head
+    const pts = []; for (let i = 0; i <= 12; i++) pts.push([Math.sin(i * 0.65 + t * 3) * 10, -12 + i * 3.6, 6 - i * 0.35]);
+    ctx.moveTo(0, -30); ctx.lineTo(9, -20); ctx.lineTo(pts[0][0] + pts[0][2], pts[0][1]);
+    for (const [x, y, r] of pts) ctx.lineTo(x + r, y);
+    for (let i = pts.length - 1; i >= 0; i--) ctx.lineTo(pts[i][0] - pts[i][2], pts[i][1]);
+    ctx.lineTo(-9, -20); ctx.closePath(); return -22;
+  },
+  moth(t) { // four broad wings, feathered antennae
+    const f = 1 + Math.sin(t * 9) * 0.08;
+    ctx.moveTo(0, -12); ctx.bezierCurveTo(14 * f, -28, 34 * f, -18, 30 * f, -2); ctx.quadraticCurveTo(14, 0, 3, 0); ctx.bezierCurveTo(18 * f, 6, 22 * f, 20, 8, 20); ctx.lineTo(2, 12); ctx.lineTo(0, 22);
+    ctx.lineTo(-2, 12); ctx.lineTo(-8, 20); ctx.bezierCurveTo(-22 * f, 20, -18 * f, 6, -3, 0); ctx.quadraticCurveTo(-14, 0, -30 * f, -2); ctx.bezierCurveTo(-34 * f, -18, -14 * f, -28, 0, -12); ctx.closePath();
+    ctx.moveTo(-1, -12); ctx.quadraticCurveTo(-6, -24, -13, -29); ctx.lineTo(-12, -26); ctx.quadraticCurveTo(-5, -22, 1, -12);
+    ctx.moveTo(1, -12); ctx.quadraticCurveTo(6, -24, 13, -29); ctx.lineTo(12, -26); ctx.quadraticCurveTo(5, -22, -1, -12); return -9;
+  },
+  toad(t, w) { // squat and wide, bulging eyes, splayed legs
+    ctx.moveTo(-15, -16); ctx.quadraticCurveTo(-15, -26, -8, -25); ctx.quadraticCurveTo(-3, -24, -3, -19); ctx.lineTo(3, -19); ctx.quadraticCurveTo(3, -24, 8, -25); ctx.quadraticCurveTo(15, -26, 15, -16);
+    ctx.quadraticCurveTo(22, -6, 20, 6); ctx.lineTo(30, 4 + w); ctx.lineTo(26, 12 + w); ctx.lineTo(18, 14); ctx.quadraticCurveTo(10, 22, 0, 22); ctx.quadraticCurveTo(-10, 22, -18, 14); ctx.lineTo(-26, 12 - w); ctx.lineTo(-30, 4 - w); ctx.lineTo(-20, 6); ctx.quadraticCurveTo(-22, -6, -15, -16); ctx.closePath(); return -20;
+  },
+  snail(t) { // a spiral shell and a soft foot with eye stalks
+    ctx.moveTo(-6, -8); ctx.quadraticCurveTo(-8, -20, -5, -26); ctx.lineTo(-2, -25); ctx.quadraticCurveTo(-3, -16, 0, -10); ctx.quadraticCurveTo(3, -16, 2, -25); ctx.lineTo(5, -26); ctx.quadraticCurveTo(8, -20, 6, -8);
+    ctx.quadraticCurveTo(12, 6, 6, 28); ctx.lineTo(-6, 28); ctx.quadraticCurveTo(-12, 6, -6, -8); ctx.closePath();
+    ctx.moveTo(20, 10); for (let i = 0; i <= 30; i++) { const a = i * 0.42, r = 16 - i * 0.45; ctx.lineTo(4 + Math.cos(a) * r, 10 + Math.sin(a) * r); }
+    return -24;
+  },
+  tortoise(t, w) { // a domed shell, head and four flippers
+    ctx.moveTo(0, -30); ctx.quadraticCurveTo(7, -30, 6, -20); ctx.lineTo(10, -18); ctx.lineTo(22, -24 + w); ctx.lineTo(18, -12); ctx.quadraticCurveTo(22, 2, 18, 12); ctx.lineTo(24, 22 - w); ctx.lineTo(12, 20);
+    ctx.lineTo(4, 26); ctx.lineTo(0, 30); ctx.lineTo(-4, 26); ctx.lineTo(-12, 20); ctx.lineTo(-24, 22 + w); ctx.lineTo(-18, 12); ctx.quadraticCurveTo(-22, 2, -18, -12); ctx.lineTo(-22, -24 - w); ctx.lineTo(-10, -18); ctx.lineTo(-6, -20); ctx.quadraticCurveTo(-7, -30, 0, -30); ctx.closePath();
+    ctx.moveTo(-8, -6); ctx.lineTo(0, -12); ctx.lineTo(8, -6); ctx.lineTo(8, 6); ctx.lineTo(0, 12); ctx.lineTo(-8, 6); ctx.closePath(); return -25;
+  },
+  stag(t) { // a long head crowned with branching antlers
+    ctx.moveTo(0, -12); ctx.quadraticCurveTo(8, -12, 8, -2); ctx.quadraticCurveTo(14, 4, 12, 18); ctx.lineTo(6, 28); ctx.lineTo(-6, 28); ctx.lineTo(-12, 18); ctx.quadraticCurveTo(-14, 4, -8, -2); ctx.quadraticCurveTo(-8, -12, 0, -12); ctx.closePath();
+    for (const s of [-1, 1]) { ctx.moveTo(s * 5, -10); ctx.lineTo(s * 12, -22); ctx.lineTo(s * 22, -28); ctx.moveTo(s * 12, -22); ctx.lineTo(s * 10, -34); ctx.moveTo(s * 17, -25); ctx.lineTo(s * 26, -20); ctx.moveTo(s * 8, -4); ctx.lineTo(s * 18, -8); }
+    return -5;
+  },
+  swan(t, w) { // an S-neck over a teardrop body and a raised wing
+    ctx.moveTo(-2, -30); ctx.lineTo(5, -32); ctx.lineTo(3, -27); ctx.quadraticCurveTo(-8, -20, 2, -8); ctx.quadraticCurveTo(18, 0, 22, -14 + w * 2); ctx.quadraticCurveTo(26, 8, 10, 20); ctx.quadraticCurveTo(0, 28, -10, 20);
+    ctx.quadraticCurveTo(-18, 10, -10, 0); ctx.quadraticCurveTo(-6, -4, -4, -8); ctx.quadraticCurveTo(-14, -20, -2, -30); ctx.closePath(); return -29;
+  },
+  manta(t, w) { // a wide ray with horn fins and a whip tail
+    ctx.moveTo(-6, -20); ctx.lineTo(-4, -12); ctx.lineTo(4, -12); ctx.lineTo(6, -20); ctx.lineTo(9, -10); ctx.quadraticCurveTo(24, -8, 36, 4 + w * 2); ctx.quadraticCurveTo(18, 6, 8, 14); ctx.lineTo(2, 16); ctx.lineTo(1, 34);
+    ctx.lineTo(-1, 34); ctx.lineTo(-2, 16); ctx.lineTo(-8, 14); ctx.quadraticCurveTo(-18, 6, -36, 4 - w * 2); ctx.quadraticCurveTo(-24, -8, -9, -10); ctx.closePath(); return -7;
+  },
+  bee(t) { // striped body, blurred wings, a sting
+    const f = Math.sin(t * 30) * 3;
+    ctx.moveTo(0, -22); ctx.quadraticCurveTo(9, -20, 8, -10); ctx.quadraticCurveTo(12, 6, 6, 18); ctx.lineTo(0, 28); ctx.lineTo(-6, 18); ctx.quadraticCurveTo(-12, 6, -8, -10); ctx.quadraticCurveTo(-9, -20, 0, -22); ctx.closePath();
+    ctx.moveTo(8, -6); ctx.quadraticCurveTo(28, -22 + f, 26, -4); ctx.quadraticCurveTo(20, 2, 8, -2); ctx.closePath();
+    ctx.moveTo(-8, -6); ctx.quadraticCurveTo(-28, -22 + f, -26, -4); ctx.quadraticCurveTo(-20, 2, -8, -2); ctx.closePath();
+    ctx.moveTo(-10, 2); ctx.lineTo(10, 2); ctx.moveTo(-10, 10); ctx.lineTo(10, 10); return -15;
+  },
+};
 function drawForm(form, x, y, color, t, s = 1) {
   ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-  const w = Math.sin(t * 3) * 1.5;
-  ctx.beginPath();
-  if (form === 'blob') {
-    for (let i = 0; i <= 14; i++) { const a = i / 14 * 6.283, r = 18 + Math.sin(a * 3 + t * 2.4) * 2.5 + Math.sin(a * 5 - t * 1.7) * 1.5; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
-  } else if (form === 'dragon') {
-    ctx.moveTo(0, -24); ctx.lineTo(5, -18); ctx.lineTo(9, -26); ctx.lineTo(8, -14); // horn and head
-    ctx.quadraticCurveTo(14, -8, 30, -16 + w); ctx.lineTo(26, -6 + w); ctx.lineTo(34, -2 + w); ctx.lineTo(24, 2 + w); ctx.lineTo(28, 8 + w); // right wing, scalloped
-    ctx.quadraticCurveTo(14, 4, 8, 10); ctx.quadraticCurveTo(6, 22, 12, 30); ctx.quadraticCurveTo(0, 22, -8, 10); // tail
-    ctx.quadraticCurveTo(-14, 4, -28, 8 - w); ctx.lineTo(-24, 2 - w); ctx.lineTo(-34, -2 - w); ctx.lineTo(-26, -6 - w); ctx.lineTo(-30, -16 - w);
-    ctx.quadraticCurveTo(-14, -8, -8, -14); ctx.lineTo(-9, -26); ctx.lineTo(-5, -18);
-  } else if (form === 'bird') {
-    ctx.moveTo(0, -26); ctx.lineTo(5, -16); ctx.quadraticCurveTo(18, -14, 34, -4 + w * 2); ctx.quadraticCurveTo(20, 0, 9, 4);
-    ctx.lineTo(10, 16); ctx.lineTo(4, 12); ctx.lineTo(0, 22); ctx.lineTo(-4, 12); ctx.lineTo(-10, 16); ctx.lineTo(-9, 4);
-    ctx.quadraticCurveTo(-20, 0, -34, -4 - w * 2); ctx.quadraticCurveTo(-18, -14, -5, -16);
-  } else if (form === 'rat') {
-    ctx.moveTo(0, -24); ctx.quadraticCurveTo(6, -18, 7, -14); ctx.arc(12, -15, 6, Math.PI * 0.9, Math.PI * 2.4); ctx.quadraticCurveTo(16, 0, 10, 12);
-    ctx.quadraticCurveTo(4, 18, 2, 18); ctx.quadraticCurveTo(14 + w * 3, 26, 4 + w * 3, 34); ctx.quadraticCurveTo(10 + w * 3, 24, -2, 18);
-    ctx.quadraticCurveTo(-8, 18, -10, 12); ctx.quadraticCurveTo(-16, 0, -12, -9); ctx.arc(-12, -15, 6, Math.PI * 0.6, Math.PI * 2.1); ctx.quadraticCurveTo(-6, -18, 0, -24);
-  } else { // humanoid
-    ctx.moveTo(0, -27); ctx.quadraticCurveTo(8, -27, 7, -19); ctx.quadraticCurveTo(6, -15, 4, -14); ctx.quadraticCurveTo(14, -13, 15, -6);
-    ctx.lineTo(19, 10 + w); ctx.lineTo(14, 10 + w); ctx.lineTo(11, -2); ctx.lineTo(9, 14); ctx.quadraticCurveTo(6, 22, 3, 28 + w); ctx.lineTo(0, 20);
-    ctx.lineTo(-3, 28 - w); ctx.quadraticCurveTo(-6, 22, -9, 14); ctx.lineTo(-11, -2); ctx.lineTo(-14, 10 - w); ctx.lineTo(-19, 10 - w);
-    ctx.lineTo(-15, -6); ctx.quadraticCurveTo(-14, -13, -4, -14); ctx.quadraticCurveTo(-6, -15, -7, -19); ctx.quadraticCurveTo(-8, -27, 0, -27);
-  }
-  ctx.closePath(); ctx.fillStyle = INK; ctx.fill(); glowStroke(color, 14, 2.2);
-  // eyes
-  const ey = form === 'blob' ? -4 : form === 'humanoid' ? -21 : form === 'rat' ? -16 : -17;
+  ctx.beginPath(); const ey = (FORM_PATHS[form] || FORM_PATHS.blob)(t, Math.sin(t * 3) * 1.5);
+  ctx.fillStyle = INK; ctx.fill(); glowStroke(color, 14, 2.2);
   ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = CHEAP ? 0 : 6;
   ctx.beginPath(); ctx.ellipse(-3.5, ey, 1.6, 2.4, 0, 0, 6.283); ctx.ellipse(3.5, ey, 1.6, 2.4, 0, 0, 6.283); ctx.fill(); ctx.shadowBlur = 0;
   ctx.restore();
@@ -608,54 +943,50 @@ function drawPod(e, t) {
   ctx.save(); ctx.translate(e.x, e.y);
   const g = ctx.createRadialGradient(-3, -4, 2, 0, 0, e.r * 1.2); g.addColorStop(0, '#9b55b0'); g.addColorStop(1, '#3a1746');
   organic(e.r, 12, e.ph, t); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = '#b5c43a'; ctx.lineWidth = 1.5; ctx.stroke();
-  ctx.strokeStyle = 'rgba(181,196,58,0.45)'; ctx.lineWidth = 1; // veins
-  ctx.beginPath(); ctx.moveTo(-8, -10); ctx.quadraticCurveTo(-2, 0, -6, 12); ctx.moveTo(7, -11); ctx.quadraticCurveTo(2, -2, 8, 10); ctx.stroke();
-  ctx.fillStyle = '#1a0a20'; ctx.beginPath(); ctx.arc(0, 2, 6 + Math.sin(t * 4 + e.ph) * 1, 0.4, 5.6); ctx.quadraticCurveTo(2, 2, 3, 6); ctx.fill(); // the curled larva
-  const hatch = Math.min(1, e.age / tune.pod_hatch);
+  ctx.strokeStyle = 'rgba(181,196,58,0.45)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-8, -10); ctx.quadraticCurveTo(-2, 0, -6, 12); ctx.moveTo(7, -11); ctx.quadraticCurveTo(2, -2, 8, 10); ctx.stroke();
+  ctx.fillStyle = '#1a0a20'; ctx.beginPath(); ctx.arc(0, 2, 6 + Math.sin(t * 4 + e.ph), 0.4, 5.6); ctx.quadraticCurveTo(2, 2, 3, 6); ctx.fill();
+  const hatch = Math.min(1, (e.age || 0) / tune.pod_hatch);
   if (hatch > 0.6) { ctx.strokeStyle = `rgba(230,240,120,${(hatch - 0.6) * 2})`; ctx.beginPath(); ctx.moveTo(-4, -e.r); ctx.lineTo(-1, -e.r + 6); ctx.lineTo(3, -e.r + 3); ctx.stroke(); }
   ctx.restore();
 }
 function drawGrazer(e, t) {
   ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(Math.atan2(e.vy, e.vx) - Math.PI / 2);
-  ctx.strokeStyle = '#8d9a2e'; ctx.lineWidth = 2; ctx.beginPath(); // legs
+  ctx.strokeStyle = '#8d9a2e'; ctx.lineWidth = 2; ctx.beginPath();
   for (let i = -1; i <= 1; i++) { const k = Math.sin(t * 12 + i) * 3; ctx.moveTo(-6, i * 6); ctx.lineTo(-15, i * 6 + 4 + k); ctx.lineTo(-18, i * 6 + 10 + k); ctx.moveTo(6, i * 6); ctx.lineTo(15, i * 6 + 4 - k); ctx.lineTo(18, i * 6 + 10 - k); }
   ctx.stroke();
   for (const [y, rx, ry] of [[-9, 7, 7], [0, 9, 8], [10, 7, 6]]) { ctx.beginPath(); ctx.ellipse(0, y, rx, ry, 0, 0, 6.283); ctx.fillStyle = '#5d2e6e'; ctx.fill(); ctx.strokeStyle = '#c3d64a'; ctx.lineWidth = 1.2; ctx.stroke(); }
-  ctx.strokeStyle = '#c3d64a'; ctx.lineWidth = 2; ctx.beginPath(); // mandibles, at the front
-  ctx.moveTo(-3, 15); ctx.quadraticCurveTo(-9, 22, -3, 26); ctx.moveTo(3, 15); ctx.quadraticCurveTo(9, 22, 3, 26); ctx.stroke();
+  ctx.strokeStyle = '#c3d64a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-3, 15); ctx.quadraticCurveTo(-9, 22, -3, 26); ctx.moveTo(3, 15); ctx.quadraticCurveTo(9, 22, 3, 26); ctx.stroke();
   ctx.fillStyle = e.dive ? '#ff5050' : '#e6f070'; ctx.beginPath(); ctx.arc(-3, 13, 1.6, 0, 6.283); ctx.arc(3, 13, 1.6, 0, 6.283); ctx.fill();
   ctx.restore();
 }
 function drawFeeder(e, t) {
   ctx.save(); ctx.translate(e.x, e.y);
-  ctx.strokeStyle = '#6e3a7e'; ctx.lineWidth = 3; ctx.beginPath(); // tendrils trailing up
+  ctx.strokeStyle = '#6e3a7e'; ctx.lineWidth = 3; ctx.beginPath();
   for (let i = -2; i <= 2; i++) { ctx.moveTo(i * 7, -14); ctx.bezierCurveTo(i * 9 + Math.sin(t * 3 + i) * 6, -30, i * 6 - Math.sin(t * 2 + i) * 6, -40, i * 8, -48); }
   ctx.stroke();
   const g = ctx.createRadialGradient(0, -4, 4, 0, 0, e.r * 1.3); g.addColorStop(0, '#8c4aa0'); g.addColorStop(1, '#2c1036');
   organic(e.r, 14, e.ph, t, 0.06); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = '#b5c43a'; ctx.lineWidth = 1.5; ctx.stroke();
   for (const sx of [-1, 1]) { ctx.beginPath(); ctx.ellipse(sx * e.r * 0.95, 2, 6, 9, 0, 0, 6.283); ctx.fillStyle = '#a4b236'; ctx.fill(); }
-  ctx.fillStyle = '#0c0410'; ctx.beginPath(); ctx.ellipse(0, 6, 10, 8 + Math.sin(t * 5) * 2, 0, 0, 6.283); ctx.fill(); // the mouth
+  ctx.fillStyle = '#0c0410'; ctx.beginPath(); ctx.ellipse(0, 6, 10, 8 + Math.sin(t * 5) * 2, 0, 0, 6.283); ctx.fill();
   ctx.fillStyle = '#e8e6c0'; for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 10, 6 + Math.sin(a) * 8); ctx.lineTo(Math.cos(a + 0.2) * 6, 6 + Math.sin(a + 0.2) * 5); ctx.lineTo(Math.cos(a - 0.2) * 9, 6 + Math.sin(a - 0.2) * 7); ctx.fill(); }
   ctx.restore();
 }
 function drawMother(e, t, px, py) {
   ctx.save(); ctx.translate(e.x, e.y);
-  ctx.fillStyle = '#4a1f58'; for (let i = 0; i < 9; i++) { const a = Math.PI + (i + 0.5) / 9 * Math.PI; ctx.beginPath(); ctx.moveTo(Math.cos(a - 0.12) * 60, Math.sin(a - 0.12) * 60); ctx.lineTo(Math.cos(a) * (95 + Math.sin(t * 2 + i) * 5), Math.sin(a) * (95 + Math.sin(t * 2 + i) * 5)); ctx.lineTo(Math.cos(a + 0.12) * 60, Math.sin(a + 0.12) * 60); ctx.fill(); }
-  for (let i = -2; i <= 2; i++) { ctx.save(); ctx.translate(i * 22, 62 + Math.abs(i) * -6 + Math.sin(t * 2 + i) * 3); ctx.fillStyle = '#5c2a6c'; organic(9, 8, i, t); ctx.fill(); ctx.strokeStyle = '#b5c43a'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore(); }
+  ctx.fillStyle = '#4a1f58'; for (let i = 0; i < 9; i++) { const a = Math.PI + (i + 0.5) / 9 * Math.PI, L = 95 + Math.sin(t * 2 + i) * 5; ctx.beginPath(); ctx.moveTo(Math.cos(a - 0.12) * 60, Math.sin(a - 0.12) * 60); ctx.lineTo(Math.cos(a) * L, Math.sin(a) * L); ctx.lineTo(Math.cos(a + 0.12) * 60, Math.sin(a + 0.12) * 60); ctx.fill(); }
+  for (let i = -2; i <= 2; i++) { ctx.save(); ctx.translate(i * 22, 62 - Math.abs(i) * 6 + Math.sin(t * 2 + i) * 3); ctx.fillStyle = '#5c2a6c'; organic(9, 8, i, t); ctx.fill(); ctx.strokeStyle = '#b5c43a'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore(); }
   const g = ctx.createRadialGradient(0, -10, 10, 0, 0, 90); g.addColorStop(0, '#9a4fb2'); g.addColorStop(1, '#1f0a28');
   organic(e.r, 22, e.ph, t * 0.6, 0.06); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = '#c7d84c'; ctx.lineWidth = 2.5; ctx.stroke();
   for (const [ex, ey, er] of [[0, -4, 13], [-30, -18, 8], [30, -18, 8], [-26, 18, 7], [26, 18, 7]]) {
     ctx.fillStyle = '#d6e25a'; ctx.beginPath(); ctx.ellipse(ex, ey, er, er * 0.8, 0, 0, 6.283); ctx.fill();
-    const a = Math.atan2(py - (e.y + ey), px - (e.x + ex)); ctx.fillStyle = '#12060f';
-    ctx.beginPath(); ctx.ellipse(ex + Math.cos(a) * er * 0.35, ey + Math.sin(a) * er * 0.3, er * 0.22, er * 0.6, 0, 0, 6.283); ctx.fill();
+    const a = Math.atan2(py - (e.y + ey), px - (e.x + ex)); ctx.fillStyle = '#12060f'; ctx.beginPath(); ctx.ellipse(ex + Math.cos(a) * er * 0.35, ey + Math.sin(a) * er * 0.3, er * 0.22, er * 0.6, 0, 0, 6.283); ctx.fill();
   }
   ctx.restore();
 }
-function drawGlob(g, t) {
+function drawGlob(g) {
   ctx.save(); ctx.translate(g.x, g.y); ctx.rotate(Math.atan2(g.vy, g.vx) - Math.PI / 2);
-  ctx.beginPath(); ctx.moveTo(0, 9); ctx.quadraticCurveTo(7, 0, 0, -12); ctx.quadraticCurveTo(-7, 0, 0, 9);
-  ctx.fillStyle = '#b5c43a'; ctx.fill(); ctx.fillStyle = '#4c5a10'; ctx.beginPath(); ctx.arc(0, 3, 2.5, 0, 6.283); ctx.fill();
-  ctx.restore();
+  ctx.beginPath(); ctx.moveTo(0, 9); ctx.quadraticCurveTo(7, 0, 0, -12); ctx.quadraticCurveTo(-7, 0, 0, 9); ctx.fillStyle = '#b5c43a'; ctx.fill();
+  ctx.fillStyle = '#4c5a10'; ctx.beginPath(); ctx.arc(0, 3, 2.5, 0, 6.283); ctx.fill(); ctx.restore();
 }
 function drawAsteroid(m) {
   ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(m.rot);
@@ -666,22 +997,20 @@ function drawAsteroid(m) {
   ctx.restore();
 }
 function drawDebris(m) {
-  ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(m.a);
-  const hw = m.w / 2, hh = m.h / 2;
+  ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(m.a); const hw = m.w / 2, hh = m.h / 2;
   ctx.beginPath(); ctx.moveTo(-hw, -hh); ctx.lineTo(hw * 0.6, -hh); ctx.lineTo(hw * 0.75, -hh * 0.3); ctx.lineTo(hw * 0.9, -hh * 0.9); ctx.lineTo(hw, hh * 0.2); ctx.lineTo(hw * 0.8, hh); ctx.lineTo(-hw * 0.7, hh); ctx.lineTo(-hw * 0.85, hh * 0.4); ctx.lineTo(-hw, hh); ctx.closePath();
   ctx.fillStyle = '#353a44'; ctx.fill(); ctx.strokeStyle = '#8b95a3'; ctx.lineWidth = 1.5; ctx.stroke();
   ctx.strokeStyle = '#4b525e'; ctx.lineWidth = 1; ctx.beginPath(); for (let x = -hw + 14; x < hw - 10; x += 18) { ctx.moveTo(x, -hh + 2); ctx.lineTo(x, hh - 2); } ctx.stroke();
   ctx.fillStyle = '#9aa3ae'; for (let x = -hw + 8; x < hw - 6; x += 18) { ctx.fillRect(x, -hh + 3, 1.6, 1.6); ctx.fillRect(x, hh - 4.6, 1.6, 1.6); }
-  ctx.fillStyle = '#5a1a1a'; ctx.beginPath(); ctx.arc(-hw + 6, 0, 2.4, 0, 6.283); ctx.arc(hw * 0.5, 0, 2.4, 0, 6.283); ctx.fill(); // dead running lights
+  ctx.fillStyle = '#5a1a1a'; ctx.beginPath(); ctx.arc(-hw + 6, 0, 2.4, 0, 6.283); ctx.arc(hw * 0.5, 0, 2.4, 0, 6.283); ctx.fill();
   ctx.restore();
 }
 function drawRuin(m, t) {
-  ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(m.a);
-  const hw = m.w / 2, hh = m.h / 2;
+  ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(m.a); const hw = m.w / 2, hh = m.h / 2;
   ctx.beginPath(); ctx.moveTo(-hw + 8, -hh); ctx.lineTo(hw - 20, -hh); ctx.lineTo(hw - 12, -hh + 7); ctx.lineTo(hw, -hh + 4); ctx.lineTo(hw, hh - 10); ctx.lineTo(hw - 8, hh); ctx.lineTo(-hw + 30, hh); ctx.lineTo(-hw + 22, hh - 6); ctx.lineTo(-hw, hh); ctx.lineTo(-hw, -hh + 9); ctx.closePath();
   ctx.fillStyle = '#423d4b'; ctx.fill(); ctx.strokeStyle = '#8a8296'; ctx.lineWidth = 1.6; ctx.stroke();
   ctx.strokeStyle = '#2f2b36'; ctx.beginPath(); ctx.moveTo(-hw, -2); ctx.lineTo(hw, -2); ctx.moveTo(-20, -hh); ctx.lineTo(-14, hh); ctx.moveTo(40, -hh); ctx.lineTo(36, -2); ctx.stroke();
-  ctx.strokeStyle = `rgba(90,200,185,${0.35 + 0.15 * Math.sin(t * 1.5 + m.ph)})`; ctx.lineWidth = 1.4; ctx.beginPath(); // faint glyphs
+  ctx.strokeStyle = `rgba(90,200,185,${0.35 + 0.15 * Math.sin(t * 1.5 + m.ph)})`; ctx.lineWidth = 1.4; ctx.beginPath();
   m.glyphs.forEach((g, i) => { const gx = -hw + 16 + i * 22, gy = 9;
     if (g === 0) { ctx.moveTo(gx - 5, gy - 5); ctx.lineTo(gx, gy + 5); ctx.lineTo(gx + 5, gy - 5); }
     else if (g === 1) { ctx.moveTo(gx + 5, gy); ctx.arc(gx, gy, 5, 0, 4.7); }
@@ -699,122 +1028,126 @@ function drawFirefly(x, y, t) {
   ctx.fillStyle = '#d8ffb0'; ctx.shadowColor = '#d8ffb0'; ctx.shadowBlur = CHEAP ? 0 : 10; ctx.beginPath(); ctx.ellipse(0, 4, 3, 4, 0, 0, 6.283); ctx.fill();
   ctx.restore();
 }
-function drawCrack(x, y, t) {
-  ctx.save(); ctx.translate(x, y);
-  ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(4, -14); ctx.lineTo(-3, -4); ctx.lineTo(5, 6); ctx.lineTo(-2, 16); ctx.lineTo(1, 26);
-  glowStroke('#fff3c8', 18 + Math.sin(t * 4) * 6, 3); ctx.restore();
-}
+function drawCrack(x, y, t) { ctx.save(); ctx.translate(x, y); ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(4, -14); ctx.lineTo(-3, -4); ctx.lineTo(5, 6); ctx.lineTo(-2, 16); ctx.lineTo(1, 26); glowStroke('#fff3c8', 18 + Math.sin(t * 4) * 6, 3); ctx.restore(); }
 function drawBolt(b) {
-  ctx.save();
-  ctx.strokeStyle = b.color; ctx.globalAlpha = 0.45; ctx.lineWidth = b.r * 0.9; ctx.lineCap = 'round';
-  ctx.beginPath(); for (let i = 0; i < b.trail.length; i += 2) ctx.lineTo(b.trail[i], b.trail[i + 1]); ctx.lineTo(b.x, b.y); ctx.stroke();
-  ctx.globalAlpha = 1; ctx.translate(b.x, b.y); ctx.rotate(Math.atan2(b.vy, b.vx));
-  const r = b.r; ctx.beginPath(); ctx.moveTo(r * 1.6, 0); ctx.lineTo(0, r * 0.7); ctx.lineTo(-r, 0); ctx.lineTo(0, -r * 0.7); ctx.closePath();
+  ctx.save(); ctx.strokeStyle = b.color; ctx.globalAlpha = 0.45; ctx.lineWidth = b.r * 0.9; ctx.lineCap = 'round';
+  if (!(b.orbitT > 0)) { ctx.beginPath(); for (let i = 0; i < b.trail.length; i += 2) ctx.lineTo(b.trail[i], b.trail[i + 1]); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+  ctx.globalAlpha = 1; ctx.translate(b.x, b.y); ctx.rotate(Math.atan2(b.vy, b.vx)); const r = b.r;
+  ctx.beginPath(); ctx.moveTo(r * 1.6, 0); ctx.lineTo(0, r * 0.7); ctx.lineTo(-r, 0); ctx.lineTo(0, -r * 0.7); ctx.closePath();
   ctx.fillStyle = b.color; ctx.shadowColor = b.color; ctx.shadowBlur = CHEAP ? 0 : 10; ctx.fill(); ctx.shadowBlur = 0;
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(r * 0.7, 0); ctx.lineTo(0, r * 0.3); ctx.lineTo(-r * 0.4, 0); ctx.lineTo(0, -r * 0.3); ctx.fill();
   if (!b.shard && b.natures.length >= 2) { ctx.strokeStyle = b.color; ctx.lineWidth = 1; for (let i = 0; i < b.natures.length; i++) { ctx.beginPath(); ctx.arc(0, 0, r + 3 + i * 3, 0, 6.283); ctx.stroke(); } }
   ctx.restore();
 }
 function drawField(f, t) {
-  const a = f.t / f.max;
-  ctx.save(); ctx.translate(f.x, f.y); ctx.globalAlpha = Math.min(1, a * 1.5);
-  ctx.strokeStyle = f.c; ctx.lineWidth = 2;
-  if (f.k === 'stasis') { ctx.beginPath(); for (let i = 0; i <= 6; i++) { const q = i / 6 * 6.283 + t * 0.3; ctx.lineTo(Math.cos(q) * f.r, Math.sin(q) * f.r); } ctx.stroke();
-    ctx.fillStyle = 'rgba(200,230,140,0.08)'; ctx.fill(); ctx.beginPath(); for (let i = 0; i < 6; i++) { const q = i / 6 * 6.283; ctx.moveTo(0, 0); ctx.lineTo(Math.cos(q) * f.r * 0.5, Math.sin(q) * f.r * 0.5); } ctx.stroke(); }
-  else { for (let i = 0; i < 3; i++) { ctx.beginPath(); const rr = f.r * (0.35 + i * 0.3); ctx.arc(0, 0, rr, t * (f.k === 'well' ? 6 : 4) + i * 2, t * (f.k === 'well' ? 6 : 4) + i * 2 + 2.6); ctx.stroke(); }
-    if (f.k === 'well') { ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.beginPath(); ctx.arc(0, 0, 10, 0, 6.283); ctx.fill(); ctx.strokeStyle = '#ff5a36'; ctx.stroke(); } }
+  const a = f.t / f.max; ctx.save(); ctx.translate(f.x, f.y); ctx.globalAlpha = Math.min(1, a * 1.5); ctx.strokeStyle = f.c; ctx.lineWidth = 2;
+  if (f.k === 'stasis') { ctx.beginPath(); for (let i = 0; i <= 6; i++) { const q = i / 6 * 6.283 + t * 0.3; ctx.lineTo(Math.cos(q) * f.r, Math.sin(q) * f.r); } ctx.stroke(); ctx.fillStyle = 'rgba(200,230,140,0.07)'; ctx.fill(); }
+  else if (f.k === 'thorns') { for (let i = 0; i < 9; i++) { const q = i / 9 * 6.283 + f.x, rr = f.r * (0.4 + (i % 3) * 0.25); ctx.beginPath(); ctx.moveTo(Math.cos(q) * rr * 0.3, Math.sin(q) * rr * 0.3); ctx.quadraticCurveTo(Math.cos(q + 0.5) * rr, Math.sin(q + 0.5) * rr, Math.cos(q + 0.2) * rr * 1.1, Math.sin(q + 0.2) * rr * 1.1); ctx.stroke(); ctx.beginPath(); ctx.moveTo(Math.cos(q + 0.2) * rr * 0.8, Math.sin(q + 0.2) * rr * 0.8); ctx.lineTo(Math.cos(q + 0.35) * rr * 0.95, Math.sin(q + 0.35) * rr * 0.95); ctx.stroke(); } }
+  else if (f.k === 'storm') { ctx.fillStyle = 'rgba(40,40,60,0.55)'; for (let i = 0; i < 7; i++) { ctx.beginPath(); ctx.ellipse(-40 + i * 13, -20 + Math.sin(t * 3 + i) * 3, 13, 9, 0, 0, 6.283); ctx.fill(); } ctx.setLineDash([3, 6]); ctx.beginPath(); ctx.arc(0, 0, f.r, 0, 6.283); ctx.stroke(); ctx.setLineDash([]); }
+  else if (f.k === 'spore') { ctx.fillStyle = 'rgba(139,224,78,0.12)'; for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(Math.cos(i + t) * f.r * 0.4, Math.sin(i * 2 + t) * f.r * 0.4, f.r * 0.45, 0, 6.283); ctx.fill(); } }
+  else if (f.k === 'hole') { ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(0, 0, 24, 0, 6.283); ctx.fill(); glowStroke('#b9a6ff', 16, 2); for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(0, 0, 40 + i * 22, t * 5 + i, t * 5 + i + 2); ctx.stroke(); } }
+  else if (f.k === 'lull') { ctx.strokeStyle = '#ff6fc8'; ctx.beginPath(); ctx.arc(0, 0, f.r * (1 - a), 0, 6.283); ctx.stroke(); }
+  else { for (let i = 0; i < 3; i++) { ctx.beginPath(); const rr = f.r * (0.35 + i * 0.3), sp = f.k === 'well' || f.k === 'vortex' ? 6 : 4; ctx.arc(0, 0, rr, t * sp + i * 2, t * sp + i * 2 + 2.6); ctx.stroke(); }
+    if (f.k === 'well') { ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.beginPath(); ctx.arc(0, 0, 10, 0, 6.283); ctx.fill(); ctx.strokeStyle = '#ff4b3a'; ctx.stroke(); } }
   ctx.restore();
 }
-function drawMote(m, t) {
-  ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(t * 3 + m.ph);
-  ctx.fillStyle = '#d8c8ff'; ctx.shadowColor = '#a585ff'; ctx.shadowBlur = CHEAP ? 0 : 8;
-  ctx.beginPath(); ctx.moveTo(0, -5); ctx.lineTo(2.5, 0); ctx.lineTo(0, 5); ctx.lineTo(-2.5, 0); ctx.closePath(); ctx.fill(); ctx.restore();
-}
+function drawMote(m, t) { ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(t * 3 + m.ph); ctx.fillStyle = '#d8c8ff'; ctx.shadowColor = '#a585ff'; ctx.shadowBlur = CHEAP ? 0 : 8; ctx.beginPath(); ctx.moveTo(0, -5); ctx.lineTo(2.5, 0); ctx.lineTo(0, 5); ctx.lineTo(-2.5, 0); ctx.closePath(); ctx.fill(); ctx.restore(); }
+function drawPetal(pt, t) { ctx.save(); ctx.translate(pt.x, pt.y); ctx.rotate(t * 2); ctx.fillStyle = '#c8ffe8'; ctx.beginPath(); ctx.moveTo(0, -6); ctx.quadraticCurveTo(6, 0, 0, 6); ctx.quadraticCurveTo(-6, 0, 0, -6); ctx.fill(); ctx.restore(); }
 function hpBar(x, y, w, frac, c) { ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x - w / 2, y, w, 4); ctx.fillStyle = c; ctx.fillRect(x - w / 2, y, w * Math.max(0, frac), 4); }
 function drawStatus(e) {
-  if (e.burn) { ctx.strokeStyle = 'rgba(255,90,54,0.8)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(e.x, e.y, (e.r || 20) + 4, state.t * 4, state.t * 4 + 2); ctx.stroke(); }
-  if (e.slow) { ctx.strokeStyle = 'rgba(159,232,255,0.8)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(e.x, e.y, (e.r || 20) + 7, -state.t * 2, -state.t * 2 + 2.4); ctx.stroke(); }
+  const r = (e.r || 20), t = state.t; ctx.lineWidth = 1.5;
+  if (e.burn) { ctx.strokeStyle = 'rgba(255,75,58,0.85)'; ctx.beginPath(); ctx.arc(e.x, e.y, r + 4, t * 4, t * 4 + 2); ctx.stroke(); }
+  if (e.slow) { ctx.strokeStyle = 'rgba(143,227,255,0.85)'; ctx.beginPath(); ctx.arc(e.x, e.y, r + 7, -t * 2, -t * 2 + 2.4); ctx.stroke(); }
+  if (e.venom) { ctx.fillStyle = '#8be04e'; for (let i = 0; i < e.venom.n; i++) { ctx.beginPath(); ctx.moveTo(e.x - r + i * 6, e.y + r + 3); ctx.lineTo(e.x - r + i * 6 + 2, e.y + r + 7); ctx.lineTo(e.x - r + i * 6, e.y + r + 10); ctx.lineTo(e.x - r + i * 6 - 2, e.y + r + 7); ctx.fill(); } }
+  if (e.sleep > 0) text('z', e.x + r, e.y - r - Math.sin(t * 3) * 3, 15, '#9a8fc8', 'center', 'bold');
+  if (e.charm > 0) { ctx.strokeStyle = '#ff6fc8'; ctx.beginPath(); ctx.moveTo(e.x, e.y - r - 4); ctx.bezierCurveTo(e.x - 8, e.y - r - 12, e.x - 4, e.y - r - 16, e.x, e.y - r - 11); ctx.bezierCurveTo(e.x + 4, e.y - r - 16, e.x + 8, e.y - r - 12, e.x, e.y - r - 4); ctx.stroke(); }
+  if (e.doom) { ctx.strokeStyle = '#ff6fa0'; ctx.beginPath(); ctx.arc(e.x, e.y, r + 10, -Math.PI / 2, -Math.PI / 2 + 6.283 * (1 - e.doom.t / tune.doom_time)); ctx.stroke(); }
+  if (e.tether && e.tether.o && !e.tether.o.dead) { ctx.strokeStyle = 'rgba(242,201,76,0.6)'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(e.tether.o.x, e.tether.o.y); ctx.stroke(); ctx.setLineDash([]); }
 }
 
 // ---- Nature sigils and cards --------------------------------------------------------------------
 function sigil(n, x, y, s, color) {
-  ctx.save(); ctx.translate(x, y); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = Math.max(1.2, s * 0.14); ctx.lineCap = 'round';
-  ctx.beginPath();
-  if (n === 'wrath') { ctx.moveTo(0, -s); ctx.quadraticCurveTo(s * 0.9, -s * 0.1, s * 0.5, s * 0.7); ctx.quadraticCurveTo(0, s * 1.05, -s * 0.5, s * 0.7); ctx.quadraticCurveTo(-s * 0.8, 0, -s * 0.2, -s * 0.3); ctx.quadraticCurveTo(-s * 0.1, -s * 0.6, 0, -s); ctx.fill(); }
-  else if (n === 'patience') { for (let i = 0; i < 3; i++) { const a = i / 3 * Math.PI + Math.PI / 2, c = Math.cos(a) * s, d = Math.sin(a) * s; ctx.moveTo(-c, -d); ctx.lineTo(c, d);
-      for (const k of [-1, 1]) { const bx = c * 0.6 * k, by = d * 0.6 * k; ctx.moveTo(bx, by); ctx.lineTo(bx + Math.cos(a + 0.7 * k) * s * 0.3 * k, by + Math.sin(a + 0.7 * k) * s * 0.3 * k); } } ctx.stroke(); }
-  else if (n === 'greed') { for (let i = 0; i < 26; i++) { const a = i * 0.45, r = s * (0.1 + i / 26 * 0.9); ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.stroke(); }
-  else if (n === 'charity') { ctx.moveTo(0, s * 0.6); ctx.quadraticCurveTo(-s * 1.2, -s * 0.1, -s * 0.5, -s * 0.9); ctx.quadraticCurveTo(-s * 0.1, -s * 0.2, 0, s * 0.6);
-    ctx.quadraticCurveTo(s * 1.2, -s * 0.1, s * 0.5, -s * 0.9); ctx.quadraticCurveTo(s * 0.1, -s * 0.2, 0, s * 0.6); ctx.fill(); }
-  else { ctx.moveTo(0, -s); ctx.lineTo(s * 0.7, 0); ctx.lineTo(0, s); ctx.lineTo(-s * 0.7, 0); ctx.closePath(); ctx.stroke(); }
+  ctx.save(); ctx.translate(x, y); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = Math.max(1.2, s * 0.14); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath();
+  switch (n) {
+    case 'wrath': ctx.moveTo(0, -s); ctx.quadraticCurveTo(s * 0.9, -s * 0.1, s * 0.5, s * 0.7); ctx.quadraticCurveTo(0, s * 1.05, -s * 0.5, s * 0.7); ctx.quadraticCurveTo(-s * 0.8, 0, -s * 0.2, -s * 0.3); ctx.quadraticCurveTo(-s * 0.1, -s * 0.6, 0, -s); ctx.fill(); break;
+    case 'patience': for (let i = 0; i < 3; i++) { const a = i / 3 * Math.PI + Math.PI / 2, c = Math.cos(a) * s, d = Math.sin(a) * s; ctx.moveTo(-c, -d); ctx.lineTo(c, d); for (const k of [-1, 1]) { const bx = c * 0.6 * k, by = d * 0.6 * k; ctx.moveTo(bx, by); ctx.lineTo(bx + Math.cos(a + 0.7 * k) * s * 0.3 * k, by + Math.sin(a + 0.7 * k) * s * 0.3 * k); } } ctx.stroke(); break;
+    case 'greed': for (let i = 0; i < 26; i++) { const a = i * 0.45, r = s * (0.1 + i / 26 * 0.9); ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.stroke(); break;
+    case 'charity': ctx.moveTo(0, s * 0.6); ctx.quadraticCurveTo(-s * 1.2, -s * 0.1, -s * 0.5, -s * 0.9); ctx.quadraticCurveTo(-s * 0.1, -s * 0.2, 0, s * 0.6); ctx.quadraticCurveTo(s * 1.2, -s * 0.1, s * 0.5, -s * 0.9); ctx.quadraticCurveTo(s * 0.1, -s * 0.2, 0, s * 0.6); ctx.fill(); break;
+    case 'pride': for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; ctx.moveTo(Math.cos(a) * s * 0.62, Math.sin(a) * s * 0.62); ctx.lineTo(Math.cos(a) * s, Math.sin(a) * s); } ctx.stroke(); ctx.beginPath(); for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283 + 0.39; ctx.lineTo(Math.cos(a) * s * 0.45, Math.sin(a) * s * 0.45); } ctx.closePath(); ctx.fill(); break;
+    case 'humility': ctx.moveTo(-s, s * 0.5); ctx.lineTo(-s * 0.2, -s * 0.7); ctx.lineTo(s * 0.1, -s * 0.2); ctx.lineTo(s * 0.4, -s * 0.5); ctx.lineTo(s, s * 0.5); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(-s, s * 0.85); ctx.lineTo(s, s * 0.85); ctx.stroke(); break;
+    case 'envy': ctx.moveTo(-s, 0); ctx.quadraticCurveTo(0, -s * 1.1, s, 0); ctx.quadraticCurveTo(0, s * 1.1, -s, 0); ctx.stroke(); ctx.beginPath(); ctx.ellipse(0, 0, s * 0.2, s * 0.42, 0, 0, 6.283); ctx.fill(); break;
+    case 'kindness': ctx.moveTo(0, s); ctx.quadraticCurveTo(-s * 1.1, 0, 0, -s); ctx.quadraticCurveTo(s * 1.1, 0, 0, s); ctx.fill(); ctx.strokeStyle = '#0e0a18'; ctx.beginPath(); ctx.moveTo(0, s * 0.8); ctx.lineTo(0, -s * 0.6); ctx.stroke(); break;
+    case 'lust': ctx.moveTo(0, s * 0.85); ctx.bezierCurveTo(-s * 1.3, -s * 0.1, -s * 0.5, -s * 1.1, 0, -s * 0.35); ctx.bezierCurveTo(s * 0.5, -s * 1.1, s * 1.3, -s * 0.1, 0, s * 0.85); ctx.fill(); break;
+    case 'chastity': ctx.moveTo(0, -s); ctx.quadraticCurveTo(s * 0.9, s * 0.2, 0, s); ctx.quadraticCurveTo(-s * 0.9, s * 0.2, 0, -s); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, s * 0.1); ctx.lineTo(s * 0.2, s * 0.35); ctx.lineTo(0, s * 0.6); ctx.lineTo(-s * 0.2, s * 0.35); ctx.fill(); break;
+    case 'gluttony': ctx.arc(0, 0, s, 0.5, 6.283 - 0.5); ctx.lineTo(0, 0); ctx.closePath(); ctx.fill(); ctx.fillStyle = '#0e0a18'; ctx.beginPath(); for (let i = 0; i < 3; i++) { const y = -s * 0.3 + i * s * 0.3; ctx.moveTo(s * 0.95, y - s * 0.12); ctx.lineTo(s * 0.55, y); ctx.lineTo(s * 0.95, y + s * 0.12); } ctx.fill(); break;
+    case 'sloth': ctx.arc(0, 0, s, Math.PI * 0.3, Math.PI * 1.7); ctx.quadraticCurveTo(-s * 0.1, 0, Math.cos(Math.PI * 0.3) * s, Math.sin(Math.PI * 0.3) * s); ctx.fill(); break;
+    case 'temperance': for (let i = -1; i <= 1; i++) { ctx.moveTo(-s, i * s * 0.55); ctx.bezierCurveTo(-s * 0.4, i * s * 0.55 - s * 0.4, s * 0.2, i * s * 0.55 + s * 0.4, s, i * s * 0.55 - s * 0.1); } ctx.stroke(); break;
+    case 'diligence': ctx.moveTo(s * 0.3, -s); ctx.lineTo(-s * 0.5, s * 0.1); ctx.lineTo(0, s * 0.1); ctx.lineTo(-s * 0.3, s); ctx.lineTo(s * 0.5, -s * 0.15); ctx.lineTo(0, -s * 0.15); ctx.closePath(); ctx.fill(); break;
+    default: ctx.moveTo(0, -s); ctx.lineTo(s * 0.7, 0); ctx.lineTo(0, s); ctx.lineTo(-s * 0.7, 0); ctx.closePath(); ctx.stroke();
+  }
   ctx.restore();
 }
 function cardSigil(c, x, y, s) {
   const col = cardColor(c);
   if (c.natures.length <= 1) { sigil(c.natures[0] || '', x, y, s, col); return; }
-  ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1;
-  for (let i = 0; i < c.natures.length; i++) { ctx.beginPath(); ctx.arc(x, y, s * (1.05 + i * 0.16), 0, 6.283); ctx.stroke(); }
-  ctx.restore();
+  ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1; for (let i = 0; i < c.natures.length; i++) { ctx.beginPath(); ctx.arc(x, y, s * (1.05 + i * 0.16), 0, 6.283); ctx.stroke(); } ctx.restore();
   c.natures.forEach((n, i) => { const a = i / c.natures.length * 6.283 - Math.PI / 2; sigil(n, x + Math.cos(a) * s * 0.45, y + Math.sin(a) * s * 0.45, s * 0.42, BASE[n].color); });
 }
 function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-function drawCard(c, x, y, w, h, hover, selected) {
-  const col = cardColor(c), rec = recipeOf(c);
-  ctx.save(); roundRect(x, y - (hover ? 6 : 0), w, h, 8);
-  ctx.fillStyle = selected ? '#1d1430' : '#0e0a18'; ctx.fill();
-  ctx.strokeStyle = col; ctx.lineWidth = selected ? 3 : 1.6; ctx.shadowColor = col; ctx.shadowBlur = CHEAP ? 0 : (hover || selected ? 14 : 4); ctx.stroke(); ctx.shadowBlur = 0;
-  const yy = y - (hover ? 6 : 0);
+function drawCard(c, x, y, w, h, hover, selected, badge) {
+  const col = cardColor(c), rec = recipeOf(c), yy = y - (hover ? 4 : 0);
+  ctx.save(); roundRect(x, yy, w, h, 8); ctx.fillStyle = selected ? '#1d1430' : '#0e0a18'; ctx.fill();
+  ctx.strokeStyle = col; ctx.lineWidth = selected ? 3 : c.natures.length > 1 ? 2.2 : 1.4; ctx.shadowColor = col; ctx.shadowBlur = CHEAP ? 0 : (hover || selected ? 14 : c.natures.length > 1 ? 8 : 3); ctx.stroke(); ctx.shadowBlur = 0;
   cardSigil(c, x + w / 2, yy + h * 0.36, Math.min(w, h) * 0.2);
-  text(rec ? rec.name : 'Unstable', x + w / 2, yy + h * 0.7, w > 140 ? 22 : 15, col, 'center', 'bold');
-  for (let i = 0; i < c.level; i++) { ctx.fillStyle = col; ctx.beginPath(); const px = x + w / 2 + (i - (c.level - 1) / 2) * 12; ctx.moveTo(px, yy + h - 16); ctx.lineTo(px + 4, yy + h - 12); ctx.lineTo(px, yy + h - 8); ctx.lineTo(px - 4, yy + h - 12); ctx.fill(); }
-  if (w > 140 && rec) { ctx.save(); wrapText(rec.says, x + w / 2, yy + h * 0.82, w - 20, 15, '#cfc6e6'); ctx.restore(); }
+  text(rec ? rec.name : 'Unstable', x + w / 2, yy + h * 0.7, w > 140 ? 22 : 14, col, 'center', 'bold');
+  for (let i = 0; i < c.level; i++) { ctx.fillStyle = col; ctx.beginPath(); const px = x + w / 2 + (i - (c.level - 1) / 2) * 12; ctx.moveTo(px, yy + h - 14); ctx.lineTo(px + 4, yy + h - 10); ctx.lineTo(px, yy + h - 6); ctx.lineTo(px - 4, yy + h - 10); ctx.fill(); }
+  if (badge) { roundRect(x + w - 34, yy - 8, 40, 20, 6); ctx.fillStyle = badge.bg || '#2a1f45'; ctx.fill(); text(badge.s, x + w - 14, yy + 2, 14, badge.c || '#fff', 'center', 'bold'); }
   ctx.restore();
-}
-function wrapText(s, x, y, maxW, size, c) {
-  ctx.font = `${size}px ${FONT}`; const words = s.split(' '); let line = '', yy = y;
-  for (const wd of words) { const tst = line ? line + ' ' + wd : wd; if (ctx.measureText(tst).width > maxW && line) { text(line, x, yy, size, c); line = wd; yy += size + 3; } else line = tst; }
-  if (line) text(line, x, yy, size, c);
 }
 
 // ---- The HUD ---------------------------------------------------------------------------------
+function nextDiscoveries(k) {
+  if (!meta.innate) return [];
+  return Object.entries(DISCOVER).filter(([n]) => !meta.discovered.includes(n))
+    .map(([n, d]) => ({ n, text: d.text, frac: Math.min(1, (meta.stats[d.stat] || 0) / d.n) }))
+    .sort((a, b) => b.frac - a.frac).slice(0, k);
+}
 function drawHUD() {
-  // left: the deck as a magazine
   ctx.fillStyle = '#08060f'; ctx.fillRect(0, 0, RL - 4, H); ctx.fillRect(RR + 4, 0, W - RR - 4, H);
-  text('THE DECK', 30, 34, 20, '#e9dcff', 'left', 'bold');
-  text(`Draw ${state.draw.length}   Discard ${state.discard.length}   Cards ${state.deck.length}`, 30, 64, 15, '#b8acd6', 'left');
-  text(state.reshuffleT > 0 ? 'Reshuffling...' : 'Next bolts, in order:', 30, 96, 15, state.reshuffleT > 0 ? '#ffd27a' : '#8f84ad', 'left');
-  const next = state.draw.slice(0, 9).map(cardById).filter(Boolean);
-  next.forEach((c, i) => {
-    const y = 116 + i * 46, col = cardColor(c);
-    roundRect(26, y, 284, 38, 6); ctx.fillStyle = i === 0 ? '#1a1229' : '#0f0b18'; ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = i === 0 ? 2 : 1; ctx.stroke();
-    cardSigil(c, 48, y + 19, 11);
-    text(cardName(c), 72, y + 19, 16, col, 'left', i === 0 ? 'bold' : '');
-    const rec = recipeOf(c); if (rec && rec.effects.length) text(rec.effects[0] === 'split3' ? 'shards' : rec.effects[0], 300, y + 19, 14, '#8f84ad', 'right');
+  text('THE DECK', 30, 30, 20, '#e9dcff', 'left', 'bold');
+  text(`Draw ${state.draw.length}   Discard ${state.discard.length}   Cards ${state.deck.length}`, 30, 58, 15, '#b8acd6', 'left');
+  text(state.reshuffleT > 0 ? 'Reshuffling...' : 'Next bolts, in order:', 30, 86, 15, state.reshuffleT > 0 ? '#ffd27a' : '#8f84ad', 'left');
+  state.draw.slice(0, 9).map(cardById).filter(Boolean).forEach((c, i) => {
+    const y = 104 + i * 44, col = cardColor(c);
+    roundRect(26, y, 284, 36, 6); ctx.fillStyle = i === 0 ? '#1a1229' : '#0f0b18'; ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = i === 0 ? 2 : 1; ctx.stroke();
+    cardSigil(c, 48, y + 18, 11); text(cardName(c), 72, y + 18, 16, col, 'left', i === 0 ? 'bold' : '');
   });
-  if (!state.deck.length) wrapText('No natures yet. Find the light.', 165, 140, 260, 16, '#8f84ad');
-  // right: energy, void energy, the run
+  if (!state.deck.length) wrapText('No natures yet. Find the light.', 165, 130, 260, 16, '#8f84ad');
+  if (state.found.length) { text('DISCOVERED THIS ADVENTURE', 30, 520, 15, '#e9dcff', 'left', 'bold'); state.found.slice(-4).forEach((n, i) => { sigil(n, 40, 548 + i * 26, 9, BASE[n].color); text(BASE[n].name, 58, 548 + i * 26, 15, BASE[n].color, 'left'); }); }
   const x = RR + 30;
-  text('ENERGY', x, 34, 18, '#e9dcff', 'left', 'bold');
-  roundRect(x, 50, 280, 18, 5); ctx.fillStyle = '#1a0f12'; ctx.fill();
-  const ef = state.energy / tune.max_energy; roundRect(x, 50, Math.max(0, 280 * ef), 18, 5); ctx.fillStyle = ef > 0.35 ? '#9b7bff' : '#ff6a6a'; ctx.fill();
-  text(`${Math.ceil(state.energy)} / ${tune.max_energy}`, x + 140, 59, 14, '#fff');
-  text('VOID ENERGY', x, 96, 18, '#e9dcff', 'left', 'bold');
-  ctx.save(); ctx.translate(x + 10, 126); ctx.fillStyle = '#d8c8ff'; ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(6, 0); ctx.lineTo(0, 10); ctx.lineTo(-6, 0); ctx.fill(); ctx.restore();
-  text(`${state.voidE}`, x + 28, 126, 26, '#d8c8ff', 'left', 'bold');
-  text(`Stage ${state.stage} / 3   ·   Wave ${state.waveN} / 3`, x, 170, 17, '#e9dcff', 'left');
-  text(`Ybasogs slain: ${state.kills}`, x, 196, 15, '#b8acd6', 'left');
-  const f = deckForm();
-  text('YOUR FORM', x, 236, 18, '#e9dcff', 'left', 'bold');
-  drawForm(f.form, x + 40, 296, f.color, state.t, 1.4);
-  text(f.nature ? `${f.form[0].toUpperCase() + f.form.slice(1)}` : 'Shapeless', x + 96, 284, 18, f.color, 'left', 'bold');
-  text(f.nature ? `shaped by ${BASE[f.nature].name}` : 'no nature yet', x + 96, 308, 14, '#b8acd6', 'left');
-  text('NATURES', x, 362, 18, '#e9dcff', 'left', 'bold');
-  NATURE_IDS.forEach((n, i) => { const y = 392 + i * 32; sigil(n, x + 12, y, 9, BASE[n].color); text(`${BASE[n].name}: ${BASE[n].element}`, x + 32, y, 15, BASE[n].color, 'left'); });
-  text('Opposites fused become void:', x, 534, 14, '#8f84ad', 'left');
-  text('Wrath and Patience, Greed and Charity', x, 554, 14, '#8f84ad', 'left');
-  text(`Auto-fire (Q): ${state.autoFire ? 'on' : 'off'}`, x, 600, 15, state.autoFire ? '#bfffd2' : '#8f84ad', 'left');
-  text('Hold the left button to fire', x, 626, 14, '#8f84ad', 'left');
-  text('Space or P: pause   ·   M: mute', x, 652, 14, '#8f84ad', 'left');
+  text('ENERGY', x, 30, 18, '#e9dcff', 'left', 'bold');
+  roundRect(x, 46, 280, 18, 5); ctx.fillStyle = '#1a0f12'; ctx.fill();
+  const ef = Math.max(0, state.energy / state.maxEnergy); if (ef > 0) { roundRect(x, 46, Math.max(8, 280 * ef), 18, 5); ctx.fillStyle = ef > 0.35 ? '#7b5bdf' : '#c94a4a'; ctx.fill(); }
+  text(`${Math.ceil(state.energy)} / ${state.maxEnergy}`, x + 140, 55, 14, '#fff', 'center', 'bold');
+  for (let i = 0; i < state.ward; i++) sigil('pride', x + 270 - 20 * i, 80, 7, '#fff0b0');
+  text('VOID ENERGY', x, 90, 18, '#e9dcff', 'left', 'bold');
+  ctx.save(); ctx.translate(x + 10, 120); ctx.fillStyle = '#d8c8ff'; ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(6, 0); ctx.lineTo(0, 10); ctx.lineTo(-6, 0); ctx.fill(); ctx.restore();
+  text(`${state.voidE}`, x + 28, 120, 26, '#d8c8ff', 'left', 'bold');
+  if (state.voidMul !== 1) text(`x${Math.round(state.voidMul * 100) / 100} when banked`, x + 110, 122, 14, '#b8acd6', 'left');
+  text(`Stage ${state.stage} / 3   ·   Wave ${state.waveN} / 3`, x, 160, 17, '#e9dcff', 'left');
+  text(`Depth ${state.depth}   ·   ${state.omen.name}`, x, 186, 15, '#b8acd6', 'left');
+  const n = state.form, col = n ? BASE[n].color : '#b9a6ff';
+  text('YOUR FORM', x, 224, 18, '#e9dcff', 'left', 'bold');
+  drawForm(n ? BASE[n].form : 'blob', x + 34, 276, col, state.t, 1.3);
+  text(n ? BASE[n].formName : 'Shapeless', x + 82, 258, 18, col, 'left', 'bold');
+  wrapText(n ? BASE[n].traitText : 'no nature yet', x + 82, 282, 200, 14, '#b8acd6', 'left');
+  const nd = nextDiscoveries(3);
+  if (nd.length) text('NEXT DISCOVERIES', x, 352, 16, '#e9dcff', 'left', 'bold');
+  nd.forEach((d, i) => { const y = 380 + i * 50; sigil(d.n, x + 9, y, 8, '#6d6488'); wrapText(d.text, x + 24, y, 250, 14, '#b8acd6', 'left');
+    roundRect(x + 24, y + 16, 240, 6, 3); ctx.fillStyle = '#1a1229'; ctx.fill(); if (d.frac > 0) { roundRect(x + 24, y + 16, Math.max(6, 240 * d.frac), 6, 3); ctx.fillStyle = '#9b7bff'; ctx.fill(); } });
+  text(`Auto-fire (Q): ${state.autoFire ? 'on' : 'off'}`, x, 560, 15, state.autoFire ? '#c8ffe8' : '#8f84ad', 'left');
+  text('Hold the left button to fire', x, 586, 14, '#8f84ad', 'left');
+  text('Space or P: pause   ·   M: mute', x, 610, 14, '#8f84ad', 'left');
 }
 function drawPlay() {
   const t = state.t, p = state.player;
@@ -822,11 +1155,15 @@ function drawPlay() {
   if (state.shake > 0) ctx.translate(Math.sin(t * 90) * state.shake * 0.5, Math.cos(t * 77) * state.shake * 0.5);
   drawBackdrop(t);
   ctx.save(); ctx.beginPath(); ctx.rect(RL, 0, RR - RL, H); ctx.clip();
-  // the band the blob holds
-  ctx.fillStyle = 'rgba(120,90,200,0.05)'; ctx.fillRect(RL, tune.band_top - PR, RR - RL, H);
-  ctx.strokeStyle = 'rgba(150,120,230,0.18)'; ctx.setLineDash([6, 10]); ctx.beginPath(); ctx.moveTo(RL, tune.band_top - PR); ctx.lineTo(RR, tune.band_top - PR); ctx.stroke(); ctx.setLineDash([]);
+  const top = tune.band_top - state.tr.band;
+  ctx.fillStyle = 'rgba(120,90,200,0.05)'; ctx.fillRect(RL, top - PR, RR - RL, H);
+  ctx.strokeStyle = 'rgba(150,120,230,0.18)'; ctx.setLineDash([6, 10]); ctx.beginPath(); ctx.moveTo(RL, top - PR); ctx.lineTo(RR, top - PR); ctx.stroke(); ctx.setLineDash([]);
   if (state.leakFlash > 0) { const g = ctx.createLinearGradient(0, H - 60, 0, H); g.addColorStop(0, 'rgba(255,60,60,0)'); g.addColorStop(1, `rgba(255,60,60,${state.leakFlash})`); ctx.fillStyle = g; ctx.fillRect(RL, H - 60, RR - RL, 60); }
+  if (state.timewarp > 0) { ctx.fillStyle = 'rgba(160,220,255,0.06)'; ctx.fillRect(RL, 0, RR - RL, H); }
   for (const f of state.fields) drawField(f, t);
+  for (const w of state.walls) { ctx.save(); ctx.globalAlpha = Math.min(1, w.t); roundRect(w.x - w.w / 2, w.y - w.h / 2, w.w, w.h, 3); ctx.fillStyle = '#5b4a36'; ctx.fill(); ctx.strokeStyle = '#c8a77a'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.beginPath(); for (let i = 1; i < 6; i++) { ctx.moveTo(w.x - w.w / 2 + i * w.w / 6, w.y - w.h / 2); ctx.lineTo(w.x - w.w / 2 + i * w.w / 6, w.y + w.h / 2); } ctx.stroke(); ctx.restore(); }
+  for (const d of state.decoys) { ctx.save(); ctx.translate(d.x, d.y); ctx.globalAlpha = Math.min(1, d.t); for (let i = 0; i < 5; i++) { ctx.rotate(1.2566); ctx.beginPath(); ctx.ellipse(0, -9, 5, 9, 0, 0, 6.283); ctx.fillStyle = d.charm ? '#ff6fc8' : '#3fd08f'; ctx.fill(); } ctx.fillStyle = '#fff0b0'; ctx.beginPath(); ctx.arc(0, 0, 4, 0, 6.283); ctx.fill(); ctx.restore(); }
   for (const m of state.matter) { if (m.k === 'asteroid') drawAsteroid(m); else if (m.k === 'debris') drawDebris(m); else drawRuin(m, t);
     if (m.flash > 0) { ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(m.x, m.y, Math.min(m.r, 30), 0, 6.283); ctx.fill(); ctx.restore(); }
     drawStatus(m); if (m.hp < m.maxhp) hpBar(m.x, m.y - (m.rect ? m.h / 2 + 10 : m.r + 10), 40, m.hp / m.maxhp, '#a89a8a'); }
@@ -835,212 +1172,292 @@ function drawPlay() {
     if (e.flash > 0) { ctx.save(); ctx.globalAlpha = 0.45; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, 6.283); ctx.fill(); ctx.restore(); }
     drawStatus(e); if (e.k !== 'mother' && e.hp < e.maxhp) hpBar(e.x, e.y - e.r - 10, 30, e.hp / e.maxhp, '#c3d64a');
   }
-  for (const g of state.globs) drawGlob(g, t);
+  for (const a of state.allies) { ctx.save(); ctx.translate(a.x, a.y); ctx.rotate(t * 6 + a.ph); ctx.beginPath(); for (let i = 0; i < 5; i++) { const q = i / 5 * 6.283; ctx.lineTo(Math.cos(q) * 9, Math.sin(q) * 9); ctx.lineTo(Math.cos(q + 0.63) * 4, Math.sin(q + 0.63) * 4); } ctx.closePath(); ctx.fillStyle = '#ff6fc8'; ctx.fill(); ctx.restore(); }
+  for (const g of state.globs) drawGlob(g);
   for (const m of state.motes) drawMote(m, t);
+  for (const pt of state.petals) drawPetal(pt, t);
+  for (const m of state.mines) if (m.x !== undefined) { ctx.save(); ctx.strokeStyle = m.c; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(m.x, m.y, 6 + (0.9 - m.t) * 14, 0, 6.283); ctx.stroke(); ctx.restore(); }
+  for (const m of state.meteors) { const k = m.t / m.max; ctx.save(); ctx.strokeStyle = m.c; ctx.setLineDash([4, 6]); ctx.beginPath(); ctx.arc(m.x, m.y, tune.meteor_radius, 0, 6.283); ctx.stroke(); ctx.setLineDash([]);
+    const cy = m.y - k * 500; ctx.fillStyle = '#ffd27a'; ctx.beginPath(); ctx.moveTo(m.x, cy + 12); ctx.lineTo(m.x + 9, cy - 6); ctx.lineTo(m.x, cy - 40); ctx.lineTo(m.x - 9, cy - 6); ctx.fill(); ctx.restore(); }
   for (const b of state.bolts) drawBolt(b);
+  for (const bm of state.beams) { ctx.save(); ctx.globalAlpha = Math.min(1, bm.t * 6); ctx.beginPath(); ctx.moveTo(bm.x1, bm.y1); ctx.lineTo(bm.x2, bm.y2); glowStroke(bm.c, 20, bm.wide ? 3 : 7); ctx.strokeStyle = '#fff'; ctx.lineWidth = bm.wide ? 1 : 2; ctx.stroke(); ctx.restore(); }
+  for (const a of state.arcs) { ctx.save(); ctx.globalAlpha = Math.min(1, a.t * 6); ctx.beginPath(); a.pts.forEach(([x, y], i) => { if (!i) ctx.moveTo(x, y); else { const [px, py] = a.pts[i - 1]; ctx.lineTo((px + x) / 2 + Math.sin(t * 50 + i) * 8, (py + y) / 2 + Math.cos(t * 43 + i) * 8); ctx.lineTo(x, y); } }); glowStroke(a.c, 10, 2); ctx.restore(); }
   for (const q of state.parts) { ctx.globalAlpha = Math.max(0, q.life / q.max); ctx.strokeStyle = q.c; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(q.x - q.vx * 0.03, q.y - q.vy * 0.03); ctx.stroke(); }
   ctx.globalAlpha = 1;
   if (state.phase === 'intro') {
     drawCrack(RCX, 575, t);
     const fx = RCX + 60 + Math.sin(t * 1.3) * 30, fy = 520 + Math.cos(t * 1.7) * 20; drawFirefly(fx, fy, t);
-    const a = Math.min(1, state.introT / 1.5); ctx.globalAlpha = a;
-    text('"take it..."', fx + 20, fy - 34, 18, '#d8ffb0', 'left'); ctx.globalAlpha = 1;
+    ctx.globalAlpha = Math.min(1, state.introT / 1.5); text('"take it..."', fx + 20, fy - 34, 18, '#d8ffb0', 'left'); ctx.globalAlpha = 1;
     text('Move to the crack of light (WASD or Arrows)', RCX, 400, 18, 'rgba(233,220,255,0.75)');
   }
-  // the blob and its aim
-  const f = deckForm();
-  ctx.strokeStyle = f.color; ctx.globalAlpha = 0.35; ctx.setLineDash([4, 8]); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + Math.cos(p.aim) * 90, p.y + Math.sin(p.aim) * 90); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
-  if (!(p.iframe > 0 && Math.floor(t * 20) % 2)) drawForm(f.form, p.x, p.y, f.color, t);
+  const col = state.form ? BASE[state.form].color : '#b9a6ff';
+  ctx.strokeStyle = col; ctx.globalAlpha = 0.35; ctx.setLineDash([4, 8]); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + Math.cos(p.aim) * 90, p.y + Math.sin(p.aim) * 90); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+  if (state.tr.aura) { ctx.strokeStyle = 'rgba(154,143,200,0.2)'; ctx.beginPath(); ctx.arc(p.x, p.y, 160, 0, 6.283); ctx.stroke(); }
+  if (!(p.iframe > 0 && Math.floor(t * 20) % 2)) drawForm(state.form ? BASE[state.form].form : 'blob', p.x, p.y, col, t);
   for (const fl of state.floaters) { ctx.globalAlpha = Math.min(1, fl.life / fl.max * 2); text(fl.s, fl.x, fl.y, fl.size, fl.c, 'center', 'bold'); }
   ctx.globalAlpha = 1;
-  // the Mother's health across the top
   if (state.mother && !state.mother.dead) { text('THE MOTHER', RCX, 18, 15, '#d6e25a', 'center', 'bold'); hpBar(RCX, 30, 500, state.mother.hp / state.mother.maxhp, '#c7d84c'); }
   ctx.restore();
   drawHUD();
   ctx.restore();
 }
 
-// ---- The pick and the Altar ---------------------------------------------------------------------
-const PICK_CARD = (i) => ({ x: RCX - 285 + i * 195, y: 230, w: 180, h: 240 });
-function updatePick() {
-  const c = mouse.click;
-  let choice = -1;
-  for (let i = 0; i < 3; i++) { const b = PICK_CARD(i); if (inBox(c, b.x, b.y, b.w, b.h) || pressed('Digit' + (i + 1))) choice = i; }
-  if (choice >= 0) {
-    const card = state.pick[choice]; state.deck.push(card); state.draw.unshift(card.id);
-    tone(520, 0.2, 'sine', 0.15, 1.5); floatText(`${cardName(card)} joins your deck`, RCX, 470, cardColor(card), 20, 2);
-    state.pick = null; nextWave(); return;
+// ---- The Rift Altar: Prepare, Void Rite, Forge, Codex, Discoveries --------------------------------
+const altar = { tab: 'deck', page: 0, sel: [], reveal: [], msg: '', msgC: '#ddd', forgetArm: -9, t: 0, hoverInfo: null };
+const TABS = [['deck', 'Prepare'], ['rite', 'Void Rite'], ['forge', 'Forge'], ['codex', 'Codex'], ['found', 'Discoveries']];
+const COL = { x: 30, y: 170, cw: 92, ch: 104, gap: 8, cols: 6, rows: 4 };
+const R = 680; // the right panel's left edge
+function say(s, c = '#ddd') { altar.msg = s; altar.msgC = c; }
+function colTile(i) { return { x: COL.x + (i % COL.cols) * (COL.cw + COL.gap), y: COL.y + Math.floor(i / COL.cols) * (COL.ch + 26), w: COL.cw, h: COL.ch }; }
+const focusTile = i => ({ cx: R + 36 + (i % 7) * 76, cy: 280 + Math.floor(i / 7) * 58 });
+const loadRow = i => ({ x: R + (i % 2) * 284, y: 182 + Math.floor(i / 2) * 32 });
+function openAltar() { scene = 'altar'; altar.sel = []; altar.reveal = []; altar.t = 0; say(meta.runs ? 'Choose the deck for the next adventure. The omen tells you what waits.' : 'The rift is open. Prepare your deck.'); }
+function riteDraw(n) {
+  const cost = n === 10 ? tune.grand_rite_cost + (meta.focus ? tune.focus_cost * 10 : 0) : tune.rite_cost + (meta.focus ? tune.focus_cost : 0);
+  if (meta.bank < cost) { say(`The rite needs ${cost} void energy.`, '#ff9a9a'); return; }
+  meta.bank -= cost; altar.reveal = [];
+  const pairs = FUSION_KEYS.filter(k => k.split('+').every(x => meta.discovered.includes(x)));
+  for (let i = 0; i < n; i++) {
+    seed = CONFIG.seed * 1000003 + meta.draws * 104729; meta.draws++; meta.pity++;
+    let natures, level = 1, rar = 'common';
+    if (pairs.length && (meta.pity >= tune.mythic_pity || rng() < tune.mythic_chance)) {
+      natures = pairs[Math.floor(rng() * pairs.length)].split('+'); rar = 'mythic'; meta.pity = 0;
+      if (!meta.fusions.includes(keyOf(natures))) meta.fusions.push(keyOf(natures));
+    } else {
+      natures = [meta.focus && rng() < tune.focus_share ? meta.focus : meta.discovered[Math.floor(rng() * meta.discovered.length)]];
+      if (rng() < tune.rare_chance) { level = 2; rar = 'rare'; }
+    }
+    const sk = stackKey(natures, level), isNew = !meta.seen[sk];
+    meta.seen[sk] = true; addCards(sk, 1);
+    altar.reveal.push({ natures, level, rar, isNew });
   }
-  if (inBox(c, RCX - 120, 510, 240, 44) || pressed('Digit4') || pressed('KeyX')) {
-    state.voidE += tune.skip_reward; state.pick = null; tone(330, 0.2, 'triangle', 0.1);
-    floatText(`Skipped: +${tune.skip_reward} void energy`, RCX, 470, '#d8c8ff', 20, 2); nextWave();
+  saveMeta();
+  const best = altar.reveal.some(r => r.rar === 'mythic') ? 'mythic' : altar.reveal.some(r => r.rar === 'rare') ? 'rare' : 'common';
+  tone(best === 'mythic' ? 300 : 400, 0.7, 'triangle', 0.18, best === 'mythic' ? 3 : 2); if (best === 'mythic') tone(600, 0.9, 'sine', 0.12, 2);
+  say(best === 'mythic' ? 'A mythic answers the rite: a fused nature, whole. It is written in your Codex.' : best === 'rare' ? 'A rare card rises from the void.' : 'The void gives what it gives.', best === 'mythic' ? '#ffd27a' : '#d8c8ff');
+}
+function forge() {
+  if (altar.sel.length < 2) { say('Choose two cards from your collection to fuse.', '#ffd27a'); return; }
+  const [ka, kb] = altar.sel, a = parseStack(ka), b = parseStack(kb);
+  if (ka === kb && owned(ka) < 2) { say('You need two of that card to fuse it with itself.', '#ffd27a'); return; }
+  const r = fuseResult(a, b), names = `${cardName(a)} + ${cardName(b)}`;
+  if (r.kind === 'unstable') { say(`${names}: unstable, not yet known.`, '#ffd27a'); return; }
+  if (r.kind === 'maxed') { say(`${names}: already at its highest level.`, '#ffd27a'); return; }
+  if (meta.bank < tune.fuse_cost) { say(`Fusing needs ${tune.fuse_cost} void energy.`, '#ff9a9a'); return; }
+  meta.bank -= tune.fuse_cost; takeCard(ka); takeCard(kb); altar.sel = [];
+  if (r.kind === 'void') { meta.bank += tune.void_refund; say(`${names}: opposites annul. Both return to the void (+${tune.void_refund}).`, '#b9a6ff'); tone(80, 0.8, 'sine', 0.25, 0.3); }
+  else {
+    const key = keyOf(r.union), sk = stackKey(r.union, r.level || 1), first = isFusionKey(key) && !meta.fusions.includes(key);
+    addCards(sk, 1); meta.seen[sk] = true;
+    if (first) { meta.fusions.push(key); meta.bank += tune.first_fusion_bonus; }
+    const c = { natures: r.union, level: r.level || 1 };
+    say(`${first ? 'NEW FUSION! ' : ''}${names} = ${cardName(c)}. ${recipeOf(c).says}${first ? ` (+${tune.first_fusion_bonus})` : ''}`, cardColor(c));
+    tone(330, 0.5, 'sine', 0.2, 2); if (first) tone(660, 0.8, 'sine', 0.15, 1.5);
   }
+  saveMeta();
 }
-function drawPick() {
-  drawPlay();
-  ctx.fillStyle = 'rgba(2,1,8,0.82)'; ctx.fillRect(0, 0, W, H);
-  text('Wave cleared', RCX, 130, 36, '#e9dcff', 'center', 'bold');
-  text('Take one nature into your deck, or skip to keep it lean', RCX, 176, 18, '#b8acd6');
-  state.pick.forEach((c, i) => { const b = PICK_CARD(i); drawCard(c, b.x, b.y, b.w, b.h, inBox(mouse, b.x, b.y, b.w, b.h), false); text(`${i + 1}`, b.x + b.w / 2, b.y + b.h + 18, 15, '#8f84ad'); });
-  const hv = inBox(mouse, RCX - 120, 510, 240, 44);
-  roundRect(RCX - 120, 510, 240, 44, 8); ctx.fillStyle = hv ? '#221838' : '#120d1e'; ctx.fill(); ctx.strokeStyle = '#d8c8ff'; ctx.lineWidth = 1.5; ctx.stroke();
-  text(`Skip: +${tune.skip_reward} void energy  (4)`, RCX, 532, 17, '#d8c8ff');
+function beginAdventure() {
+  if (deckCount() < tune.deck_min) { say(`An adventure needs at least ${tune.deck_min} cards in the deck.`, '#ff9a9a'); return; }
+  saveMeta(); reset(); scene = 'play';
 }
-const ALTAR = { gx: 40, gy: 120, cw: 92, ch: 118, cols: 7, bx: 790, bw: 450 };
-function altarCardBox(i) { return { x: ALTAR.gx + (i % ALTAR.cols) * (ALTAR.cw + 10), y: ALTAR.gy + Math.floor(i / ALTAR.cols) * (ALTAR.ch + 12), w: ALTAR.cw, h: ALTAR.ch }; }
-const BTN = { gacha: { y: 120 }, fuse: { y: 186 }, descend: { y: 252 } };
-function altarSay(s, c = '#ddd') { state.msg = s; state.msgC = c; }
 function updateAltar(dt) {
-  state.t += dt;
-  const c = mouse.click;
-  if (state.reveal) { // a gacha draw: keep one or none
-    for (let i = 0; i < 3; i++) { const b = PICK_CARD(i); if (inBox(c, b.x, b.y, b.w, b.h) || pressed('Digit' + (i + 1))) {
-      const card = state.reveal[i]; state.deck.push(card); state.reveal = null; tone(520, 0.2, 'sine', 0.15, 1.5); altarSay(`${cardName(card)} joins your deck.`, cardColor(card)); return; } }
-    if (inBox(c, RCX - 120, 510, 240, 44) || pressed('Digit4')) { state.reveal = null; altarSay('You let them drift back into the void.'); }
-    return;
+  altar.t += dt; const c = mouse.click;
+  for (let i = 0; i < TABS.length; i++) if (inBox(c, 30 + i * 150, 104, 140, 38) || pressed('Digit' + (i + 1))) { if (altar.tab !== TABS[i][0]) say(''); altar.tab = TABS[i][0]; altar.sel = []; }
+  const list = stacks(meta.cards), per = COL.cols * COL.rows, pages = Math.max(1, Math.ceil(list.length / per));
+  altar.page = Math.min(altar.page, pages - 1);
+  if (inBox(c, 30, 674, 90, 30) && altar.page > 0) altar.page--;
+  if (inBox(c, 530, 674, 90, 30) && altar.page < pages - 1) altar.page++;
+  list.slice(altar.page * per, altar.page * per + per).forEach((s, i) => {
+    const b = colTile(i); if (!inBox(c, b.x, b.y, b.w, b.h)) return;
+    if (altar.tab === 'deck') {
+      const inDeck = meta.loadout[s.sk] || 0;
+      if (inDeck >= s.n) say('All your copies of that card are already in the deck.', '#ffd27a');
+      else if (deckCount() >= tune.deck_max) say(`The deck holds at most ${tune.deck_max} cards.`, '#ffd27a');
+      else { meta.loadout[s.sk] = inDeck + 1; tone(700, 0.04, 'sine', 0.05); saveMeta(); }
+    } else if (altar.tab === 'forge') { altar.sel.push(s.sk); if (altar.sel.length > 2) altar.sel.shift(); tone(700, 0.04, 'sine', 0.05); }
+  });
+  if (altar.tab === 'deck') {
+    stacks(meta.loadout).forEach((s, i) => { const r = loadRow(i); if (inBox(c, r.x, r.y, 274, 28)) { meta.loadout[s.sk]--; if (!meta.loadout[s.sk]) delete meta.loadout[s.sk]; saveMeta(); } });
+    if (inBox(c, 1004, 566, 34, 30) && meta.depth > 0) { meta.depth--; saveMeta(); }
+    if (inBox(c, 1110, 566, 34, 30) && meta.depth < meta.maxDepth) { meta.depth++; saveMeta(); }
+    if (inBox(c, R, 612, 560, 70) || pressed('Enter')) { beginAdventure(); return; }
+  } else if (altar.tab === 'rite') {
+    meta.discovered.forEach((n, i) => { const f = focusTile(i); if (inBox(c, f.cx - 32, f.cy - 26, 64, 52)) { meta.focus = meta.focus === n ? null : n; saveMeta(); } });
+    if (inBox(c, R, 380, 270, 60)) riteDraw(1);
+    if (inBox(c, 970, 380, 270, 60)) riteDraw(10);
+  } else if (altar.tab === 'forge') {
+    if (inBox(c, R, 400, 560, 56)) forge();
+    if (inBox(c, R, 470, 270, 34)) altar.sel = [];
+  } else if (altar.tab === 'found') {
+    if (inBox(c, 980, 664, 260, 34)) { if (altar.t - altar.forgetArm < 3) { meta = freshMeta(); saveMeta(); reset(); scene = 'title'; return; } altar.forgetArm = altar.t; say('Click again within 3 seconds to forget everything.', '#ff9a9a'); }
   }
-  state.deck.forEach((card, i) => { const b = altarCardBox(i); if (inBox(c, b.x, b.y, b.w, b.h)) {
-    const k = state.sel.indexOf(card.id); if (k >= 0) state.sel.splice(k, 1); else { state.sel.push(card.id); if (state.sel.length > 2) state.sel.shift(); } tone(700, 0.04, 'sine', 0.05); } });
-  if (inBox(c, ALTAR.bx, BTN.gacha.y, ALTAR.bw, 52)) {
-    if (state.voidE < state.gachaCost) altarSay(`Not enough void energy: a draw costs ${state.gachaCost}.`, '#ff9a9a');
-    else {
-      state.voidE -= state.gachaCost; state.gachaCost += tune.gacha_cost_step;
-      const twoKeys = Object.keys(RECIPES).filter(k => k.split('+').length === 2);
-      state.reveal = [0, 1, 2].map(() => { const r = rng();
-        if (r < tune.gacha_fused_chance) return makeCard(twoKeys[Math.floor(rng() * twoKeys.length)].split('+'));
-        return makeCard([NATURE_IDS[Math.floor(rng() * NATURE_IDS.length)]], r < tune.gacha_fused_chance + tune.gacha_level_chance ? 2 : 1); });
-      tone(400, 0.5, 'triangle', 0.15, 2.2);
-    }
-  }
-  if (inBox(c, ALTAR.bx, BTN.fuse.y, ALTAR.bw, 52)) {
-    if (state.sel.length < 2) altarSay('Choose two cards from your deck to fuse.', '#ffd27a');
-    else {
-      const a = cardById(state.sel[0]), b = cardById(state.sel[1]), r = fuseResult(a, b);
-      const names = `${cardName(a)} + ${cardName(b)}`;
-      if (r.kind === 'unstable') altarSay(`${names}: unstable, not yet known. Nothing changes.`, '#ffd27a');
-      else if (r.kind === 'maxed') altarSay(`${names}: already at its highest level.`, '#ffd27a');
-      else if (state.voidE < tune.fuse_cost) altarSay(`Not enough void energy: fusing costs ${tune.fuse_cost}.`, '#ff9a9a');
-      else if (state.deck.length - (r.kind === 'void' ? 2 : 1) < tune.min_deck) altarSay(`Your deck can't grow thinner than ${tune.min_deck} cards.`, '#ff9a9a');
-      else {
-        state.voidE -= tune.fuse_cost;
-        state.deck = state.deck.filter(c2 => c2 !== a && c2 !== b); state.sel = [];
-        if (r.kind === 'void') { state.voidE += tune.void_refund; altarSay(`${names}: opposites annul. Both return to the void (+${tune.void_refund}).`, '#b9a6ff'); tone(80, 0.8, 'sine', 0.25, 0.3); }
-        else { const nc = makeCard(r.union, r.level || 1); state.deck.push(nc); altarSay(`${names} = ${cardName(nc)}. ${recipeOf(nc).says}`, cardColor(nc)); tone(330, 0.5, 'sine', 0.2, 2); }
-      }
-    }
-  }
-  if (inBox(c, ALTAR.bx, BTN.descend.y, ALTAR.bw, 52) || pressed('Enter')) nextWave();
+  if (pressed('Escape')) scene = 'title';
 }
-function button(label, sub, y, color, enabled) {
-  const hv = inBox(mouse, ALTAR.bx, y, ALTAR.bw, 52);
-  roundRect(ALTAR.bx, y, ALTAR.bw, 52, 8); ctx.fillStyle = hv && enabled ? '#241a3a' : '#120d1e'; ctx.fill();
-  ctx.strokeStyle = enabled ? color : '#3b3350'; ctx.lineWidth = 1.6; ctx.stroke();
-  text(label, ALTAR.bx + 18, y + 19, 18, enabled ? color : '#6d6488', 'left', 'bold'); text(sub, ALTAR.bx + 18, y + 39, 14, '#9d92bb', 'left');
+function abutton(x, y, w, h, label, sub, color, enabled) {
+  const hv = enabled && inBox(mouse, x, y, w, h);
+  roundRect(x, y, w, h, 8); ctx.fillStyle = hv ? '#241a3a' : '#120d1e'; ctx.fill(); ctx.strokeStyle = enabled ? color : '#3b3350'; ctx.lineWidth = 1.6; ctx.stroke();
+  const tx = w < 60 ? x + w / 2 : x + 16, al = w < 60 ? 'center' : 'left';
+  text(label, tx, y + (sub ? h / 2 - 9 : h / 2), w < 60 ? 20 : 18, enabled ? color : '#6d6488', al, 'bold'); if (sub) text(sub, x + 16, y + h / 2 + 12, 14, '#9d92bb', 'left');
 }
 function drawAltar() {
-  const t = state.t;
+  const t = altar.t;
   clear('#030209');
-  for (const s of stars) { ctx.fillStyle = `rgba(210,200,255,${0.15 + 0.25 * s.z})`; ctx.fillRect(s.x, s.y, s.z * 1.6, s.z * 1.6); }
-  // the altar itself: a broken stone ring around a crack of light
-  ctx.save(); ctx.translate(1015, 600);
-  ctx.strokeStyle = '#5a5366'; ctx.lineWidth = 10; for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(0, 0, 80, i * 1.047 + 0.12, i * 1.047 + 0.88); ctx.stroke(); }
-  ctx.strokeStyle = `rgba(90,200,185,${0.4 + 0.2 * Math.sin(t * 2)})`; ctx.lineWidth = 1.4; for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(0, 0, 66, i * 1.047 + 0.3, i * 1.047 + 0.7); ctx.stroke(); }
-  ctx.restore(); drawCrack(1015, 600, t);
-  const f = deckForm(); drawForm(f.form, 1015, 680, f.color, t, 0.9);
-  text('THE RIFT ALTAR', 40, 40, 28, '#e9dcff', 'left', 'bold');
-  text(`Stage ${state.stage} cleared. Void energy: ${state.voidE}`, 40, 76, 18, '#d8c8ff', 'left');
-  text('Your deck: click two cards to select them for fusing', 40, 102, 15, '#8f84ad', 'left');
-  state.deck.forEach((card, i) => { const b = altarCardBox(i); drawCard(card, b.x, b.y, b.w, b.h, inBox(mouse, b.x, b.y, b.w, b.h) && !state.reveal, state.sel.includes(card.id)); });
-  button(`Gacha draw: ${state.gachaCost} void energy`, 'Reveal three natures and keep one', BTN.gacha.y, '#d8c8ff', state.voidE >= state.gachaCost);
-  let fuseSub = 'Select two cards first';
-  if (state.sel.length === 2) { const a = cardById(state.sel[0]), b = cardById(state.sel[1]), r = fuseResult(a, b);
-    fuseSub = r.kind === 'void' ? 'Opposites: both return to the void' : r.kind === 'unstable' ? 'Unstable: not yet known' : r.kind === 'maxed' ? 'Already at its highest level'
-      : r.kind === 'level' ? `Becomes ${RECIPES[keyOf(r.union)].name} ${'I'.repeat(r.level)}` : `Becomes ${RECIPES[keyOf(r.union)].name}`; }
-  button(`Fuse: ${tune.fuse_cost} void energy`, fuseSub, BTN.fuse.y, '#ffd27a', state.sel.length === 2 && state.voidE >= tune.fuse_cost);
-  button(`Descend to stage ${state.stage + 1}  (Enter)`, 'The rift waits', BTN.descend.y, '#bfffd2', true);
-  ctx.save(); wrapText(state.msg, ALTAR.bx + ALTAR.bw / 2, 340, ALTAR.bw, 16, state.msgC); ctx.restore();
-  // the codex: every known recipe
-  text('KNOWN FUSIONS', ALTAR.bx, 392, 17, '#e9dcff', 'left', 'bold');
-  Object.entries(RECIPES).filter(([k]) => k.split('+').length >= 2).forEach(([k, r], i) => {
-    const y = 422 + i * 26, parts = k.split('+').map(n => BASE[n].name).join(' + ');
-    text(`${parts} = ${r.name}`, ALTAR.bx, y, 15, r.color, 'left');
+  for (const s of stars) { ctx.fillStyle = `rgba(210,200,255,${0.12 + 0.2 * s.z})`; ctx.fillRect(s.x, s.y, s.z * 1.6, s.z * 1.6); }
+  text('THE RIFT ALTAR', 30, 36, 28, '#e9dcff', 'left', 'bold');
+  text(`Adventures ${meta.runs}  ·  Mothers felled ${meta.wins}  ·  Natures ${meta.discovered.length}/14  ·  Fusions ${meta.fusions.length}/${FUSION_KEYS.length}`, 30, 72, 15, '#b8acd6', 'left');
+  ctx.save(); ctx.translate(1090, 40); ctx.fillStyle = '#d8c8ff'; ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(7, 0); ctx.lineTo(0, 12); ctx.lineTo(-7, 0); ctx.fill(); ctx.restore();
+  text(`${meta.bank}`, 1106, 40, 28, '#d8c8ff', 'left', 'bold'); text('void energy banked', 1106, 66, 14, '#9d92bb', 'left');
+  TABS.forEach(([k, label], i) => { const x = 30 + i * 150, on = altar.tab === k; roundRect(x, 104, 140, 38, 8); ctx.fillStyle = on ? '#241a3a' : '#0e0a18'; ctx.fill(); ctx.strokeStyle = on ? '#d8c8ff' : '#3b3350'; ctx.lineWidth = on ? 2 : 1; ctx.stroke(); text(`${i + 1}  ${label}`, x + 70, 123, 16, on ? '#efe6ff' : '#9d92bb', 'center', on ? 'bold' : ''); });
+  // the collection, always on the left
+  const list = stacks(meta.cards), per = COL.cols * COL.rows, pages = Math.max(1, Math.ceil(list.length / per));
+  text(`YOUR COLLECTION  (${list.reduce((a, s) => a + s.n, 0)} cards)`, 30, 156, 15, '#e9dcff', 'left', 'bold');
+  text(altar.tab === 'deck' ? 'click to add to the deck' : altar.tab === 'forge' ? 'click two to fuse' : '', 620, 156, 14, '#8f84ad', 'right');
+  list.slice(altar.page * per, altar.page * per + per).forEach((s, i) => {
+    const b = colTile(i), inDeck = meta.loadout[s.sk] || 0, sel = altar.sel.includes(s.sk);
+    drawCard(s, b.x, b.y, b.w, b.h, inBox(mouse, b.x, b.y, b.w, b.h), sel || (altar.tab === 'deck' && inDeck > 0), { s: `x${s.n}` });
+    if (altar.tab === 'deck' && inDeck) text(`${inDeck} in deck`, b.x + b.w / 2, b.y + b.h + 10, 13, '#c8ffe8');
   });
-  text('Wrath + Patience, Greed + Charity = void', ALTAR.bx, 532, 15, '#b9a6ff', 'left');
-  text('Twin cards fuse into a higher level', ALTAR.bx, 556, 15, '#9d92bb', 'left');
-  text('Three- and four-nature fusions: not yet known', ALTAR.bx, 580, 15, '#6d6488', 'left');
-  if (state.reveal) {
-    ctx.fillStyle = 'rgba(2,1,8,0.85)'; ctx.fillRect(0, 0, W, H);
-    text('The void offers', RCX, 150, 34, '#e9dcff', 'center', 'bold'); text('Keep one', RCX, 190, 18, '#b8acd6');
-    state.reveal.forEach((c, i) => { const b = PICK_CARD(i); drawCard(c, b.x, b.y, b.w, b.h, inBox(mouse, b.x, b.y, b.w, b.h), false); text(`${i + 1}`, b.x + b.w / 2, b.y + b.h + 18, 15, '#8f84ad'); });
-    roundRect(RCX - 120, 510, 240, 44, 8); ctx.fillStyle = '#120d1e'; ctx.fill(); ctx.strokeStyle = '#d8c8ff'; ctx.stroke(); text('Keep none  (4)', RCX, 532, 17, '#d8c8ff');
+  if (!list.length) wrapText('Nothing yet. Adventures and the Void Rite fill your collection.', 320, 300, 520, 17, '#8f84ad');
+  if (pages > 1) { abutton(30, 674, 90, 30, 'Prev', '', '#d8c8ff', altar.page > 0); text(`Page ${altar.page + 1} / ${pages}`, 325, 689, 15, '#b8acd6'); abutton(530, 674, 90, 30, 'Next', '', '#d8c8ff', altar.page < pages - 1); }
+  ctx.strokeStyle = '#2a2140'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(655, 150); ctx.lineTo(655, 705); ctx.stroke();
+  let msgY = 700;
+  if (altar.tab === 'deck') {
+    text(`DECK FOR THE NEXT ADVENTURE  (${deckCount()} / ${tune.deck_max}, at least ${tune.deck_min})`, R, 160, 15, '#e9dcff', 'left', 'bold');
+    stacks(meta.loadout).forEach((s, i) => { const r = loadRow(i), hv = inBox(mouse, r.x, r.y, 274, 28);
+      roundRect(r.x, r.y, 274, 28, 6); ctx.fillStyle = hv ? '#241a3a' : '#0f0b18'; ctx.fill(); ctx.strokeStyle = cardColor(s); ctx.lineWidth = 1; ctx.stroke();
+      cardSigil(s, r.x + 16, r.y + 14, 9); text(`${cardName(s)}  x${s.n}`, r.x + 34, r.y + 14, 15, cardColor(s), 'left'); if (hv) text('remove', r.x + 264, r.y + 14, 13, '#ff9a9a', 'right'); });
+    const n = dominantNature(loadoutCards()), col = n ? BASE[n].color : '#b9a6ff';
+    text('YOUR FORM', R, 418, 15, '#e9dcff', 'left', 'bold');
+    drawForm(n ? BASE[n].form : 'blob', R + 44, 472, col, t, 1.5);
+    text(n ? `${BASE[n].formName}, shaped by ${BASE[n].name}` : 'Shapeless', R + 100, 452, 18, col, 'left', 'bold');
+    wrapText(n ? BASE[n].traitText : 'Add nature cards: the nature most present in the deck shapes you.', R + 100, 478, 440, 15, '#cfc6e6', 'left');
+    const om = OMENS[meta.omen] || OMENS.calm;
+    text('OMEN', R, 524, 15, '#e9dcff', 'left', 'bold'); text(om.name, R + 60, 524, 17, '#ffd27a', 'left', 'bold'); text(om.says, R + 60, 548, 14, '#cfc6e6', 'left');
+    text('DEPTH', R, 581, 15, '#e9dcff', 'left', 'bold');
+    text(`+${Math.round(tune.depth_hp * meta.depth * 100)}% Ybasog life, +${Math.round(tune.depth_void * meta.depth * 100)}% void energy`, R + 60, 581, 14, '#9d92bb', 'left');
+    abutton(1004, 566, 34, 30, '-', '', '#d8c8ff', meta.depth > 0); text(`${meta.depth}`, 1074, 581, 20, '#efe6ff', 'center', 'bold'); abutton(1110, 566, 34, 30, '+', '', '#d8c8ff', meta.depth < meta.maxDepth);
+    abutton(R, 612, 560, 70, 'Begin the adventure  (Enter)', deckCount() < tune.deck_min ? `Add ${tune.deck_min - deckCount()} more card(s) first` : 'Three stages, the Mother at the end. Void energy you gather is banked.', '#c8ffe8', deckCount() >= tune.deck_min);
+    msgY = 702;
+  } else if (altar.tab === 'rite') {
+    text('THE VOID RITE', R, 160, 18, '#e9dcff', 'left', 'bold');
+    wrapText('Spend banked void energy to call cards from the natures you have discovered. Twins fuse into higher levels at the Forge.', R, 188, 560, 15, '#cfc6e6', 'left');
+    text('FOCUS (optional): click a nature to call it more often', R, 234, 14, '#9d92bb', 'left');
+    meta.discovered.forEach((n, i) => { const f = focusTile(i), on = meta.focus === n;
+      roundRect(f.cx - 32, f.cy - 26, 64, 52, 8); ctx.fillStyle = on ? '#2a1f45' : '#0f0b18'; ctx.fill(); ctx.strokeStyle = on ? BASE[n].color : '#2a2140'; ctx.lineWidth = on ? 2 : 1; ctx.stroke();
+      sigil(n, f.cx, f.cy - 6, 11, BASE[n].color); text(BASE[n].name, f.cx, f.cy + 16, 12, BASE[n].color); });
+    const per = tune.rite_cost + (meta.focus ? tune.focus_cost : 0), grand = tune.grand_rite_cost + (meta.focus ? tune.focus_cost * 10 : 0);
+    abutton(R, 380, 270, 60, `One rite: ${per}`, meta.focus ? `focused on ${BASE[meta.focus].name}` : 'any discovered nature', '#d8c8ff', meta.bank >= per);
+    abutton(970, 380, 270, 60, `Ten rites: ${grand}`, 'ten cards for the price of nine', '#ffd27a', meta.bank >= grand);
+    text(`Rare (level II) ${Math.round(tune.rare_chance * 100)}%  ·  Mythic (already fused) ${Math.round(tune.mythic_chance * 100)}%  ·  a mythic is certain within ${Math.max(1, tune.mythic_pity - meta.pity)} draws`, R, 456, 13, '#9d92bb', 'left');
+    altar.reveal.forEach((r, i) => { const x = R + (i % 5) * 112, y = 476 + Math.floor(i / 5) * 112, w = 100, h = 100;
+      const glow = r.rar === 'mythic' ? '#ffd27a' : r.rar === 'rare' ? '#9ad7ff' : null;
+      if (glow) { ctx.save(); ctx.shadowColor = glow; ctx.shadowBlur = CHEAP ? 0 : 22; roundRect(x - 3, y - 3, w + 6, h + 6, 10); ctx.strokeStyle = glow; ctx.lineWidth = 3; ctx.stroke(); ctx.restore(); }
+      drawCard(r, x, y, w, h, false, false, r.isNew ? { s: 'NEW', bg: '#ffd27a', c: '#1a1229' } : null); });
+    msgY = altar.reveal.length > 5 ? 2000 : 600;
+  } else if (altar.tab === 'forge') {
+    text('THE FORGE', R, 160, 18, '#e9dcff', 'left', 'bold');
+    wrapText('Two cards become one. New fusions fill the Codex and pay a bounty. Twins rise a level. Opposites annul: a way to thin your collection, with a little void energy back.', R, 188, 560, 15, '#cfc6e6', 'left');
+    const sl = [altar.sel[0], altar.sel[1]];
+    sl.forEach((sk, i) => { const x = R + i * 200; roundRect(x, 250, 120, 130, 8); ctx.strokeStyle = '#3b3350'; ctx.lineWidth = 1; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+      if (sk) drawCard(parseStack(sk), x, 250, 120, 130, false, true); else text('choose', x + 60, 315, 15, '#6d6488'); });
+    text('+', R + 160, 315, 30, '#9d92bb'); text('=', R + 360, 315, 30, '#9d92bb');
+    let sub = 'Choose two cards';
+    if (altar.sel.length === 2) {
+      const a = parseStack(sl[0]), b = parseStack(sl[1]), r = fuseResult(a, b);
+      if (r.kind === 'void') { sub = 'Opposites: both return to the void'; ctx.save(); ctx.translate(R + 460, 315); ctx.beginPath(); for (let i = 0; i <= 14; i++) { const q = i / 14 * 6.283, rr = 34 + Math.sin(q * 3 + t * 3) * 4; ctx.lineTo(Math.cos(q) * rr, Math.sin(q) * rr); } ctx.fillStyle = '#000'; ctx.fill(); glowStroke('#b9a6ff', 14, 2); ctx.restore(); }
+      else if (r.kind === 'new' && isFusionKey(keyOf(r.union)) && !meta.fusions.includes(keyOf(r.union))) { sub = 'An unknown fusion. Forge it to find out.'; roundRect(R + 400, 250, 120, 130, 8); ctx.fillStyle = '#0e0a18'; ctx.fill(); glowStroke(RECIPES[keyOf(r.union)].color, 16, 2); text('?', R + 460, 312, 48, '#efe6ff', 'center', 'bold'); }
+      else if (r.kind === 'new' || r.kind === 'level') { const c = { natures: r.union, level: r.level || 1 }; drawCard(c, R + 400, 250, 120, 130, false, false); sub = `Becomes ${cardName(c)}`; }
+      else sub = r.kind === 'maxed' ? 'Already at its highest level' : 'Unstable: not yet known';
+    }
+    abutton(R, 400, 560, 56, `Fuse: ${tune.fuse_cost} void energy`, sub, '#ffd27a', altar.sel.length === 2 && meta.bank >= tune.fuse_cost);
+    abutton(R, 470, 270, 34, 'Clear the choice', '', '#9d92bb', altar.sel.length > 0);
+    text(`Fusions found: ${meta.fusions.length} / ${FUSION_KEYS.length}`, R, 536, 16, '#e9dcff', 'left', 'bold');
+    text('A Void Bolt melts into any nature card: a way to trim plain bolts.', R, 562, 14, '#9d92bb', 'left');
+    text('Three- and four-nature fusions: not yet known', R, 586, 14, '#6d6488', 'left');
+    msgY = 640;
+  } else if (altar.tab === 'codex') {
+    text(`THE CODEX   ${meta.fusions.length} / ${FUSION_KEYS.length} fusions`, R, 160, 18, '#e9dcff', 'left', 'bold');
+    let hi = null;
+    FUSION_KEYS.forEach((k, i) => { const x = R + (i % 12) * 46, y = 180 + Math.floor(i / 12) * 46, known = meta.fusions.includes(k), ns = k.split('+'), rec = RECIPES[k];
+      roundRect(x, y, 40, 40, 6); ctx.fillStyle = known ? '#140f22' : '#0a0812'; ctx.fill(); ctx.strokeStyle = known ? rec.color : '#221b33'; ctx.lineWidth = known ? 1.6 : 1; ctx.stroke();
+      const canMake = ns.every(n => meta.discovered.includes(n));
+      if (known) cardSigil({ natures: ns, level: 1 }, x + 20, y + 20, 13); else text('?', x + 20, y + 21, 16, canMake ? '#7d7398' : '#3a3150', 'center', 'bold');
+      if (inBox(mouse, x, y, 40, 40)) hi = { k, known, canMake }; });
+    if (hi) { const rec = RECIPES[hi.k], ns = hi.k.split('+');
+      text(hi.known ? rec.name : 'Unknown fusion', R, 524, 20, hi.known ? rec.color : '#9d92bb', 'left', 'bold');
+      text(hi.known ? `${BASE[ns[0]].name} + ${BASE[ns[1]].name}` : hi.canMake ? 'You know both of its natures. Try the Forge.' : 'One of its natures is still undiscovered.', R, 550, 15, '#cfc6e6', 'left');
+      if (hi.known) wrapText(rec.says, R, 574, 560, 15, '#cfc6e6', 'left'); }
+    else text('Point at a cell to read it. A brighter ? can be forged with natures you know.', R, 540, 15, '#8f84ad', 'left');
+    text('Opposites never fuse: Pride and Humility, Greed and Charity, Wrath and Patience,', R, 622, 14, '#b9a6ff', 'left');
+    text('Envy and Kindness, Lust and Chastity, Gluttony and Temperance, Sloth and Diligence.', R, 642, 14, '#b9a6ff', 'left');
+    msgY = 2000;
+  } else if (altar.tab === 'found') {
+    text(`DISCOVERIES   ${meta.discovered.length} / 14 natures`, R, 160, 18, '#e9dcff', 'left', 'bold');
+    NIDS.forEach((n, i) => { const x = R + (i % 2) * 284, y = 200 + Math.floor(i / 2) * 64, b = BASE[n], got = meta.discovered.includes(n), d = DISCOVER[n];
+      roundRect(x, y - 24, 274, 56, 8); ctx.fillStyle = got ? '#130e20' : '#0a0812'; ctx.fill(); ctx.strokeStyle = got ? b.color : '#2a2140'; ctx.lineWidth = 1; ctx.stroke();
+      sigil(n, x + 22, y + 4, 12, got ? b.color : '#4a4060');
+      text(got ? `${b.name}  ·  ${b.element}` : `${b.name}  ·  undiscovered`, x + 44, y - 8, 15, got ? b.color : '#8f84ad', 'left', 'bold');
+      if (n === meta.innate) text(`your innate nature  ·  ${b.formName}`, x + 44, y + 14, 13, '#cfc6e6', 'left');
+      else if (got) wrapText(`${b.formName}: ${b.traitText}`, x + 44, y + 10, 222, 12, '#9d92bb', 'left');
+      else { const have = Math.min(d.n, meta.stats[d.stat] || 0); wrapText(`${d.text} (${have}/${d.n})`, x + 44, y + 12, 222, 12, '#b8acd6', 'left'); } });
+    abutton(980, 664, 260, 34, 'Forget everything', '', '#ff9a9a', true);
+    msgY = 2000; if (altar.msg.startsWith('Click again')) text(altar.msg, R, 681, 14, altar.msgC, 'left');
   }
+  if (msgY < H) wrapText(altar.msg, R, msgY, 560, 14, altar.msgC, 'left');
 }
 
 // ---- Scenes ------------------------------------------------------------------------------------
+function drawEnd(won) {
+  ctx.fillStyle = 'rgba(0,0,0,0.72)'; ctx.fillRect(RL, 0, RR - RL, H);
+  wrapText(state.gained, RCX, 170, 540, 30, won ? '#efe6ff' : '#ffb0b0');
+  text(`Ybasogs slain: ${state.kills}   ·   Void energy gathered: ${state.voidE}`, RCX, 250, 18, '#ddd');
+  text(`Banked: +${state.banked} void energy`, RCX, 284, 22, '#d8c8ff', 'center', 'bold');
+  text(won ? `including +${tune.win_bonus} for the Mother` : `${Math.round(tune.loss_keep * 100)}% kept after a fall`, RCX, 312, 15, '#b8acd6');
+  if (state.found.length) { text('Discovered:', RCX, 352, 18, '#e9dcff', 'center', 'bold'); state.found.forEach((n, i) => { const x = RCX + (i - (state.found.length - 1) / 2) * 120; sigil(n, x, 390, 14, BASE[n].color); text(BASE[n].name, x, 420, 16, BASE[n].color); }); }
+  if (won && meta.maxDepth > state.depth) text(`Depth ${state.depth + 1} is open to you.`, RCX, 462, 18, '#ffd27a', 'center', 'bold');
+  text(`Next omen: ${(OMENS[meta.omen] || OMENS.calm).name}`, RCX, 500, 16, '#b8acd6');
+  text('Enter or click: return to the Rift Altar', RCX, 566, 22, '#fff', 'center', 'bold');
+}
 const scenes = {
   figures: {
     update(dt) { state.t += dt; },
     draw() {
       clear('#000'); const t = state.t;
-      text('Voidwalker: every figure', W / 2, 30, 22, '#e9dcff', 'center', 'bold');
-      const row1 = [['Pod', e => drawPod(e, t)], ['Grazer', e => drawGrazer(e, t)], ['Feeder', e => drawFeeder(e, t)], ['Glob', e => drawGlob(e, t)], ['Firefly', e => drawFirefly(e.x, e.y, t)]];
-      row1.forEach(([n, fn], i) => { const x = 160 + i * 150, y = 130; fn({ x, y, r: n === 'Feeder' ? 22 : 15, ph: i, age: 2, vx: 0, vy: 1, dive: false }); text(n, x, y + 62, 16, '#ddd'); });
-      drawMother({ x: 1040, y: 150, r: 66, ph: 0 }, t, 1040, 400); text('The Mother', 1040, 282, 16, '#ddd');
-      const ast = { x: 160, y: 380, r: 26, rot: 0.3, verts: [24, 22, 26, 20, 25, 23, 21, 26, 22, 24] }, big = { x: 320, y: 380, r: 42, rot: 1, verts: [40, 36, 42, 33, 39, 41, 35, 40, 37, 42, 38] };
-      drawAsteroid(ast); text('Asteroid', 160, 450, 16, '#ddd'); drawAsteroid(big); text('Big asteroid', 320, 450, 16, '#ddd');
-      drawDebris({ x: 500, y: 380, w: 78, h: 16, a: 0.4 }); text('Space debris', 500, 450, 16, '#ddd');
-      drawRuin({ x: 720, y: 380, w: 150, h: 46, a: 0, ph: 0, glyphs: [0, 1, 2, 3, 4, 1] }, t); text('Ruin', 720, 450, 16, '#ddd');
-      drawCrack(900, 380, t); text('Crack of light', 900, 450, 16, '#ddd');
-      [['blob', '#b9a6ff', 'Shapeless blob'], ['dragon', BASE.wrath.color, 'Dragon (Wrath)'], ['humanoid', BASE.patience.color, 'Humanoid (Patience)'], ['rat', BASE.greed.color, 'Rat (Greed)'], ['bird', BASE.charity.color, 'Bird (Charity)']]
-        .forEach(([fm, c, n], i) => { const x = 170 + i * 200; drawForm(fm, x, 590, c, t, 1.6); text(n, x, 665, 16, '#ddd'); });
+      text('Voidwalker: every figure', W / 2, 24, 22, '#e9dcff', 'center', 'bold');
+      [['Pod', e => drawPod(e, t)], ['Grazer', e => drawGrazer(e, t)], ['Feeder', e => drawFeeder(e, t)], ['Glob', e => drawGlob(e)], ['Firefly', e => drawFirefly(e.x, e.y, t)]]
+        .forEach(([n, fn], i) => { const x = 110 + i * 130, y = 110; fn({ x, y, r: n === 'Feeder' ? 22 : 15, ph: i, age: 2, vx: 0, vy: 1, dive: false }); text(n, x, y + 58, 15, '#ddd'); });
+      drawMother({ x: 1100, y: 130, r: 66, ph: 0 }, t, 1100, 400); text('The Mother', 1100, 252, 15, '#ddd');
+      drawAsteroid({ x: 110, y: 290, r: 26, rot: 0.3, verts: [24, 22, 26, 20, 25, 23, 21, 26, 22, 24] }); text('Asteroid', 110, 340, 15, '#ddd');
+      drawAsteroid({ x: 250, y: 290, r: 42, rot: 1, verts: [40, 36, 42, 33, 39, 41, 35, 40, 37, 42, 38] }); text('Big asteroid', 250, 350, 15, '#ddd');
+      drawDebris({ x: 410, y: 290, w: 78, h: 16, a: 0.4 }); text('Space debris', 410, 340, 15, '#ddd');
+      drawRuin({ x: 600, y: 290, w: 150, h: 46, a: 0, ph: 0, glyphs: [0, 1, 2, 3, 4, 1] }, t); text('Ruin', 600, 340, 15, '#ddd');
+      drawCrack(760, 290, t); text('Crack of light', 760, 340, 15, '#ddd');
+      const forms = [['blob', '#b9a6ff', 'Shapeless']].concat(NIDS.map(n => [BASE[n].form, BASE[n].color, `${BASE[n].formName} (${BASE[n].name})`]));
+      forms.forEach(([fm, c, n], i) => { const x = 90 + (i % 8) * 156, y = 440 + Math.floor(i / 8) * 150; drawForm(fm, x, y, c, t, 1.5); text(n, x, y + 62, 14, '#ddd'); });
     },
   },
   title: {
-    update(dt) { state.t += dt; if (pressed('Enter') || pressed('Space') || mouse.click) { reset(); scene = 'play'; } },
+    update(dt) { state.t += dt; if (pressed('Enter') || pressed('Space') || mouse.click) { if (meta.innate) openAltar(); else { reset(); scene = 'play'; } } },
     draw() {
-      const t = state.t; drawBackdrop(t);
+      const t = state.t; drawBackdrop(t, false);
       ctx.fillStyle = 'rgba(2,1,8,0.55)'; ctx.fillRect(0, 0, W, H);
-      drawForm('blob', W / 2, 150, '#b9a6ff', t, 2.2);
-      ctx.save(); ctx.shadowColor = '#8f6bff'; ctx.shadowBlur = CHEAP ? 0 : 20; text(TITLE, W / 2, 250, 72, '#efe6ff', 'center', 'bold'); ctx.restore();
-      text('Hold the rift. Your deck of sins and virtues is your ammo.', W / 2, 305, 20, '#b8acd6');
-      CONTROLS.forEach((c, i) => text(c, W / 2, 380 + i * 36, 20, '#cfc6e6'));
-      NATURE_IDS.forEach((n, i) => { const x = W / 2 - 240 + i * 160; sigil(n, x - 40, 560, 10, BASE[n].color); text(BASE[n].name, x, 560, 18, BASE[n].color, 'left'); });
-      text('Enter or click to begin', W / 2, 650, 24, '#fff', 'center', 'bold');
+      drawForm(meta.innate ? BASE[meta.innate].form : 'blob', W / 2, 140, meta.innate ? BASE[meta.innate].color : '#b9a6ff', t, 2.2);
+      ctx.save(); ctx.shadowColor = '#8f6bff'; ctx.shadowBlur = CHEAP ? 0 : 20; text(TITLE, W / 2, 240, 72, '#efe6ff', 'center', 'bold'); ctx.restore();
+      text('Hold the rift. Your deck of sins and virtues is your ammo.', W / 2, 292, 20, '#b8acd6');
+      CONTROLS.forEach((c, i) => text(c, W / 2, 350 + i * 34, 19, '#cfc6e6'));
+      NIDS.forEach((n, i) => { const x = W / 2 - 400 + (i % 7) * 120, y = 512 + Math.floor(i / 7) * 34, got = meta.discovered.includes(n); sigil(n, x - 14, y, 9, got ? BASE[n].color : '#4a4060'); text(got ? BASE[n].name : '?', x, y, 16, got ? BASE[n].color : '#6d6488', 'left'); });
+      text(meta.innate ? `Natures ${meta.discovered.length}/14  ·  Fusions ${meta.fusions.length}/${FUSION_KEYS.length}  ·  ${meta.bank} void energy banked` : 'Fourteen innate natures wait in the void.', W / 2, 604, 16, '#9d92bb');
+      text(meta.innate ? 'Enter or click: to the Rift Altar' : 'Enter or click to begin', W / 2, 656, 24, '#fff', 'center', 'bold');
     },
   },
-  play: {
-    update(dt) {
-      if (pressed('KeyP') || pressed('Escape') || pressed('Space')) { scene = 'pause'; return; }
-      updatePlay(dt);
-    },
-    draw() { drawPlay(); },
-  },
-  pick: { update() { updatePick(); }, draw() { drawPick(); } },
+  play: { update(dt) { if (pressed('KeyP') || pressed('Escape') || pressed('Space')) { scene = 'pause'; return; } updatePlay(dt); }, draw() { drawPlay(); } },
   altar: { update(dt) { updateAltar(dt); }, draw() { drawAltar(); } },
   pause: {
     update() { if (pressed('KeyP') || pressed('Escape') || pressed('Space')) scene = 'play'; },
     draw() { drawPlay(); ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(RL, 0, RR - RL, H); text('Paused', RCX, H / 2 - 20, 48, '#fff', 'center', 'bold'); text('Space or P to resume', RCX, H / 2 + 30, 20, '#ccc'); },
   },
-  over: {
-    update() { if (pressed('KeyR') || pressed('Enter')) { reset(); scene = 'play'; } },
-    draw() {
-      drawPlay(); ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(RL, 0, RR - RL, H);
-      wrapText(state.gained || 'Game over', RCX, H / 2 - 60, 540, 30, '#ffb0b0');
-      text(`Ybasogs slain: ${state.kills}   ·   Void energy gathered: ${state.totalVoid}`, RCX, H / 2 + 10, 18, '#ddd');
-      text('R or Enter to begin a new run', RCX, H / 2 + 60, 22, '#fff', 'center', 'bold');
-    },
-  },
-  results: {
-    update() { if (pressed('Enter') || pressed('KeyR')) { reset(); scene = 'play'; } },
-    draw() {
-      drawPlay(); ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(RL, 0, RR - RL, H);
-      wrapText(state.gained, RCX, H / 2 - 70, 540, 30, '#efe6ff');
-      const f = deckForm();
-      text(`Ybasogs slain: ${state.kills}   ·   Void energy gathered: ${state.totalVoid}`, RCX, H / 2, 18, '#ddd');
-      text(`Final deck: ${state.deck.length} cards   ·   Form: ${f.nature ? f.form : 'shapeless'}`, RCX, H / 2 + 30, 18, '#ddd');
-      text('Enter to begin a new run', RCX, H / 2 + 80, 22, '#fff', 'center', 'bold');
-    },
-  },
+  over: { update() { if (pressed('Enter') || pressed('KeyR') || mouse.click) openAltar(); }, draw() { drawPlay(); drawEnd(false); } },
+  results: { update() { if (pressed('Enter') || pressed('KeyR') || mouse.click) openAltar(); }, draw() { drawPlay(); drawEnd(true); } },
 };
 
 // ---- Loop ----------------------------------------------------------------------------------------
@@ -1053,8 +1470,7 @@ function tick() {
   const now = clock.now();
   acc += Math.min(now - last, 0.25); last = now;
   while (acc >= STEP) { step(); acc -= STEP; }
-  ALPHA = acc / STEP;
-  drawFrame();
+  ALPHA = acc / STEP; drawFrame();
 }
 function drawFrame() { ctx.setTransform(VIEW_R, 0, 0, VIEW_R, 0, 0); scenes[scene].draw(); }
 function frame() { tick(); requestAnimationFrame(frame); }
@@ -1064,17 +1480,18 @@ function timer() { if (document.visibilityState === 'visible' && clock.now() - l
 window.game = {
   get scene() { return scene; },
   get state() { return state; },
+  get meta() { return meta; },
   press(code) { hit.add(code); },
   hold(code, on) { on ? down.add(code) : down.delete(code); },
   get events() { return events; },
-  step(n = 1, draw = true, alpha = 1) {
-    for (let i = 0; i < n; i++) step();
-    if (draw) { ALPHA = alpha; drawFrame(); }
-  },
+  step(n = 1, draw = true, alpha = 1) { for (let i = 0; i < n; i++) step(); if (draw) { ALPHA = alpha; drawFrame(); } },
 };
 
+meta = loadMeta();
 reset();
 scene = params.get('scene') || 'title';
+if (scene === 'altar') openAltar();
+if (params.get('tab')) altar.tab = params.get('tab');
 last = clock.now();
 if (params.get('manual') === '1') drawFrame();
 else { requestAnimationFrame(frame); setInterval(timer, 50); }

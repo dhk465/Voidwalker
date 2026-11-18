@@ -24,11 +24,15 @@ Change: "Not only Ybasogs approaches but space debris, ruin and asteroids."
 
 Change: "Leave rooms for 3-nature combinations and 4-nature combinations in the future updates (big numbers)"
 
+After play: "Cards/innate natures are discovered in adventures as achievement rewards. But you described: "Wrath/.. joins the ", deck types are supposed to be "joined" between adventure sessions. Now let's add all innate natures and all combos. Many combos are not just combined powers. They can be unique. Be creative. The player character shapes can be also very unique: they give certain stat and effect benefits/traits. Raise the void costs to balance the economy."
+
+After play: "Make gachability and deckbuilding specific to this game: collections are fun and need to be rewarding -- preparation before adventures which can be fun and replayability matters."
+
 **Pitch:** A blob born of the void holds the edge of a rift as Ybasogs, asteroids and wrecked ruins pour down, and its deck of sin and virtue cards is its ammo: every ricocheting bolt is the next nature in the deck. *(provisional)*
 
 **Genre:** survivors-like × roguelike deckbuilder (vertical rift shooter)
 
-**Controls:** WASD to move inside the bottom band, mouse to aim, hold the left button to fire, Space to pause. *(provisional)*
+**Controls:** WASD to move inside the bottom band, mouse to aim, hold the left button to fire, Q auto-fire, Space to pause; the Altar is played with the mouse, 1-5 for its tabs, Enter to begin. *(provisional)*
 
 **Question:** Is building and fusing a nature deck fun when every card is a bolt you watch ricochet? *(inferred (strong))*
 
@@ -48,35 +52,38 @@ The blob floats alone in the dark. A firefly drifts by whispering "take it" besi
 Stage 1 wave 2 (about 1:30) brings feeders spitting slow globs, grazers that dive once they reach the middle, and a big asteroid that splits when hit. Anything reaching the bottom drains energy (your HP): enemies a lot, matter a little; falling matter also blocks shots and body-checks the blob. Stage 2 adds ruins, tough slow walls that shield the enemies behind them. Stage 3 ends on the Mother, who spawns pods and fires spreading volleys. Death ends the run; a new run starts fresh. *(provisional)*
 
 ## Core loop
-- Fire your deck's bolts at descending Ybasogs and matter; kills and broken rock drop void energy.
-- Clear a wave, then take or skip one of three nature cards.
-- After the stage, at the Rift Altar (instead of the town), spend energy on gacha draws, fuse two cards, or void two opposites to trim the deck.
-- Into the next, harder stage; win by beating the Mother, lose when energy hits 0.
-- Leads: survivors-like leads the horde, movement and in-stage picks; the deckbuilder leads the deck, its draw order, fusion and removal. *(guessed)*
+- At the Rift Altar, before an adventure: build the deck from your collection, read the omen, pick a depth; the deck's main nature sets your form and its trait.
+- In the rift: fire the deck's bolts at Ybasogs and falling matter; kills and broken matter drop void energy; achievements discover new natures.
+- After the adventure (win or fall): void energy is banked; at the Altar spend it on the Void Rite (gacha from discovered natures), fuse at the Forge to fill the 84-fusion Codex, and prepare the next deck.
+- Leads: survivors-like leads the horde and movement in the rift; the deckbuilder leads the collection, the deck, fusion and removal. *(guessed)*
 
 ## Goal & fail state
 - Win: clear 3 stages and defeat the Mother. *(provisional)*
 - Fail: energy reaches 0 from hits or from things reaching the bottom; the run ends. *(provisional)*
 
 ## Features
-- [x] One full run: 3 stages of waves, the run ending on a boss
+- [x] One full adventure: 3 stages of waves, ending on the Mother
 - [x] The nature deck is the magazine: each bolt is the next card, draw and discard counts shown, reshuffle when empty
-- [x] 4 natures: Wrath (burns), Patience (freezes), Greed (pulls enemies in), Charity (splits on hit, heals a little)
-- [x] 4 two-nature fusions: Wrath+Greed = Hunger (burning gravity well), Wrath+Charity = Zeal (splits into burning shards), Patience+Greed = Stasis (freezing field), Patience+Charity = Mercy (shatters into ice shards, heals); opposites fused make void and both cards are removed. Fusion is a recipe table keyed by any set of natures, a card records every nature in it and fused cards can be fused again, so 3- and 4-nature recipes are data later; a combination with no recipe yet reads "unstable — not yet known" and the cards are kept
-- [x] Rift Altar between stages: gacha draws paid with void energy, fusing, voiding
-- [x] Pick 1 of 3 or skip after each wave
-- [x] 4 enemy kinds, each attacking differently: pod (slow drifter that hatches), grazer (dives), feeder (spits globs), Mother (boss: spawns pods, fires spreads)
-- [x] 3 kinds of falling matter: asteroids (break and split), space debris (fast thin slabs to ricochet off), ruins (tough slow walls that shield enemies), all destructible for void energy
-- [x] The blob's shape follows the deck's main nature (thin stand-in)
+- [x] All 14 innate natures, each with its own effect: Pride (double damage to the unhurt), Greed (pull), Wrath (burn), Envy (stacking venom), Lust (charm: turns on its kin), Gluttony (grows per hit), Sloth (sleep), Humility (heavy stone), Charity (split, heal), Patience (freeze), Kindness (brambles), Chastity (pierce), Temperance (gust), Diligence (chain lightning)
+- [x] All 84 two-nature fusions, most with a unique mechanic (black hole, comet, mirror-twin, beam, walls, decoys, thralls, storms, orbit guard, boomerang and more); opposites annul; a recipe table keyed by any set of natures, so 3- and 4-nature recipes are data later; an unknown set reads "unstable, not yet known"
+- [x] Natures discovered by achievements during adventures, progress kept between adventures; a discovery adds cards to the collection at the Altar
+- [x] The Rift Altar before each adventure: Prepare (deck from the collection, 6 to 12 cards), Void Rite (gacha with focus, rare and mythic odds, pity), Forge (fuse, level twins, annul opposites, first-fusion bounty), Codex (84 fusions), Discoveries
+- [x] 15 forms of the blob (shapeless plus one per nature), each with a trait that helps and costs
+- [x] Omens and depth: each adventure is read in advance; a win opens a deeper rift with more life and more void energy
+- [x] The collection is saved in the browser between sessions
+- [x] 4 enemy kinds, each attacking differently: pod (hatches), grazer (dives), feeder (spits globs), Mother (boss: spawns pods, fires spreads)
+- [x] 3 kinds of falling matter: asteroids (break and split), space debris (fast slabs to ricochet off), ruins (tough walls that shield enemies), all destructible for void energy
 
 ## Your systems
-- seven sins and seven virtues as elements · thin stand-in *(guessed)*
+- seven sins and seven virtues as elements · in the slice
 - combining natures, opposites making void · in the slice
 - deckbuilding · in the slice
 - gacha with void energy · in the slice
 - void energy from killing entities and destroying objects and matter · in the slice
 - space debris, ruins and asteroids approaching · in the slice
-- character changes with the deckbuild · thin stand-in *(guessed)*
+- character changes with the deckbuild · in the slice
+- natures discovered as achievement rewards · in the slice
+- collection and preparation between adventures · in the slice
 - 3-nature and 4-nature combinations · later
 - open world void map with planets · later *(guessed)*
 - story: fireflies, Akashic Records, the 1000 days · later *(guessed)*
@@ -86,14 +93,13 @@ Stage 1 wave 2 (about 1:30) brings feeders spitting slow globs, grazers that div
 
 ## Avoid
 - The town (replaced by the deckbuilding Rift Altar)
+- Cards joining the deck in the middle of an adventure (they join at the Altar, between adventures)
 
 ## Out of scope
-- All 14 natures and their 91 two-nature fusions: grow it
 - 3-nature combinations (364 with all 14) and 4-nature combinations (1,001), an opposite pair anywhere in the set still making void: grow it
 - An open-world void to glide through: grow it
 - The story and its endings: add it as a feature
 - More stages and characters: grow it
-- Unlocks saved across runs: grow it
 
 ## Build order
 1. The slice: one run of 3 stages in the rift, Ybasogs and falling matter, deck-as-ammo bolts, picks after waves, the Rift Altar between stages, the Mother at the end; lose when energy hits 0.
