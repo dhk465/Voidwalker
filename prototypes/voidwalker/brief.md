@@ -30,6 +30,14 @@ After play: "Make gachability and deckbuilding specific to this game: collection
 
 After play: "Achievements should be hard to get."
 
+After play: "We will eventually move to Godot .net but now stay on browser. Now give Ybasogs more type variations (same type but different variants) -- at least 3 and more types -- at least 30 including what we have now -- including mini bosses and bosses."
+
+After play: "Let some ybasog have an innate nature. Opposite nature are more effective. Same natures are less effective."
+
+After play: "Make sure to create good points in time where you start confronting each type. There should be times when there are more innate ones or more void ones. Make the spawning more procedural. Make more debris and ruin types and variants too."
+
+After play: "Ybasogs are based on Cthulhu mythos inspirations so you can take more references from Lovecraftian horrors"
+
 **Pitch:** A blob born of the void holds the edge of a rift as Ybasogs, asteroids and wrecked ruins pour down, and its deck of sin and virtue cards is its ammo: every ricocheting bolt is the next nature in the deck. *(provisional)*
 
 **Genre:** survivors-like × roguelike deckbuilder (vertical rift shooter)
@@ -73,11 +81,17 @@ Stage 1 wave 2 (about 1:30) brings feeders spitting slow globs, grazers that div
 - [x] 15 forms of the blob (shapeless plus one per nature), each with a trait that helps and costs
 - [x] Omens and depth: each adventure is read in advance; a win opens a deeper rift with more life and more void energy
 - [x] The collection is saved in the browser between sessions
-- [x] 4 enemy kinds, each attacking differently: pod (hatches), grazer (dives), feeder (spits globs), Mother (boss: spawns pods, fires spreads)
-- [x] 3 kinds of falling matter: asteroids (break and split), space debris (fast slabs to ricochet off), ruins (tough walls that shield enemies), all destructible for void energy
+- [x] 34 Ybasog kinds in 8 families of variants (pods, grazers, feeders, eyes, devourers, deacons, mites, wall crawlers), plus 4 mini-bosses (Brood Warden, Hive Knight, Gazer Prime, Gorging Behemoth) and 3 bosses (The Choir or The Hollow Eye at the end of stage 2, The Mother at the end of stage 3); Lovecraftian flesh, eyes and tendrils, each kind its own outline
+- [x] Natured Ybasogs: some carry an innate nature (an aura and its sigil); bolts holding the opposite nature deal more, the same nature less; each adventure has a prevailing nature shown at the Altar
+- [x] Nature tides per wave: void tides (few natured), mixed, and nature surges (many, mostly the prevailing nature)
+- [x] Procedural waves: debuts of kinds not yet met (a name card the first time ever), then beats (trickles, lines, V formations, columns, flanks, swarms, rockfalls, wreck fields, ruin walls, elite pairs, lulls)
+- [x] 20 kinds of falling matter in 3 families: rocks (asteroid, big, iron, crystal, comet, cinder), wrecks (hull plate, slab, hull section, solar panel, engine core, cargo pod, antenna spar), ruins (wall, pillar, broken arch, sunken idol, glyph stone, shrine, monolith); several break with an effect
 
 ## Your systems
 - seven sins and seven virtues as elements · in the slice
+- Ybasog variants, mini-bosses and bosses · in the slice
+- Ybasogs with innate natures, opposite more effective, same less · in the slice
+- procedural spawning with debuts and nature tides · in the slice
 - combining natures, opposites making void · in the slice
 - deckbuilding · in the slice
 - gacha with void energy · in the slice
@@ -102,6 +116,7 @@ Stage 1 wave 2 (about 1:30) brings feeders spitting slow globs, grazers that div
 - An open-world void to glide through: grow it
 - The story and its endings: add it as a feature
 - More stages and characters: grow it
+- Godot 4 .NET (C#) as the engine, later: /setup-engine godot when the browser build is settled
 
 ## Build order
 1. The slice: one run of 3 stages in the rift, Ybasogs and falling matter, deck-as-ammo bolts, picks after waves, the Rift Altar between stages, the Mother at the end; lose when energy hits 0.
@@ -113,4 +128,4 @@ Stage 1 wave 2 (about 1:30) brings feeders spitting slow globs, grazers that div
 
 **Who it's for / what they feel:** players who love building around combos, feeling the rush of a trimmed deck firing exactly the volley they planned. *(guessed)*
 
-**Games you love / don't:** Love Ball x Pit (the stages).
+**Games you love / don't:** Love Ball x Pit (the stages). Ybasogs draw on Lovecraftian horror (Cthulhu mythos), in original creatures.

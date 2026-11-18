@@ -107,38 +107,30 @@ window.CONFIG = {
   decoy_time: { value: 4, min: 0, max: 12, step: 0.5 },
   ward_max: { value: 3, min: 1, max: 10, step: 1 },
 
-  // ---- Ybasogs ----
-  pod_hp: { value: 3, min: 1, max: 30, step: 1 },
-  pod_speed: { value: 30, min: 5, max: 200, step: 1 },
-  pod_hatch: { value: 9, min: 1, max: 30, step: 0.5 },
-  grazer_hp: { value: 4, min: 1, max: 30, step: 1 },
-  grazer_speed: { value: 44, min: 5, max: 200, step: 1 },
-  grazer_dive_speed: { value: 230, min: 50, max: 600, step: 10 },
-  grazer_dive_line: { value: 0.45, min: 0.1, max: 0.8, step: 0.05 },
-  feeder_hp: { value: 7, min: 1, max: 40, step: 1 },
-  feeder_speed: { value: 26, min: 5, max: 200, step: 1 },
-  feeder_spit: { value: 2.4, min: 0.3, max: 8, step: 0.1 },
-  glob_speed: { value: 170, min: 40, max: 500, step: 10 },
+  // ---- Ybasogs (each kind's life, speed and size live in window.YBASOGS below) ----
+  pod_hatch: { value: 9, min: 1, max: 30, step: 0.5 },          // s until a pod-family Ybasog hatches
+  grazer_dive_line: { value: 0.45, min: 0.1, max: 0.8, step: 0.05 }, // share of the screen height where grazers dive
+  glob_speed: { value: 170, min: 40, max: 500, step: 10 },      // px/s
   mother_hp: { value: 320, min: 20, max: 2000, step: 10 },
   mother_spawn: { value: 3.2, min: 0.5, max: 10, step: 0.1 },
   mother_spread: { value: 3.6, min: 0.5, max: 10, step: 0.1 },
   mother_volley: { value: 7, min: 1, max: 20, step: 1 },
+  telegraph_time: { value: 1, min: 0.2, max: 3, step: 0.1 },    // s of warning before a beam or a lash lands
+  beam_damage: { value: 2, min: 0, max: 10, step: 1 },          // energy lost to a gaze beam or a lash
 
-  // ---- Falling matter ----
-  asteroid_hp: { value: 4, min: 1, max: 30, step: 1 },
-  big_asteroid_hp: { value: 11, min: 1, max: 60, step: 1 },
-  asteroid_speed: { value: 36, min: 5, max: 200, step: 1 },
-  debris_hp: { value: 3, min: 1, max: 30, step: 1 },
-  debris_speed: { value: 105, min: 10, max: 400, step: 5 },
-  ruin_hp: { value: 26, min: 1, max: 120, step: 1 },
-  ruin_speed: { value: 17, min: 5, max: 100, step: 1 },
+  // ---- Natured Ybasogs: some carry an innate nature ----
+  nature_chance: { value: 0.2, min: 0, max: 1, step: 0.05 },    // share of stage 1 Ybasogs that carry a nature
+  nature_chance_step: { value: 0.12, min: 0, max: 0.5, step: 0.01 }, // more per later stage
+  prevailing_share: { value: 0.6, min: 0, max: 1, step: 0.05 }, // share of natured Ybasogs that carry the adventure's prevailing nature
+  opposite_mult: { value: 1.6, min: 1, max: 4, step: 0.05 },    // damage of a bolt holding the opposite nature
+  same_mult: { value: 0.5, min: 0, max: 1, step: 0.05 },        // damage of a bolt holding the same nature
 
-  // ---- The run's ramp ----
-  stage_hp_scale: { value: 0.35, min: 0, max: 2, step: 0.05 },
-  stage_speed_scale: { value: 0.1, min: 0, max: 1, step: 0.02 },
-  wave_base_count: { value: 10, min: 2, max: 40, step: 1 },
-  wave_count_step: { value: 4, min: 0, max: 20, step: 1 },
-  stage_count_step: { value: 5, min: 0, max: 20, step: 1 },
+  // ---- The run's ramp: waves are built from beats (patterns) by a director ----
+  stage_hp_scale: { value: 0.35, min: 0, max: 2, step: 0.05 },  // extra hp share per stage after the first
+  stage_speed_scale: { value: 0.1, min: 0, max: 1, step: 0.02 }, // extra speed share per stage after the first
+  beats_base: { value: 3, min: 1, max: 12, step: 1 },           // beats in a stage's first wave
+  beats_step: { value: 1, min: 0, max: 6, step: 1 },            // more beats per later wave and per later stage
+  debuts_per_wave: { value: 1, min: 0, max: 3, step: 1 },       // new Ybasog kinds brought in each wave
 };
 
 // ---- Data, not tuning ----
@@ -317,3 +309,80 @@ window.NATURES = {
     resonance: { name: 'Resonance', says: 'Nature effects last half again as long.', status: 1.5 },
   },
 };
+
+// ---- The Ybasogs: the hive, in families of variants ----
+// role: minion (in waves), mini (a mini-boss), boss. from: the first stage it appears in. w: weight in a wave's pool.
+// group: how many come together. nature: a boss's fixed innate nature (others may roll one when they spawn).
+window.YBASOGS = {
+  // pods: drift down and hatch
+  pod:      { fam: 'pod', name: 'Pod',        role: 'minion', hp: 3,  sp: 30, r: 15, drop: 2, from: 1, w: 3,   says: 'Drifts down and hatches a grazer.' },
+  husk:     { fam: 'pod', name: 'Husk Pod',   role: 'minion', hp: 8,  sp: 24, r: 17, drop: 4, from: 1, w: 1,   says: 'An armoured shell halves damage until it cracks; hatches a horned grazer.' },
+  clutch:   { fam: 'pod', name: 'Clutch Pod', role: 'minion', hp: 4,  sp: 28, r: 17, drop: 3, from: 2, w: 1.2, says: 'Bursts into three mites when it dies or hatches.' },
+  bloat:    { fam: 'pod', name: 'Bloat Pod',  role: 'minion', hp: 3,  sp: 22, r: 19, drop: 3, from: 2, w: 1,   says: 'Swollen with bile: bursts into a ring of globs when killed.' },
+  // grazers: drift, then dive
+  grazer:   { fam: 'grazer', name: 'Grazer',        role: 'minion', hp: 4,  sp: 44, r: 15, drop: 3, from: 1, w: 2.5, dive: 230, says: 'Dives at you once it passes the middle.' },
+  swift:    { fam: 'grazer', name: 'Swift Grazer',  role: 'minion', hp: 3,  sp: 70, r: 12, drop: 3, from: 1, w: 1.2, dive: 330, says: 'Small and quick; dives early.' },
+  stalker:  { fam: 'grazer', name: 'Stalker',       role: 'minion', hp: 5,  sp: 40, r: 15, drop: 4, from: 2, w: 1,   dive: 260, says: 'Weaves as it falls and turns once mid-dive.' },
+  horned:   { fam: 'grazer', name: 'Horned Grazer', role: 'minion', hp: 12, sp: 36, r: 18, drop: 5, from: 2, w: 0.8, dive: 300, says: 'Tough; plunges straight down.' },
+  // feeders: hover and spit
+  feeder:   { fam: 'feeder', name: 'Feeder',  role: 'minion', hp: 7, sp: 26, r: 22, drop: 5, from: 1, w: 1.6, spit: 2.4, says: 'Hovers and spits a glob at you.' },
+  spitter:  { fam: 'feeder', name: 'Spitter', role: 'minion', hp: 8, sp: 24, r: 22, drop: 6, from: 2, w: 1,   spit: 3,   says: 'Three mouths: a spread of three globs.' },
+  lobber:   { fam: 'feeder', name: 'Lobber',  role: 'minion', hp: 7, sp: 24, r: 22, drop: 6, from: 2, w: 0.8, spit: 3.4, says: 'Lobs a sac that bursts into droplets above you.' },
+  sniper:   { fam: 'feeder', name: 'Sniper',  role: 'minion', hp: 6, sp: 30, r: 20, drop: 6, from: 3, w: 0.7, spit: 3.2, says: 'Aims a line, then fires a fast glob along it.' },
+  // eyes: watch and strike from afar
+  watcher:  { fam: 'eye', name: 'Watcher', role: 'minion', hp: 6, sp: 30, r: 16, drop: 5, from: 2, w: 0.9, says: 'Marks your column, then burns it with its gaze.' },
+  blinker:  { fam: 'eye', name: 'Blinker', role: 'minion', hp: 5, sp: 0,  r: 14, drop: 5, from: 2, w: 0.8, says: 'Vanishes and reappears, spitting after each blink.' },
+  weeper:   { fam: 'eye', name: 'Weeper',  role: 'minion', hp: 6, sp: 20, r: 16, drop: 4, from: 1, w: 0.9, says: 'Drips tears that fall straight down.' },
+  // devourers: eat
+  devourer: { fam: 'devourer', name: 'Devourer', role: 'minion', hp: 9,  sp: 40, r: 20, drop: 6, from: 2, w: 0.8, says: 'Chases and eats your void energy, growing as it feeds.' },
+  gorger:   { fam: 'devourer', name: 'Gorger',   role: 'minion', hp: 14, sp: 20, r: 24, drop: 7, from: 2, w: 0.6, says: 'Eats falling matter it touches to heal and grow.' },
+  maw:      { fam: 'devourer', name: 'Maw',      role: 'minion', hp: 10, sp: 26, r: 22, drop: 6, from: 3, w: 0.6, says: 'Its open mouth swallows bolts from below: strike it from the sides or bank shots off the top.' },
+  // deacons: tend the hive
+  warder:   { fam: 'deacon', name: 'Warder', role: 'minion', hp: 10, sp: 22, r: 18, drop: 8, from: 2, w: 0.5, says: 'Shields Ybasogs around it.' },
+  mender:   { fam: 'deacon', name: 'Mender', role: 'minion', hp: 9,  sp: 22, r: 18, drop: 8, from: 2, w: 0.5, says: 'Heals Ybasogs around it.' },
+  herald:   { fam: 'deacon', name: 'Herald', role: 'minion', hp: 11, sp: 20, r: 18, drop: 8, from: 3, w: 0.5, says: 'Calls pods out of the dark.' },
+  // mites: tiny, in swarms
+  mite:     { fam: 'mite', name: 'Mite',       role: 'minion', hp: 1,   sp: 80, r: 7, drop: 1, from: 1, w: 1.2, group: 5, says: 'A flickering swarm.' },
+  lancer:   { fam: 'mite', name: 'Lancer',     role: 'minion', hp: 1.5, sp: 60, r: 8, drop: 1, from: 2, w: 0.8, group: 4, says: 'Hovers, then darts at you.' },
+  thief:    { fam: 'mite', name: 'Thief Mite', role: 'minion', hp: 1,   sp: 90, r: 8, drop: 1, from: 2, w: 0.6, group: 3, says: 'Steals void energy on touch and flees.' },
+  // wall crawlers
+  creeper:  { fam: 'crawler', name: 'Creeper', role: 'minion', hp: 7,  sp: 35, r: 16, drop: 5, from: 2, w: 0.7, says: 'Crawls down a rift wall, spitting across.' },
+  lasher:   { fam: 'crawler', name: 'Lasher',  role: 'minion', hp: 12, sp: 30, r: 18, drop: 7, from: 3, w: 0.5, says: 'Clings to a wall and sweeps a tendril across the rift.' },
+  weaver:   { fam: 'crawler', name: 'Weaver',  role: 'minion', hp: 8,  sp: 30, r: 16, drop: 6, from: 2, w: 0.6, says: 'Spins webs across the rift that catch bolts.' },
+  // mini-bosses
+  warden:   { fam: 'mini', name: 'Brood Warden',     role: 'mini', hp: 90,  sp: 30, r: 40, drop: 25, from: 1, w: 1, says: 'A shelled brood-carrier that sows pods and mites.' },
+  knight:   { fam: 'mini', name: 'Hive Knight',      role: 'mini', hp: 80,  sp: 30, r: 32, drop: 25, from: 1, w: 1, says: 'An armoured grazer that charges again and again.' },
+  prime:    { fam: 'mini', name: 'Gazer Prime',      role: 'mini', hp: 70,  sp: 30, r: 34, drop: 25, from: 2, w: 1, says: 'Burns three columns at once; five when hurt.' },
+  behemoth: { fam: 'mini', name: 'Gorging Behemoth', role: 'mini', hp: 110, sp: 26, r: 44, drop: 30, from: 2, w: 1, says: 'Eats falling matter and hurls it back at you.' },
+  // bosses
+  choir:    { fam: 'boss', name: 'The Choir',      role: 'boss', hp: 260, sp: 30, r: 56, drop: 40, from: 2, nature: 'pride', says: 'Three hooded heads behind orbiting wards; sings rings of globs and calls deacons.' },
+  hollow:   { fam: 'boss', name: 'The Hollow Eye', role: 'boss', hp: 240, sp: 30, r: 60, drop: 40, from: 2, nature: 'envy', says: 'A vast eye that blinks across the rift and burns your column.' },
+  mother:   { fam: 'boss', name: 'The Mother',     role: 'boss', hp: 320, sp: 40, r: 66, drop: 30, from: 3, nature: 'gluttony', says: 'The hive itself: pods, grazers, spreads of globs, hurled matter.' },
+};
+
+// ---- Falling matter: rocks, wrecks and ruins. shape: rock (jagged), rect or circle; only: never in a wave's pool ----
+window.MATTER = {
+  asteroid: { fam: 'rock', name: 'Asteroid',         shape: 'rock',   r: 26, hp: 4,   sp: 36,  drop: 3, from: 1, wt: 2,   says: 'Jagged rock; bolts ricochet off it.' },
+  big:      { fam: 'rock', name: 'Big Asteroid',     shape: 'rock',   r: 42, hp: 11,  sp: 30,  drop: 5, from: 1, wt: 0.8, onBreak: 'split', says: 'Splits into two chunks.' },
+  chunk:    { fam: 'rock', name: 'Chunk',            shape: 'rock',   r: 18, hp: 2.4, sp: 40,  drop: 1, only: 1, says: 'A broken piece of rock.' },
+  iron:     { fam: 'rock', name: 'Iron Asteroid',    shape: 'rock',   r: 30, hp: 22,  sp: 24,  drop: 9, from: 2, wt: 0.5, says: 'Dense ore: tough, and rich in void energy.' },
+  crystal:  { fam: 'rock', name: 'Crystal Asteroid', shape: 'rock',   r: 24, hp: 5,   sp: 34,  drop: 4, from: 2, wt: 0.6, onBreak: 'shards', says: 'Shatters into six shards that fly as your bolts.' },
+  comet:    { fam: 'rock', name: 'Comet',            shape: 'rock',   r: 16, hp: 3,   sp: 230, drop: 6, from: 1, wt: 0.4, warn: 1, says: 'Dangerously fast, with rare materials; a mark at the top warns of it.' },
+  cinder:   { fam: 'rock', name: 'Cinder Rock',      shape: 'rock',   r: 24, hp: 4,   sp: 34,  drop: 3, from: 2, wt: 0.6, onBreak: 'blast', says: 'Bursts in fire when broken, burning Ybasogs and you nearby.' },
+  plate:    { fam: 'wreck', name: 'Hull Plate',      shape: 'rect', w: 78,  h: 16, hp: 3,   sp: 105, drop: 2,  from: 1, wt: 1.2, tilt: 1, spin: 1.6, drift: 60, says: 'A fast, spinning plate of hull.' },
+  slab:     { fam: 'wreck', name: 'Debris Slab',     shape: 'rect', w: 150, h: 22, hp: 6,   sp: 40,  drop: 2,  from: 1, wt: 0.4, says: 'A wide, slow slab that shelters what falls behind it.' },
+  hull:     { fam: 'wreck', name: 'Hull Section',    shape: 'rect', w: 190, h: 30, hp: 20,  sp: 22,  drop: 6,  from: 2, wt: 0.4, says: 'A long piece of a dead ship, dark windows in a row.' },
+  panel:    { fam: 'wreck', name: 'Solar Panel',     shape: 'rect', w: 120, h: 10, hp: 1.5, sp: 70,  drop: 2,  from: 1, wt: 0.6, tilt: 1, spin: 0.6, onBreak: 'scatter', says: 'Fragile; breaks into a spray of scrap.' },
+  scrap:    { fam: 'wreck', name: 'Scrap',           shape: 'rect', w: 26,  h: 8,  hp: 1,   sp: 120, drop: 0,  only: 1, tilt: 1, spin: 3, drift: 140, says: 'Shards of a panel.' },
+  core:     { fam: 'wreck', name: 'Engine Core',     shape: 'circle', r: 20,       hp: 6,   sp: 30,  drop: 4,  from: 2, wt: 0.4, onBreak: 'coreblast', says: 'Explodes when broken, hurting only Ybasogs.' },
+  cargo:    { fam: 'wreck', name: 'Cargo Pod',       shape: 'rect', w: 50,  h: 34, hp: 8,   sp: 30,  drop: 14, from: 1, wt: 0.3, says: 'Sealed cargo, full of void energy.' },
+  spar:     { fam: 'wreck', name: 'Antenna Spar',    shape: 'rect', w: 140, h: 6,  hp: 3,   sp: 60,  drop: 2,  from: 2, wt: 0.5, tilt: 1, spin: 2.4, says: 'A long spinning mast with a dish.' },
+  ruin:     { fam: 'ruin', name: 'Ruin Wall',        shape: 'rect', w: 150, h: 46, hp: 26,  sp: 17, drop: 8,  from: 2, wt: 0.9, brood: 1, glyphs: 1, says: 'A carved wall, with two pods sheltering behind it.' },
+  pillar:   { fam: 'ruin', name: 'Fallen Pillar',    shape: 'rect', w: 34,  h: 120, hp: 18, sp: 20, drop: 6,  from: 2, wt: 0.6, says: 'A fluted column, falling upright.' },
+  arch:     { fam: 'ruin', name: 'Broken Arch',      shape: 'arch', w: 150, h: 92, hp: 12,  sp: 18, drop: 4,  from: 3, wt: 0.4, says: 'Two legs and a lintel: bolts slip through the gap.' },
+  idol:     { fam: 'ruin', name: 'Sunken Idol',      shape: 'circle', r: 34,       hp: 30,  sp: 16, drop: 12, from: 3, wt: 0.3, says: 'The carved head of a drowned god, its beard of tentacles.' },
+  glyph:    { fam: 'ruin', name: 'Glyph Stone',      shape: 'rect', w: 56,  h: 56, hp: 10,  sp: 22, drop: 5,  from: 2, wt: 0.4, onBreak: 'ward', glyphs: 1, says: 'Breaking its glyph grants you a ward.' },
+  shrine:   { fam: 'ruin', name: 'Shrine',           shape: 'rect', w: 70,  h: 50, hp: 12,  sp: 18, drop: 5,  from: 2, wt: 0.4, onBreak: 'heal', says: 'A small lit shrine; breaking it heals you 4.' },
+  monolith: { fam: 'ruin', name: 'Monolith',         shape: 'rect', w: 40,  h: 150, hp: 40, sp: 14, drop: 15, from: 3, wt: 0.25, absorb: 1, says: 'A black slab that drinks light: bolts never ricochet off it.' },
+};
+
