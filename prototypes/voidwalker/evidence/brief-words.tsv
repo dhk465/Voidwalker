@@ -1,0 +1,12 @@
+Ball x Pit	the stage shape: a fixed vertical rift, the blob holds the bottom band while Ybasogs and matter descend, ricocheting bolts, a boss ends the run	evidence/play.png
+deckbuilding	the deck is the magazine: left panel shows the next bolts in order, draw and discard counts; picks after waves and the Rift Altar	evidence/play.png
+innate natures	Wrath, Patience, Greed, Charity as cards, sigils and bolt colours; fusion at the Altar with opposites making void	evidence/play.png
+instead of the town	the Rift Altar scene between stages (gacha, fuse, annul), no town	index.html:drawAltar
+2D topdown	2D, a static top-down rift filling the window	evidence/play.png
+space debris, ruin and asteroids	drawDebris, drawRuin, drawAsteroid fall with the Ybasogs	evidence/figures.png
+void blob of dragon, bird, rat, humanoid	the blob reshapes by the deck main nature	evidence/figures.png
+outer space	black void, star dust, drifting rock, wreck and ruin silhouettes behind the rift	evidence/play.png
+2D	2D canvas, a static top-down view of the rift	evidence/play.png
+to take inspiration	Ball x Pit taken as inspiration for the stage shape only, see nearest-game.txt	evidence/play.png
+survivors	survivors-like horde: waves of Ybasogs swell, picks between waves, a boss ends the run	evidence/play.png
+deckbuilder	the deck panel and the Rift Altar: picks, gacha, fusion, removal by annulling opposites	evidence/play.png

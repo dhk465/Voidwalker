@@ -1,0 +1,80 @@
+time	2026-11-18 22:27:19
+keep	lines	0	pinned	0
+briefword	2D	shown	evidence/play.png
+briefword	outer space	shown	evidence/play.png
+briefword	to take inspiration	shown	evidence/play.png
+briefword	survivors	shown	evidence/play.png
+briefword	deckbuilder	shown	evidence/play.png
+checklist	L1	unlisted	-	Look: glowing vector shapes on deep black void, faint star dust and slow parallax. Natures each own a colour: Wrath ember red, Patience pale ice cyan, Greed old gold, Charity soft white-green; fusions blend their two. Ybasogs are sickly violet-and-bile organic shapes with pulsing membranes. Falling matter has its own look: asteroids are jagged grey-brown rock with lit edges, debris is twisted hull plating with dead running lights, ruins are carved stone fragments with faint glyphs. Signature detail: the player is an inky blob with a glowing rim in its main nature's colour, reshaping into dragon, bird, rat or humanoid. Every figure drawn, no emoji, no plain circles. *(provisional)*	
+checklist	L2	unlisted	-	References: Ball x Pit (the stage shape: hold the bottom while things descend, ricocheting shots, a boss to end it); Vampire Survivors (picks under pressure); Slay the Spire (take a card or skip, card removal). *(from your words, provisional)*	
+checklist	L3	unlisted	-	View: 2D · Camera: static, one fixed vertical rift filling the window. *(provisional)*	
+checklist	F1	unlisted	-	One full run: 3 stages of waves, the run ending on a boss	
+checklist	F2	unlisted	-	The nature deck is the magazine: each bolt is the next card, draw and discard counts shown, reshuffle when empty	
+checklist	F3	unlisted	-	4 natures: Wrath (burns), Patience (freezes), Greed (pulls enemies in), Charity (splits on hit, heals a little)	
+checklist	F4	unlisted	-	4 two-nature fusions: Wrath+Greed = Hunger (burning gravity well), Wrath+Charity = Zeal (splits into burning shards), Patience+Greed = Stasis (freezing field), Patience+Charity = Mercy (shatters into ice shards, heals); opposites fused make void and both cards are removed. Fusion is a recipe table keyed by any set of natures, a card records every nature in it and fused cards can be fused again, so 3- and 4-nature recipes are data later; a combination with no recipe yet reads "unstable — not yet known" and the cards are kept	
+checklist	F5	unlisted	-	Rift Altar between stages: gacha draws paid with void energy, fusing, voiding	
+checklist	F6	unlisted	-	Pick 1 of 3 or skip after each wave	
+checklist	F7	unlisted	-	4 enemy kinds, each attacking differently: pod (slow drifter that hatches), grazer (dives), feeder (spits globs), Mother (boss: spawns pods, fires spreads)	
+checklist	F8	unlisted	-	3 kinds of falling matter: asteroids (break and split), space debris (fast thin slabs to ricochet off), ruins (tough slow walls that shield enemies), all destructible for void energy	
+checklist	F9	unlisted	-	The blob's shape follows the deck's main nature (thin stand-in)	
+checklist	S1	unlisted	-	seven sins and seven virtues as elements · thin stand-in *(guessed)*	
+checklist	S2	unlisted	-	combining natures, opposites making void · in the slice	
+checklist	S3	unlisted	-	deckbuilding · in the slice	
+checklist	S4	unlisted	-	gacha with void energy · in the slice	
+checklist	S5	unlisted	-	void energy from killing entities and destroying objects and matter · in the slice	
+checklist	S6	unlisted	-	space debris, ruins and asteroids approaching · in the slice	
+checklist	S7	unlisted	-	character changes with the deckbuild · thin stand-in *(guessed)*	
+checklist	M1	unlisted	-	The blob floats alone in the dark.	
+checklist	M2	unlisted	-	A firefly drifts by whispering "take it" beside a crack of light; touching it absorbs a random first nature of the four, and the blob takes its shape.	
+checklist	M3	unlisted	-	A small asteroid and three pods drift down; held fire sends bolts ricocheting off the rift walls and the asteroid, which cracks and spills void-energy motes that fly to you.	
+checklist	M4	unlisted	-	Around 0:40 grazers arrive behind a slab of debris you must break or bank shots around.	
+checklist	M5	unlisted	-	Wave 1 ends on a pick: three nature cards, take one or skip.	
+checklist	M6	unlisted	-	The next volley alternates colours: the deck, visibly at work.	
+checklist	M7	unlisted	-	*(guessed)*	
+checklist	C1	unlisted	-	Stage 1 wave 2 (about 1:30) brings feeders spitting slow globs, grazers that dive once they reach the middle, and a big asteroid that splits when hit.	
+checklist	C2	unlisted	-	Anything reaching the bottom drains energy (your HP): enemies a lot, matter a little; falling matter also blocks shots and body-checks the blob.	
+checklist	C3	unlisted	-	Stage 2 adds ruins, tough slow walls that shield the enemies behind them.	
+checklist	C4	unlisted	-	Stage 3 ends on the Mother, who spawns pods and fires spreading volleys.	
+checklist	C5	unlisted	-	Death ends the run; a new run starts fresh.	
+checklist	C6	unlisted	-	*(provisional)*	
+browser	HeadlessChrome/158.0.0.0
+scene	play	0	title
+scene	play	1	play
+digits	log	bold 26px "Trebuchet MS", "Segoe UI", sans-serif	tabular	0
+digits	log	15px "Trebuchet MS", "Segoe UI", sans-serif	tabular	0
+digits	log	14px "Trebuchet MS", "Segoe UI", sans-serif	tabular	0
+digits	log	17px "Trebuchet MS", "Segoe UI", sans-serif	tabular	0
+measure	step-time	play	0.020	1.000	534
+lane	play	stop	8.9	133
+uncaught	play	0
+text	play	canvas	29,26,123,40	27.0	15.48	inside	THE DECK
+text	play	canvas	30,57,215,68	21.0	9.50	inside	Draw 4   Discard 2   Cards 6
+text	play	canvas	30,89,166,103	21.0	5.82	inside	Next bolts, in order:
+text	play	canvas	71,128,139,140	21.0	8.57	inside	Void Bolt
+text	play	canvas	71,174,137,186	21.0	9.21	inside	Void Bolt
+text	play	canvas	72,220,115,232	21.0	10.53	inside	Greed
+text	play	canvas	276,221,300,234	19.5	5.61	inside	pull
+text	play	canvas	72,266,115,278	21.0	10.53	inside	Greed
+text	play	canvas	276,267,300,280	19.5	5.61	inside	pull
+text	play	canvas	971,26,1038,39	25.5	15.48	inside	ENERGY
+text	play	canvas	1087,53,1133,63	19.5	3.15	inside	20 / 20
+text	play	canvas	969,88,1083,101	25.5	15.48	inside	VOID ENERGY
+text	play	canvas	998,114,1013,133	36.0	13.06	inside	0
+text	play	canvas	970,163,1173,178	22.5	15.48	inside	Stage 1 / 3   ·   Wave 1 / 3
+text	play	canvas	969,189,1074,203	21.0	9.50	inside	Ybasogs slain: 1
+text	play	canvas	969,228,1070,241	25.5	15.48	inside	YOUR FORM
+text	play	canvas	1067,276,1094,289	25.5	10.91	inside	Rat
+text	play	canvas	1066,302,1171,315	19.5	9.50	inside	shaped by Greed
+text	play	canvas	971,354,1045,367	25.5	15.48	inside	NATURES
+text	play	canvas	1001,385,1077,396	21.0	6.49	inside	Wrath: fire
+text	play	canvas	1002,417,1090,428	21.0	14.82	inside	Patience: ice
+text	play	canvas	1002,449,1100,463	21.0	10.91	inside	Greed: gravity
+text	play	canvas	1002,481,1098,495	21.0	17.68	inside	Charity: grace
+text	play	canvas	970,528,1157,541	19.5	5.82	inside	Opposites fused become void:
+text	play	canvas	969,548,1217,561	19.5	5.82	inside	Wrath and Patience, Greed and Charity
+text	play	canvas	969,592,1082,608	21.0	17.68	inside	Auto-fire (Q): on
+text	play	canvas	970,620,1140,630	19.5	5.82	inside	Hold the left button to fire
+text	play	canvas	970,646,1164,659	19.5	5.82	inside	Space or P: pause   ·   M: mute
+screen	play	drawn
+shot	play	prototypes/voidwalker/evidence/play.png
+responds	changed	4

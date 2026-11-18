@@ -1,0 +1,32 @@
+L1	pass	evidence/figures.png	glowing vector on black void, nature colours, violet-and-bile Ybasogs, rock/plating/glyph ruins, inky blob with nature rim in 5 forms
+L2	pass	evidence/play.png	stage shape from Ball x Pit (bottom band, descending threats, ricochet), picks under pressure, take-or-skip and removal (index.html:864, index.html:128)
+L3	pass	evidence/play.png	2D, static rift filling the window between the two HUD panels
+F1	pass	index.html:174	3 stages of 3 waves; stage 3 wave 3 is the Mother; win on her death (index.html:506 afterWave)
+F2	pass	evidence/play.png	deck panel shows next bolts in order with draw and discard counts; reshuffle at index.html:260
+F3	pass	index.html:285	burn, chill, pull field, split shards with heal on kill
+F4	pass	index.html:128	recipe table in config.js keyed by sorted nature sets; opposites void both; twins level; unknown sets read unstable, not yet known (index.html:920)
+F5	pass	index.html:893	Altar between stages: gacha draw, fuse, annul opposites, descend
+F6	pass	index.html:864	pick 1 of 3 or skip for void energy after waves 1 and 2
+F7	pass	evidence/figures.png	pod hatches, grazer dives (index.html:384), feeder spits, Mother spawns and fires spreads (index.html:399)
+F8	pass	evidence/figures.png	asteroids split (index.html:255), debris ricochets, ruins shield a brood (index.html:227), all drop motes
+F9	pass	evidence/play.png	blob shown as Rat shaped by Greed; deckForm index.html:139
+S1	pass	index.html:506	4 of 14 natures as a stand-in, sins and virtues paired as opposites
+S2	pass	index.html:128	fusion with opposites making void
+S3	pass	evidence/play.png	deck panel, picks, altar
+S4	pass	index.html:893	gacha draw costs void energy, cost rises each draw
+S5	pass	index.html:236	motes from kills and broken matter, counted under VOID ENERGY
+S6	pass	evidence/play.png	asteroid descending with pods in the shot
+S7	pass	evidence/figures.png	five forms, picked by the deck's main nature
+M1	pass	index.html:844	intro phase: no enemies, blob alone
+M2	pass	index.html:844	firefly whispers take it beside the crack; touching absorbs a random nature (index.html:506)
+M3	pass	evidence/play.png	asteroid and pods descend first; bolts ricochet off walls; matter drops motes
+M4	pass	index.html:171	slab of debris at 27s with grazers behind it
+M5	pass	index.html:864	wave 1 ends on a pick of three or skip
+M6	pass	evidence/play.png	next bolts list mixes Void Bolt and Greed; picked card goes on top of the draw (index.html:870)
+M7	pass	index.html:844	mark line of the First minute, built as above
+C1	pass	index.html:187	stage 1 wave 2 adds feeders and a big asteroid; grazers dive past the middle
+C2	pass	index.html:413	enemies drain 3, matter 1 on reaching the bottom; matter blocks bolts and body-checks (index.html:431)
+C3	pass	index.html:188	ruins from stage 2 with pods behind them
+C4	pass	index.html:399	Mother spawns pods and fires spreading volleys
+C5	pass	index.html:499	energy 0 ends the run; R starts a fresh run (index.html:1025)
+C6	pass	index.html:499	mark line of the Challenge, built as above
