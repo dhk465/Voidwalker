@@ -158,7 +158,7 @@ Stage 1 wave 2 (about 1:30) brings feeders spitting slow globs, grazers that div
 - The story and its endings: add it as a feature
 - Chapter II, the Silent Foundry: a civilization destroyed by its own AI; 34 machine kinds with protocols and Adaptive learning (plan: design/chapter-2-the-silent-foundry.md): add it as a feature
 - More stages and characters: grow it
-- Godot 4 .NET (C#) as the engine: set up 2026-11-19 (Godot 4.8 beta 4, .NET 10, Compatibility renderer); the browser build stays playable while the port goes system by system, starting with the hub
+- Godot 4 .NET (C#) as the engine: set up 2026-11-19 (Godot 4.8 beta 4, .NET 10, Compatibility renderer); the browser build stays playable while the port goes system by system, starting with the hub. Ported so far: the Rift Altar hub and its six station screens, with the save; the blob's 15 forms; relics on the pedestals; UI and camera scaling for phones; a floating island for each station; the Rite crack and the Gate rift as pixelfx effects; void balls that drift from the crack to the rift and react to taps. Not yet ported: the adventure itself (the rift, combat, Ybasogs, the Rift Rest)
 - Mobile-first: Android now, iOS later, PC possible; auto-aim in the adventure, touch to move and to do everything else, mobile-friendly UI (to be designed with the port)
 
 ## Build order
