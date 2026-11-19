@@ -1,0 +1,14 @@
+{
+ "source": "tools/art/fx/arcane/void-crack.js rendered by pixelfx 0.3.1 (MIT, https://github.com/patch-gg/pixelfx); snapped to the 8 void violets with ordered-dither translucency by tools/art/bake_rite_crack.py",
+ "frame_size": [
+  39,
+  69
+ ],
+ "columns": 12,
+ "frames": 90,
+ "fps": 30,
+ "pivot": [
+  24,
+  68
+ ]
+}

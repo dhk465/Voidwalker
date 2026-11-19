@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b6l1pyrupima6"
-path="res://.godot/imported/rift.png-6361dadc57aa2957f49d02aa0585e0d6.ctex"
+uid="uid://bctdd0dtxcwnv"
+path="res://.godot/imported/rite-crack.png-35b42626444830953102aae178e8c755.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/fx/rift.png"
-dest_files=["res://.godot/imported/rift.png-6361dadc57aa2957f49d02aa0585e0d6.ctex"]
+source_file="res://assets/fx/rite-crack.png"
+dest_files=["res://.godot/imported/rite-crack.png-35b42626444830953102aae178e8c755.ctex"]
 
 [params]
 

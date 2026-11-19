@@ -92,7 +92,7 @@ public partial class Hub : Node2D
 		deck.AddArt(art.Make("lectern", new Vector2(320, 220) - deck.Position), highlight);
 		_blob = art.Make("form-blob", BlobCentre); _stage.AddChild(_blob); // RefreshState gives it the pool's form
 
-		// the Void Rite: a ring of standing stones round a narrow void rift
+		// the Void Rite: a ring of standing stones round a crack in space-time, void seeping out of it
 		var rite = AddStation("rite", new Vector2(150, 215), 43);
 		var ring = new List<(float depth, Vector2 at)>();
 		for (int i = 0; i < 9; i++)
@@ -101,7 +101,7 @@ public partial class Hub : Node2D
 		}
 		ring.Sort((p, q) => p.depth.CompareTo(q.depth));
 		foreach (var (depth, at) in ring) if (depth < 0) rite.AddArt(art.Make("standing-stone-far", at - rite.Position), highlight);
-		rite.AddArt(SheetPlayer.Load("res://assets/fx/", "rift", new Vector2(150, 239) - rite.Position), highlight);
+		rite.AddArt(SheetPlayer.Load("res://assets/fx/", "rite-crack", new Vector2(150, 239) - rite.Position), highlight); // pivot: the ground under the crack
 		foreach (var (depth, at) in ring) if (depth >= 0) rite.AddArt(art.Make("standing-stone-lit", at - rite.Position), highlight);
 
 		// the Rift Gate: two stone horns round a rift (a stepped pixelfx portal) painted in the chosen rift's prevailing
