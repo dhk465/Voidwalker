@@ -33,7 +33,8 @@ public partial class Hub : Node2D
 	private readonly List<Station> _stations = new();
 	private readonly Dictionary<string, Station> _byId = new();
 	private readonly List<(Sprite2D sprite, int i)> _rocks = new();
-	private readonly List<Sprite2D> _cards = new(), _stars = new(), _pedestals = new();
+	private readonly List<Sprite2D> _cards = new(), _stars = new(), _pedestals = new(), _relicIcons = new();
+	private const float PedestalX0 = 465, PedestalStep = 30, RelicIconY = 83; // the relic floats above its pedestal
 	private Node2D _stage = null!;
 	private ColorRect _sky = null!;
 	private ShaderMaterial _swirl = null!;
@@ -182,7 +183,15 @@ public partial class Hub : Node2D
 		_pedestals.Clear();
 		int slots = rules.RelicSlots();
 		for (int i = 0; i < 3; i++)
-			_pedestals.Add(relics.AddArt(_art.Make(i < slots ? "pedestal-open" : "pedestal-locked", new Vector2(465 + 30 * i, 116) - relics.Position), _highlight));
+			_pedestals.Add(relics.AddArt(_art.Make(i < slots ? "pedestal-open" : "pedestal-locked", new Vector2(PedestalX0 + PedestalStep * i, 116) - relics.Position), _highlight));
+		foreach (var r in _relicIcons) relics.RemoveArt(r);
+		_relicIcons.Clear();
+		for (int i = 0; i < Mathf.Min(slots, meta.Equipped.Count); i++) // each equipped relic glows above its open pedestal
+		{
+			var tex = PixelIcons.Relic(meta.Equipped[i]);
+			var icon = new Sprite2D { Texture = tex, Centered = false, Offset = -new Vector2(tex.GetWidth() / 2, tex.GetHeight() / 2) };
+			_relicIcons.Add(relics.AddArt(icon, _highlight));
+		}
 
 		_swirl.SetShaderParameter("tint", meta.Prevail != null ? new Color(data.Natures[meta.Prevail].Color) : new Color("#b9a6ff"));
 		_bank.Text = meta.Bank.ToString();
@@ -241,6 +250,9 @@ public partial class Hub : Node2D
 			float k = i - (_cards.Count - 1) / 2f;
 			_cards[i].Position = new Vector2(k * 17, 6 + Mathf.Abs(k) * 4 + Mathf.Sin((float)_t * 2 + i) * 1.5f).Round();
 		}
+		var relicsAt = _byId["relics"].Position;
+		for (int i = 0; i < _relicIcons.Count; i++) // equipped relics bob over their pedestals, each in its own phase
+			_relicIcons[i].Position = (new Vector2(PedestalX0 + PedestalStep * i, RelicIconY + Mathf.Sin((float)_t * 2 + i) * 2) - relicsAt).Round();
 		if (_tome != null) _tome.Position = new Vector2(0, Mathf.Sin((float)_t * 1.5f) * 2).Round();
 		if (_blob != null) _blob.Position = (BlobCentre + new Vector2(0, Mathf.Sin((float)_t * 2) * 2)).Round();
 	}

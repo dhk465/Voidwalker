@@ -69,7 +69,7 @@ public partial class PoolScreen : StationScreen
 		int formY = poolPages > 1 ? 182 : Math.Max(146, 24 + (pool.Count + 1) / 2 * 17);
 		var form = Ui.Tile(Body, RightX, formY, RightW, 92, colour: formColour);
 		form.Fill = Pal.Panel;
-		Ui.Icon(form, GD.Load<Texture2D>("res://assets/sprites/lobby/blob.png"), 10, 30);
+		Ui.Icon(form, GD.Load<Texture2D>($"res://assets/sprites/lobby/form-{R.DominantForm()}.png"), 6, 23); // 46x46, centred in the panel's left 58 px
 		Ui.Text(form, lead != null ? D.Natures[lead].FormName : "Shapeless", 60, 8, formColour, big: true);
 		Ui.Text(form, lead != null ? D.Natures[lead].TraitText : "no trait", 60, 30, Pal.Soft, width: RightW - 68);
 		Ui.Text(Body, "Tap a card to put it in the pool. Tap a row to take it out.", RightX, formY + 100, Pal.Mid, width: RightW);
