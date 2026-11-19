@@ -16,6 +16,8 @@
 <body>
 <canvas id="game"></canvas>
 <script src="config.js"></script>
+<script src="vendor/spleen-fonts.js"></script>
+<script src="vendor/pixelfx.js"></script>
 <script>
 'use strict';
 // Voidwalker: a blob of void holds the bottom of a rift; its deck of nature cards is its ammo.
@@ -33,7 +35,7 @@ const TITLE = 'Voidwalker';
 const CONTROLS = ['WASD or Arrows: move anywhere in the rift', 'Mouse: aim  ·  hold left button: fire',
   'Q: auto-fire on or off', 'Space or P: pause  ·  M: mute'];
 const clock = window.GAME_CLOCK || { now: () => performance.now() / 1000 };
-const CHEAP = params.get('render') === 'cheap';
+const CHEAP = true; // pixel-perfect: no blur or glow ever smears colour across pixels
 let seed;
 function rng() { // mulberry32; every gameplay random call reads this, never Math.random
   seed = (seed + 0x6D2B79F5) | 0;
@@ -48,8 +50,141 @@ const canvas = document.getElementById('game');
 const BW = W, BH = H; // full resolution: one buffer pixel is one logical unit
 canvas.width = BW; canvas.height = BH;
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
+// ---- Hard edges: a small pixel rasteriser in front of the canvas ----
+// The canvas's own fill() and stroke() blend every edge pixel. Here each path is recorded, flattened in screen
+// space and scanned at pixel centres: a pixel is inside or outside, nothing between. The inside becomes whole-pixel
+// rectangles that the canvas then paints with the same colour, gradient, alpha and clip, so no edge is ever blended.
+(function hardEdges(c) {
+  const P = CanvasRenderingContext2D.prototype, natFill = P.fill, natClip = P.clip, natFillRect = P.fillRect;
+  let subs = [], cur = null, m = null;
+  const T = () => (m = c.getTransform());
+  const tp = (x, y) => [m.a * x + m.c * y + m.e, m.b * x + m.d * y + m.f];
+  const scale = () => Math.sqrt(Math.abs(m.a * m.d - m.b * m.c)) || 1;
+  const start = (x, y) => { cur = { pts: [x, y], closed: false }; subs.push(cur); };
+  const add = (x, y) => { if (!cur) start(x, y); else cur.pts.push(x, y); };
+  const lastPt = () => (cur ? [cur.pts[cur.pts.length - 2], cur.pts[cur.pts.length - 1]] : null);
+  c.beginPath = function () { subs = []; cur = null; };
+  c.moveTo = function (x, y) { T(); const [X, Y] = tp(x, y); start(X, Y); };
+  c.lineTo = function (x, y) { T(); const [X, Y] = tp(x, y); add(X, Y); };
+  c.closePath = function () { if (cur) { cur.closed = true; const [x, y] = [cur.pts[0], cur.pts[1]]; start(x, y); } };
+  c.rect = function (x, y, w, h) { c.moveTo(x, y); c.lineTo(x + w, y); c.lineTo(x + w, y + h); c.lineTo(x, y + h); c.closePath(); };
+  function curve(n, f) { for (let i = 1; i <= n; i++) { const [X, Y] = f(i / n); add(X, Y); } }
+  c.quadraticCurveTo = function (cx, cy, x, y) {
+    T(); const p0 = lastPt() || tp(cx, cy), p1 = tp(cx, cy), p2 = tp(x, y);
+    const n = Math.min(64, Math.max(2, Math.ceil((Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) + Math.hypot(p2[0] - p1[0], p2[1] - p1[1])) / 3)));
+    if (!cur) start(p0[0], p0[1]);
+    curve(n, t => { const u = 1 - t; return [u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0], u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1]]; });
+  };
+  c.bezierCurveTo = function (ax, ay, bx, by, x, y) {
+    T(); const p1 = tp(ax, ay), p0 = lastPt() || p1, p2 = tp(bx, by), p3 = tp(x, y);
+    const n = Math.min(96, Math.max(2, Math.ceil((Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) + Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) + Math.hypot(p3[0] - p2[0], p3[1] - p2[1])) / 3)));
+    if (!cur) start(p0[0], p0[1]);
+    curve(n, t => { const u = 1 - t, a = u * u * u, b = 3 * u * u * t, d = 3 * u * t * t, e = t * t * t; return [a * p0[0] + b * p1[0] + d * p2[0] + e * p3[0], a * p0[1] + b * p1[1] + d * p2[1] + e * p3[1]]; });
+  };
+  function sweep(a0, a1, ccw) {
+    const TAU = Math.PI * 2;
+    if (!ccw) { if (a1 - a0 >= TAU) return TAU; let d = (a1 - a0) % TAU; if (d < 0) d += TAU; return d; }
+    if (a0 - a1 >= TAU) return -TAU; let d = (a0 - a1) % TAU; if (d < 0) d += TAU; return -d;
+  }
+  c.ellipse = function (x, y, rx, ry, rot, a0, a1, ccw = false) {
+    T(); const sw = sweep(a0, a1, ccw), cr = Math.cos(rot), sr = Math.sin(rot);
+    const n = Math.min(256, Math.max(8, Math.ceil(Math.abs(sw) * Math.max(rx, ry) * scale() / 3)));
+    const at = t => { const ex = rx * Math.cos(t), ey = ry * Math.sin(t); return tp(x + ex * cr - ey * sr, y + ex * sr + ey * cr); };
+    const p = at(a0); add(p[0], p[1]);
+    curve(n, k => at(a0 + sw * k));
+  };
+  c.arc = function (x, y, r, a0, a1, ccw = false) { c.ellipse(x, y, r, r, 0, a0, a1, ccw); };
+  c.arcTo = function (x1, y1, x2, y2, r) { // the tangent arc between two lines, worked in user space
+    T(); const inv = m.inverse(), lp = lastPt();
+    const p0 = lp ? [inv.a * lp[0] + inv.c * lp[1] + inv.e, inv.b * lp[0] + inv.d * lp[1] + inv.f] : [x1, y1];
+    const v1 = [p0[0] - x1, p0[1] - y1], v2 = [x2 - x1, y2 - y1], l1 = Math.hypot(...v1), l2 = Math.hypot(...v2);
+    if (!l1 || !l2 || !r) { c.lineTo(x1, y1); return; }
+    const u1 = [v1[0] / l1, v1[1] / l1], u2 = [v2[0] / l2, v2[1] / l2], ang = Math.acos(Math.max(-1, Math.min(1, u1[0] * u2[0] + u1[1] * u2[1])));
+    if (ang < 1e-6 || Math.abs(ang - Math.PI) < 1e-6) { c.lineTo(x1, y1); return; }
+    const d = r / Math.tan(ang / 2), t1 = [x1 + u1[0] * d, y1 + u1[1] * d], t2 = [x1 + u2[0] * d, y1 + u2[1] * d];
+    const bis = [u1[0] + u2[0], u1[1] + u2[1]], bl = Math.hypot(...bis), h = r / Math.sin(ang / 2), cc = [x1 + bis[0] / bl * h, y1 + bis[1] / bl * h];
+    const s0 = Math.atan2(t1[1] - cc[1], t1[0] - cc[0]), s1 = Math.atan2(t2[1] - cc[1], t2[0] - cc[0]);
+    const cross = u1[0] * u2[1] - u1[1] * u2[0];
+    c.lineTo(t1[0], t1[1]); c.arc(cc[0], cc[1], r, s0, s1, cross > 0);
+  };
+
+  // Scan polygons (closed point lists) with the nonzero rule; return the inside as whole-pixel rectangles.
+  function scan(polys) {
+    const E = [];
+    for (const p of polys) for (let i = 0, n = p.length; i < n; i += 2) {
+      const x0 = p[i], y0 = p[i + 1], x1 = p[(i + 2) % n], y1 = p[(i + 3) % n];
+      if (y0 === y1) continue;
+      E.push(y0 < y1 ? [y0, y1, x0, (x1 - x0) / (y1 - y0), 1] : [y1, y0, x1, (x0 - x1) / (y0 - y1), -1]);
+    }
+    if (!E.length) return null;
+    E.sort((a, b) => a[0] - b[0]);
+    let yTop = Math.max(0, Math.ceil(E[0][0] - 0.5)), yEnd = 0; for (const e of E) yEnd = Math.max(yEnd, e[1]);
+    yEnd = Math.min(BH, Math.ceil(yEnd - 0.5));
+    const path = new Path2D(); let any = false, ei = 0, active = [], prev = new Map();
+    for (let y = yTop; y < yEnd; y++) {
+      const yc = y + 0.5;
+      while (ei < E.length && E[ei][0] <= yc) active.push(E[ei++]);
+      active = active.filter(e => e[1] > yc);
+      const xs = [];
+      for (const e of active) if (e[0] <= yc) xs.push([e[2] + (yc - e[0]) * e[3], e[4]]);
+      xs.sort((a, b) => a[0] - b[0]);
+      const row = new Map(); let w = 0, xa = 0;
+      for (const [x, d] of xs) { const was = w; w += d; if (!was && w) xa = x; else if (was && !w) {
+        const s = Math.max(0, Math.ceil(xa - 0.5)), t = Math.min(BW, Math.ceil(x - 0.5)); if (t > s) { const k = s * 4096 + t; row.set(k, prev.has(k) ? prev.get(k) : y); } } }
+      for (const [k, y0] of prev) if (!row.has(k)) { path.rect(Math.floor(k / 4096), y0, k % 4096 - Math.floor(k / 4096), y - y0); any = true; }
+      prev = row;
+    }
+    for (const [k, y0] of prev) { path.rect(Math.floor(k / 4096), y0, k % 4096 - Math.floor(k / 4096), yEnd - y0); any = true; }
+    return any ? path : null;
+  }
+  function paint(path, clip) { // the rectangles are in screen pixels; draw them back under the caller's transform
+    if (!path) return; const mm = c.getTransform(), p2 = new Path2D(); p2.addPath(path, mm.inverse());
+    (clip ? natClip : natFill).call(c, p2);
+  }
+  const polysOf = () => subs.filter(s => s.pts.length >= 6).map(s => s.pts);
+  c.fill = function () { paint(scan(polysOf()), false); };
+  c.clip = function () { paint(scan(polysOf()), true); };
+  function disc(x, y, r) { const n = Math.max(6, Math.min(32, Math.ceil(r * 2.2))), p = []; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; p.push(x + Math.cos(a) * r, y + Math.sin(a) * r); } return p; }
+  const area = p => { let s = 0; for (let i = 0, n = p.length; i < n; i += 2) s += p[i] * p[(i + 3) % n] - p[(i + 2) % n] * p[i + 1]; return s; };
+  function dashes(pts, closed, pat) { // split a polyline by the dash pattern (screen units)
+    const out = []; if (closed) pts = pts.concat(pts[0], pts[1]);
+    let k = 0, left = pat[0], on = true, curD = [pts[0], pts[1]];
+    for (let i = 2; i < pts.length; i += 2) {
+      let x0 = pts[i - 2], y0 = pts[i - 1]; const x1 = pts[i], y1 = pts[i + 1]; let seg = Math.hypot(x1 - x0, y1 - y0);
+      while (seg > left) { const f = left / seg, mx = x0 + (x1 - x0) * f, my = y0 + (y1 - y0) * f;
+        if (on) { curD.push(mx, my); out.push(curD); } seg -= left; x0 = mx; y0 = my; on = !on; k = (k + 1) % pat.length; left = pat[k]; curD = [mx, my]; }
+      left -= seg; if (on) curD.push(x1, y1);
+    }
+    if (on && curD.length >= 4) out.push(curD);
+    return out;
+  }
+  c.stroke = function () {
+    T(); const hw = Math.max(0.5, c.lineWidth * scale() / 2), round = c.lineCap === 'round', dash = c.getLineDash().map(v => v * scale());
+    const polys = [];
+    for (const s of subs) {
+      if (s.pts.length < 4) continue;
+      const lines = dash.length && dash.some(v => v > 0) ? dashes(s.pts, s.closed, dash.length % 2 ? dash.concat(dash) : dash) : [s.closed ? s.pts.concat(s.pts[0], s.pts[1]) : s.pts];
+      for (const L of lines) {
+        for (let i = 2; i < L.length; i += 2) {
+          const x0 = L[i - 2], y0 = L[i - 1], x1 = L[i], y1 = L[i + 1], len = Math.hypot(x1 - x0, y1 - y0); if (!len) continue;
+          const nx = -(y1 - y0) / len * hw, ny = (x1 - x0) / len * hw; polys.push([x0 + nx, y0 + ny, x1 + nx, y1 + ny, x1 - nx, y1 - ny, x0 - nx, y0 - ny]);
+          if (i > 2 && hw > 0.75) polys.push(disc(x0, y0, hw)); // round joins
+        }
+        if (round && hw > 0.75) { polys.push(disc(L[0], L[1], hw)); polys.push(disc(L[L.length - 2], L[L.length - 1], hw)); }
+      }
+    }
+    for (const p of polys) if (area(p) < 0) for (let i = 0, j = p.length - 2; i < j; i += 2, j -= 2) { [p[i], p[j]] = [p[j], p[i]]; [p[i + 1], p[j + 1]] = [p[j + 1], p[i + 1]]; }
+    const fs = c.fillStyle; c.fillStyle = c.strokeStyle; paint(scan(polys), false); c.fillStyle = fs;
+  };
+  c.fillRect = function (x, y, w, h) { // axis-aligned rectangles: whole pixels (tiny stars keep one pixel; empty bars stay empty)
+    T(); if (m.b || m.c) { c.beginPath(); c.rect(x, y, w, h); c.fill(); return; }
+    const X = Math.round(x * m.a + m.e), Y = Math.round(y * m.d + m.f), W2 = Math.round(w * m.a) || (w ? Math.sign(w) : 0), H2 = Math.round(h * m.d) || (h ? Math.sign(h) : 0);
+    if (!W2 || !H2) return; c.save(); c.setTransform(1, 0, 0, 1, 0, 0); natFillRect.call(c, X, Y, W2, H2); c.restore();
+  };
+  c.strokeRect = function (x, y, w, h) { c.beginPath(); c.rect(x, y, w, h); c.stroke(); };
+})(ctx);
 function fit() {
-  const dpr = devicePixelRatio || 1, fitK = Math.min(innerWidth * dpr / BW, innerHeight * dpr / BH), k = fitK >= 1 ? Math.floor(fitK) : fitK; // whole pixels when it fits, shrunk when the window is small
+  const dpr = devicePixelRatio || 1, k = Math.max(1, Math.floor(Math.min(innerWidth * dpr / BW, innerHeight * dpr / BH))); // whole-number scaling only: every pixel the same size (a small window crops)
   canvas.style.width = (BW * k / dpr) + 'px'; canvas.style.height = (BH * k / dpr) + 'px';
   canvas.style.marginTop = Math.max(0, Math.floor((innerHeight - BH * k / dpr) / 2)) + 'px';
 }
@@ -72,20 +207,31 @@ function quantize() {
   ctx.putImageData(img, 0, 0);
 }
 function clear(c) { ctx.fillStyle = c; ctx.fillRect(0, 0, W, H); }
-// a 5 by 7 pixel font, upper case
-const FONT5 = {"A": [14, 17, 17, 31, 17, 17, 17], "B": [30, 17, 17, 30, 17, 17, 30], "C": [14, 17, 16, 16, 16, 17, 14], "D": [30, 17, 17, 17, 17, 17, 30], "E": [31, 16, 16, 30, 16, 16, 31], "F": [31, 16, 16, 30, 16, 16, 16], "G": [14, 17, 16, 23, 17, 17, 15], "H": [17, 17, 17, 31, 17, 17, 17], "I": [14, 4, 4, 4, 4, 4, 14], "J": [7, 2, 2, 2, 2, 18, 12], "K": [17, 18, 20, 24, 20, 18, 17], "L": [16, 16, 16, 16, 16, 16, 31], "M": [17, 27, 21, 21, 17, 17, 17], "N": [17, 17, 25, 21, 19, 17, 17], "O": [14, 17, 17, 17, 17, 17, 14], "P": [30, 17, 17, 30, 16, 16, 16], "Q": [14, 17, 17, 17, 21, 18, 13], "R": [30, 17, 17, 30, 20, 18, 17], "S": [15, 16, 16, 14, 1, 1, 30], "T": [31, 4, 4, 4, 4, 4, 4], "U": [17, 17, 17, 17, 17, 17, 14], "V": [17, 17, 17, 17, 17, 10, 4], "W": [17, 17, 17, 21, 21, 21, 10], "X": [17, 17, 10, 4, 10, 17, 17], "Y": [17, 17, 10, 4, 4, 4, 4], "Z": [31, 1, 2, 4, 8, 16, 31], "0": [14, 17, 19, 21, 25, 17, 14], "1": [4, 12, 4, 4, 4, 4, 14], "2": [14, 17, 1, 2, 4, 8, 31], "3": [30, 1, 1, 14, 1, 1, 30], "4": [2, 6, 10, 18, 31, 2, 2], "5": [31, 16, 30, 1, 1, 17, 14], "6": [6, 8, 16, 30, 17, 17, 14], "7": [31, 1, 2, 4, 8, 8, 8], "8": [14, 17, 17, 14, 17, 17, 14], "9": [14, 17, 17, 15, 1, 2, 12], ".": [0, 0, 0, 0, 0, 12, 12], ",": [0, 0, 0, 0, 12, 4, 8], ":": [0, 12, 12, 0, 12, 12, 0], ";": [0, 12, 12, 0, 12, 4, 8], "!": [4, 4, 4, 4, 4, 0, 4], "?": [14, 17, 1, 2, 4, 0, 4], "'": [4, 4, 8, 0, 0, 0, 0], "\"": [10, 10, 0, 0, 0, 0, 0], "-": [0, 0, 0, 31, 0, 0, 0], "+": [0, 4, 4, 31, 4, 4, 0], "/": [1, 2, 2, 4, 8, 8, 16], "(": [2, 4, 8, 8, 8, 4, 2], ")": [8, 4, 2, 2, 2, 4, 8], "%": [24, 25, 2, 4, 8, 19, 3], "·": [0, 0, 0, 12, 12, 0, 0], "#": [10, 10, 31, 10, 31, 10, 10], "&": [12, 18, 20, 8, 21, 18, 13], "=": [0, 0, 31, 0, 31, 0, 0], "<": [2, 4, 8, 16, 8, 4, 2], ">": [8, 4, 2, 1, 2, 4, 8], "*": [0, 4, 21, 14, 21, 4, 0], "_": [0, 0, 0, 0, 0, 0, 31], "[": [14, 8, 8, 8, 8, 8, 14], "]": [14, 2, 2, 2, 2, 2, 14], " ": [0, 0, 0, 0, 0, 0, 0]};
-const fontUnit = size => 2 * Math.max(1, Math.round(size / 13)); // logical units per font pixel
-function textWidth(s, size) { const u = fontUnit(size); return String(s).length * 6 * u - u; }
+// ---- Text: Spleen, a pixel font by Frederic Cambus (vendor/spleen-fonts.js), drawn from its own bitmaps ----
+// Each size is a separate design at its native size (6x12, 8x16, 12x24, 16x32), drawn one font pixel to one
+// screen pixel, so text never has bigger pixels than anything else and nothing is scaled or smoothed.
+const SPLEEN_SIZES = ['6x12', '8x16', '12x24', '16x32'];
+function fontFor(size) { return window.SPLEEN[size < 11 ? '6x12' : size < 16 ? '8x16' : size < 24 ? '12x24' : '16x32']; }
+const fontUnit = size => fontFor(size).w / 6; // kept for layout code that counts characters by width
+const glyphCache = new Map();
+function glyph(code, font, col) { // one glyph in one colour, cached as a small bitmap canvas
+  const key = font.w + '|' + code + '|' + col; let cv = glyphCache.get(key); if (cv) return cv;
+  const hex = font.g[code] || font.g[63], n = font.rowHex;
+  cv = document.createElement('canvas'); cv.width = font.w; cv.height = font.h; const c2 = cv.getContext('2d'); c2.fillStyle = col;
+  for (let y = 0; y < font.h; y++) { const row = parseInt(hex.substr(y * n, n), 16), top = 1 << (n * 4 - 1); for (let x = 0; x < font.w; x++) if (row & (top >>> x)) c2.fillRect(x, y, 1, 1); }
+  glyphCache.set(key, cv); return cv;
+}
+const cleanText = s => String(s).toUpperCase().replace(/[—–]/g, '-').replace(/[’‘]/g, "'").replace(/×/g, 'X').replace(/·/g, '-').replace(/[^\x20-\x7e]/g, '?');
+function textWidth(s, size) { return cleanText(s).length * fontFor(size).w; }
 function text(s, x, y, size, c, align = 'center', weight = '') {
-  s = String(s).toUpperCase().replace(/[—–]/g, '-').replace(/[’‘]/g, "'").replace(/×/g, 'X');
-  const u = fontUnit(size), w = s.length * 6 * u - u;
-  const x0 = Math.round((align === 'center' ? x - w / 2 : align === 'right' ? x - w : x) / 2) * 2, y0 = Math.round((y - 3.5 * u) / 2) * 2;
-  const put = (col, ox, oy) => { ctx.fillStyle = col; for (let i = 0; i < s.length; i++) { const g = FONT5[s[i]] || FONT5['?']; for (let r = 0; r < 7; r++) { const row = g[r]; if (!row) continue; for (let b = 0; b < 5; b++) if (row & (16 >> b)) ctx.fillRect(x0 + ox + (i * 6 + b) * u, y0 + oy + r * u, u, u); } } };
-  if (weight === 'bold' || u > 2) put('#07040d', u / 2 > 1 ? u / 2 : 2, u / 2 > 1 ? u / 2 : 2);
-  put(c, 0, 0);
+  s = cleanText(s); const f = fontFor(size), w = s.length * f.w;
+  const x0 = Math.round(align === 'center' ? x - w / 2 : align === 'right' ? x - w : x), y0 = Math.round(y - f.h / 2 - 1);
+  const put = (col, o) => { for (let i = 0; i < s.length; i++) if (s[i] !== ' ') ctx.drawImage(glyph(s.charCodeAt(i), f, col), x0 + o + i * f.w, y0 + o); };
+  if (weight === 'bold' || f.w >= 12) put('#07040d', 1); // a one-pixel dark shadow, never a bigger pixel
+  put(c, 0);
 }
 function wrapText(s, x, y, maxW, size, c, align = 'center') {
-  const words = String(s).split(' '); let line = '', yy = y; const lh = 7 * fontUnit(size) + 6;
+  const words = String(s).split(' '); let line = '', yy = y; const lh = fontFor(size).h + 4;
   for (const wd of words) { const tst = line ? line + ' ' + wd : wd; if (textWidth(tst, size) > maxW && line) { text(line, x, yy, size, c, align); line = wd; yy += lh; } else line = tst; }
   if (line) text(line, x, yy, size, c, align);
   return yy;
@@ -1262,8 +1408,9 @@ function updatePlay(dt) {
     const wallHit = () => { b.bounces--; b.bounced++; b.hitSet.clear(); if (b.fx.includes('snowball')) { b.dmg += 0.35; b.r = Math.min(13, b.r + 0.4); } };
     if (b.x < RL + b.r) { b.x = RL + b.r; b.vx = Math.abs(b.vx); wallHit(); }
     if (b.x > RR - b.r) { b.x = RR - b.r; b.vx = -Math.abs(b.vx); wallHit(); }
-    if (b.y < b.r) { b.y = b.r; b.vy = Math.abs(b.vy); wallHit(); }
-    if (b.y > H - b.r) { b.y = H - b.r; b.vy = -Math.abs(b.vy); wallHit(); }
+    b.age = (b.age || 0) + dt;
+    const returning = b.orbitT > 0 || (b.boomT !== undefined && b.age < 3); // orbit guards and boomerangs come back on purpose
+    if (!returning && (b.y < -b.r - 4 || b.y > H + b.r + 4)) { b.dead = true; continue; } // out of the view: gone
     for (const list of [state.enemies, state.matter]) for (const t of list) {
       if (t.dead || b.dead || b.hitSet.has(t) || t.charm > 0) continue;
       const n = hitNormal(b, t); if (!n) continue;
@@ -2225,7 +2372,7 @@ function drawHUD() {
 function drawPlay() {
   const t = state.t, p = state.player;
   ctx.save();
-  if (state.shake > 0) ctx.translate(Math.sin(t * 90) * state.shake * 0.5, Math.cos(t * 77) * state.shake * 0.5);
+  if (state.shake > 0) ctx.translate(Math.round(Math.sin(t * 90) * state.shake * 0.5), Math.round(Math.cos(t * 77) * state.shake * 0.5)); // shake in whole pixels
   drawBackdrop(t);
   ctx.save(); ctx.beginPath(); ctx.rect(RL, 0, RR - RL, H); ctx.clip();
   for (const q of state.pools) drawPool(q, t);
@@ -2314,6 +2461,33 @@ function panel(title) {
 // ---- the scene
 const hubStars = (() => { let z = 5; const r = () => (z = z * 16807 % 2147483647) / 2147483647; return Array.from({ length: 220 }, () => ({ x: r() * W, y: r() * H, s: 0.3 + r(), tw: r() * 6 })); })();
 const CONSTELLATION = [[230, 130], [262, 110], [300, 124], [330, 104], [352, 140], [318, 170], [282, 182], [246, 176], [226, 210], [270, 214], [314, 206], [350, 196]];
+// ---- Void flames and the Rite's rift: pixelfx effects (vendor/pixelfx.js) ----
+// Each effect paints into its own small pixel buffer; the buffer is cut to fully on or off pixels (hard edges, no
+// soft glow), then placed at a whole-pixel position, so it obeys the same pixel rules as everything else.
+const VOID_RAMP = ['#07040d', '#1a0a20', '#2a1636', '#4a3a7a', '#7b5bdf', '#b9a6ff', '#d8c8ff', '#ffffff'];
+const PILLARS = [[360, 120], [420, 70], [880, 100], [930, 140]];
+function fxSprite(mod, opts) {
+  const [w, h] = mod.meta.size, [ox, oy] = mod.meta.origin, frame = PIXELFX.createFrame(w, h), cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  return { fx: PIXELFX.createFx(mod, { ...opts, x: ox, y: oy }), frame, img: new ImageData(w, h), cv, c2: cv.getContext('2d'), ox, oy, lt: null, fi: null };
+}
+function drawFx(s, x, y, t) {
+  const fi = Math.floor(t * (s.fx.meta.fps || 30));
+  if (fi !== s.fi) { // effects are authored at 30 fps: re-render only when their frame changes
+    const dt = s.lt === null ? 0 : Math.max(0, Math.min(0.1, t - s.lt)); s.lt = t; s.fi = fi;
+    s.fx.update(dt); PIXELFX.clearFrame(s.frame); s.fx.draw(s.frame);
+    const d = PIXELFX.composite(s.frame, s.img.data, null, tune.fx_light);
+    for (let i = 3; i < d.length; i += 4) d[i] = d[i] >= 128 ? 255 : 0; // one pixel, one colour: no half-see-through pixels
+    s.c2.putImageData(s.img, 0, 0);
+  }
+  ctx.drawImage(s.cv, Math.round(x - s.ox), Math.round(y - s.oy));
+}
+let hubFxCache = null;
+const hubFx = new Proxy({}, { get: (_, k) => (hubFxCache || (hubFxCache = {
+  rift: fxSprite(PIXELFX.portal, { palette: VOID_RAMP, width: 8, height: 42, seed: 4 }),
+  braziers: PILLARS.map((_, i) => fxSprite(PIXELFX.shadowFlames, { palette: VOID_RAMP, seed: 12 + i * 7 })),
+  flows: Array.from({ length: 5 }, (_, i) => fxSprite(PIXELFX.spiritFlame, { palette: ['#07040d', ...VOID_RAMP], seed: 7 + i * 5 })),
+}))[k] });
 function drawHubScene() {
   const t = hub.t;
   clear('#07040d');
@@ -2326,7 +2500,8 @@ function drawHubScene() {
   ctx.fillStyle = '#45404d'; ctx.beginPath(); ctx.ellipse(640, 515, 335, 72, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = '#8a8296'; ctx.lineWidth = 3; ctx.stroke();
   ctx.strokeStyle = `rgba(90,200,185,${0.45 + 0.25 * Math.sin(t * 1.6)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(640, 515, 270, 52, 0, 0, 6.283); ctx.stroke();
   for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283 + t * 0.1; ctx.fillStyle = `rgba(90,200,185,${0.5 + 0.3 * Math.sin(t * 2 + i)})`; ctx.fillRect(640 + Math.cos(a) * 300 - 3, 515 + Math.sin(a) * 62 - 3, 6, 6); }
-  for (const [x, h] of [[360, 120], [420, 70], [880, 100], [930, 140]]) { ctx.fillStyle = '#4a4554'; ctx.fillRect(x - 14, 505 - h, 28, h); ctx.fillStyle = '#34303c'; for (let k = 0; k < 3; k++) ctx.fillRect(x - 10 + k * 8, 505 - h + 6, 3, h - 12); ctx.fillStyle = '#5a5464'; ctx.fillRect(x - 18, 505 - h - 6, 36, 8); }
+  for (const [x, h] of PILLARS) { ctx.fillStyle = '#4a4554'; ctx.fillRect(x - 14, 505 - h, 28, h); ctx.fillStyle = '#34303c'; for (let k = 0; k < 3; k++) ctx.fillRect(x - 10 + k * 8, 505 - h + 6, 3, h - 12); ctx.fillStyle = '#5a5464'; ctx.fillRect(x - 18, 505 - h - 6, 36, 8); }
+  PILLARS.forEach(([x, h], i) => drawFx(hubFx.braziers[i], x, 505 - h, t)); // void fire burning on the pillars
   // the Deck: a stone lectern with the deck's cards fanned above it
   const lo = stacks(meta.loadout).slice(0, 5), fanN = Math.max(1, lo.length);
   ctx.fillStyle = '#4a4554'; ctx.beginPath(); ctx.moveTo(590, 400); ctx.lineTo(690, 400); ctx.lineTo(670, 440); ctx.lineTo(610, 440); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#8a8296'; ctx.lineWidth = 2; ctx.stroke();
@@ -2336,8 +2511,7 @@ function drawHubScene() {
   drawForm(n ? BASE[n].form : 'blob', 640, 478 + Math.sin(t * 2) * 4, col, t, 1.8);
   // the Void Rite: a ring of stones round a crack of light
   for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283; ctx.fillStyle = '#5a5464'; ctx.fillRect(300 + Math.cos(a) * 70 - 9, 470 + Math.sin(a) * 20 - 12, 18, 18); }
-  ctx.save(); ctx.translate(300, 410); ctx.beginPath(); ctx.moveTo(0, -60); ctx.lineTo(8, -30); ctx.lineTo(-6, -8); ctx.lineTo(10, 16); ctx.lineTo(-3, 40); ctx.lineTo(2, 62); glowStroke('#fff3c8', 20 + Math.sin(t * 4) * 8, 4); ctx.restore();
-  for (let i = 0; i < 6; i++) { const k = (t * 0.4 + i / 6) % 1; ctx.fillStyle = `rgba(216,200,255,${1 - k})`; ctx.fillRect(300 + Math.sin(i * 2 + t) * 30, 470 - k * 140, 4, 4); }
+  drawFx(hubFx.rift, 300, 478, t); // the crack the Rite's cards rise out of: a narrow void rift
   // the Rift Gate: a portal tinted by the chosen rift's prevailing nature
   const rift = meta.rifts && meta.rifts[meta.riftPick], gc = rift ? BASE[rift.prevail].color : '#b9a6ff';
   ctx.fillStyle = '#3a3542'; for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(985 + sx * 60, 520); ctx.quadraticCurveTo(985 + sx * 110, 400, 985 + sx * 50, 290); ctx.lineTo(985 + sx * 40, 300); ctx.quadraticCurveTo(985 + sx * 86, 400, 985 + sx * 40, 520); ctx.fill(); }
@@ -2354,8 +2528,9 @@ function drawHubScene() {
   ctx.save(); ctx.translate(640, 118 + Math.sin(t * 1.5) * 4); ctx.fillStyle = '#3a2a20'; ctx.fillRect(-50, -26, 100, 52); ctx.fillStyle = '#e8e6c0'; ctx.fillRect(-46, -22, 44, 44); ctx.fillRect(2, -22, 44, 44);
   ctx.fillStyle = '#8a8296'; for (let i = 0; i < 5; i++) { ctx.fillRect(-40, -14 + i * 8, 32, 2); ctx.fillRect(8, -14 + i * 8, 32, 2); } ctx.restore();
   if (questReady()) { ctx.fillStyle = '#ffd27a'; ctx.fillRect(694, 78 + Math.sin(t * 6) * 3, 6, 16); ctx.fillRect(694, 98 + Math.sin(t * 6) * 3, 6, 6); }
-  // fireflies
-  for (let i = 0; i < 5; i++) drawFirefly(640 + Math.sin(t * 0.4 + i * 1.7) * 420, 300 + Math.cos(t * 0.3 + i * 2.1) * 200, t + i);
+  // void energy flowing: spirit flames drifting round the altar on a slow tide
+  hubFx.flows.forEach((f, i) => { const a = t * 0.12 + i / hubFx.flows.length * 6.283;
+    drawFx(f, 640 + Math.cos(a) * 470, 330 + Math.sin(a) * 190 + Math.sin(t * 0.9 + i * 2) * 14, t); });
   // station names
   for (const st of STATIONS) { const hv = !hub.open && Math.hypot(mouse.x - st.x, mouse.y - st.y) < st.r;
     const ly = st.id === 'journal' ? st.y + 50 : st.id === 'sigils' || st.id === 'relics' ? st.y + 82 : st.id === 'deck' ? 392 : st.y + 118;

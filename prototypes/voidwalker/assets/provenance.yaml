@@ -9,3 +9,31 @@
 #   date: 2026-01-31
 #   ships: true               # false for a file only the build uses
 #   placeholder: true         # until it is replaced; leave the line out otherwise
+- path: vendor/spleen-fonts.js
+  origin: licensed
+  tool: "Spleen's BDF bitmaps for printable ASCII (6x12, 8x16, 12x24, 16x32), converted to JS data unchanged by a one-off Python script"
+  source: {vendor: "Frederic Cambus", product: "Spleen 2.3.0", url: "https://github.com/fcambus/spleen/releases/download/2.3.0/spleen-2.3.0.tar.gz"}
+  licence: {id: BSD-2-Clause}
+  date: 2026-11-19
+  ships: true
+- path: vendor/spleen-LICENSE.txt
+  origin: licensed
+  tool: "copied from the Spleen 2.3.0 release"
+  source: {vendor: "Frederic Cambus", product: "Spleen 2.3.0", url: "https://github.com/fcambus/spleen"}
+  licence: {id: BSD-2-Clause}
+  date: 2026-11-19
+  ships: true
+- path: vendor/pixelfx.js
+  origin: licensed
+  tool: "esbuild 0.25.10 bundle (IIFE, window.PIXELFX) of pixelfx 0.3.1's core and the effects arcane/portal, shadow/shadow-flames and fire/spirit-flame, unchanged"
+  source: {vendor: "Patch", product: "pixelfx 0.3.1", url: "https://github.com/patch-gg/pixelfx"}
+  licence: {id: MIT}
+  date: 2026-11-19
+  ships: true
+- path: vendor/pixelfx-LICENSE.txt
+  origin: licensed
+  tool: "copied from pixelfx"
+  source: {vendor: "Patch", product: "pixelfx 0.3.1", url: "https://github.com/patch-gg/pixelfx"}
+  licence: {id: MIT}
+  date: 2026-11-19
+  ships: true

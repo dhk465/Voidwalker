@@ -5,6 +5,7 @@
 // through tune.<name> (index.html); the tweak panel, an add-on, writes them back here.
 window.CONFIG = {
   seed: 1, // every gameplay random call reads rng(), seeded from this (or ?seed= in the address)
+  fx_light: { value: 0.6, min: 0, max: 2, step: 0.1 },        // glow strength of the hub's pixelfx flames and rift (cut to whole pixels)
   volume: { value: 0.5, min: 0, max: 1, step: 0.05 },
 
   // ---- The economy: void energy is banked between adventures ----
@@ -258,7 +259,7 @@ window.NATURES = {
     'chastity+pride':    { name: 'Seraph',        fx: ['homing', 'pierce', 'radiant'], says: 'A seeking light that passes through.' },
     'pride+temperance':  { name: 'Comet',         fx: ['meteor'],               says: 'Calls a comet down on what it hits.' },
     'diligence+pride':   { name: 'Zenith',        fx: ['boomerang', 'radiant'], says: 'Flies out, then returns to strike again.' },
-    'greed+humility':    { name: 'Lodestone',     fx: ['pull', 'stone', 'magnet'], says: 'A heavy magnet; calls all void energy to you.' },
+    'greed+humility':    { name: 'Lodestone',     fx: ['pull', 'stone', 'magnet', 'boomerang'], says: 'A heavy magnet flung out that swings back to you; calls all void energy home.' },
     'greed+patience':    { name: 'Stasis',        fx: ['field', 'chill'],       says: 'A freezing field that holds them.' },
     'greed+kindness':    { name: 'Harvest',       fx: ['hoard', 'heal'],        says: 'Kills drop triple void energy and heal.' },
     'chastity+greed':    { name: 'Tithe',         fx: ['tithe', 'pierce'],      says: 'Takes a tenth of a Ybasog\'s life with each hit.' },
