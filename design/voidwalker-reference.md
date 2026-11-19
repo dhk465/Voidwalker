@@ -1,8 +1,8 @@
 # Voidwalker: Game Reference
 
-*Updated 2026-11-19 from `prototypes/voidwalker/config.js` (game data and tuning) and the project history. Numbers are the current `config.js` values; change them there and regenerate.*
+*Updated 2026-11-19 from `prototypes/voidwalker/config.js` (game data and tuning), the Godot port (`src/`) and the project history. Numbers in sections 3 to 16 are the browser build's `config.js` values; the port's own values are in section 18.*
 
-**Build:** `prototypes/voidwalker/index.html` (open in a browser) · **Brief:** `design/game-brief.md` · **Checkpoints:** tag `one-shot/voidwalker`, commit `ef7b610` (iteration 7)
+**Builds:** the browser game `prototypes/voidwalker/index.html` (the whole game) and the Godot 4.8 .NET port (the Rift Altar hub so far; see section 18 and the README) · **Brief:** `design/game-brief.md` · **Checkpoints:** tag `one-shot/voidwalker`, commit `96f41a9` (iteration 9, the last browser iteration), commit `20b1e1b` (the port's lobby islands)
 
 ## Contents
 - 1. The game in one page
@@ -22,7 +22,8 @@
 - 15. The save
 - 16. Every tuning value
 - 17. Development history and changelog
-- 18. Known gaps and next steps
+- 18. The Godot port
+- 19. Known gaps and next steps
 
 ## 1. The game in one page
 
@@ -45,7 +46,7 @@ Survivors-like × roguelite deckbuilder. The stage shape takes inspiration from 
 | Wave-clear pick | Click, or 1 to 3; Esc | Take a card (or temper); skip |
 | Rift Rest | Mouse; Enter | Merge, temper, take the found card, choose a path; onward |
 | Anywhere | M | Mute |
-| Altar | Mouse; Enter at the Gate | Visit a station; enter the rift |
+| Altar | Mouse, or 1 to 6; Enter at the Gate | Visit a station; enter the rift |
 | End screen | Enter, R or click | Return to the Altar |
 
 ## 3. The adventure
@@ -358,7 +359,7 @@ Row nature + column nature. "void" marks opposites.
 | **Temperance** | Comet | Whirlpool | Firestorm | Miasma | Allure | void | Doldrums | Sandstorm | Zephyr | Blizzard | Pollen | Clarity | level up | Tempest |
 | **Diligence** | Zenith | Compound | Arc Forge | Rivalry | Fervor | Grindstone | void | Bulwark | Providence | Hourglass | Hive | Oath | Tempest | level up |
 
-**Fusion rules:** the union of both cards' natures is looked up in the recipe table (keyed by natures sorted and joined with "+"). An opposite pair anywhere in the set is void. Twins (same natures) rise a level. A set with no recipe is "unstable, not yet known" and nothing is spent. With 14 natures a 3-nature set has 364 possible combinations and a 4-nature set 1,001; they are planned as data in the same table (see section 18).
+**Fusion rules:** the union of both cards' natures is looked up in the recipe table (keyed by natures sorted and joined with "+"). An opposite pair anywhere in the set is void. Twins (same natures) rise a level. A set with no recipe is "unstable, not yet known" and nothing is spent. With 14 natures a 3-nature set has 364 possible combinations and a 4-nature set 1,001; they are planned as data in the same table (see section 19).
 
 ## 9. Effects glossary
 
@@ -735,8 +736,46 @@ All 131 values the game reads live, from `prototypes/voidwalker/config.js`.
 | 2026-11-19 | **Iteration 6** (`f6c1dd9`) | Free roam, no leak damage, 23 new kinds and The Drowned King. Checked with a headless harness: each new kind alone for 30 s, three full seeded runs to a win, no errors. |
 | 2026-11-19 | Chapter II plan (`7edf2ca`) | `design/chapter-2-the-silent-foundry.md`: a civilization destroyed by its own AI, 34 machine kinds. Not built. |
 | 2026-11-19 | **Iteration 7** (`ef7b610`) | The deck is found in the adventure; Inborn and Chosen sigils; trial cards; full 1280×720. Three full runs (one from a new save) won with no errors. |
+| 2026-11-19 | **Iteration 8** (`e31844b`) | Pixel-perfect rendering, the Spleen pixel font, hard edges, bolts leave the view, pixelfx void flames in the hub. |
+| 2026-11-19 | **Iteration 9** (`96f41a9`) | Void-trail flames, a deep-space shader, a shader highlight on hover, still blinking stars, code-drawn lobby sprites. The last browser iteration. |
+| 2026-11-19 | Godot set up (`08cd289`, `8085c9d`) | Godot 4.8 beta 4 .NET, 640×360 base resolution, whole-number scaling, landscape. |
+| 2026-11-19 | Hub port (`da181db`, `4416be3`) | The Rift Altar and its six station screens in C#, with the save. Built and installed on an Android phone; all six stations passed by touch. |
+| 2026-11-19 | Forms, relics, phone scaling (`4f71af7`, `00703ce`, `87f074a`) | The blob's 15 forms drawn and shown on the altar and the Pool screen; relics over the pedestals; bigger pixels and fonts on phones. Checked on the phone. |
+| 2026-11-19 | Gate rift, Rite crack (`784e8a8`, `e1c4803`) | The Gate's rift and the Rite's crack in space-time as pixelfx effects. |
+| 2026-11-19 | Lobby islands (`20b1e1b`) | Each station on its own island, faceted rock, depth redraws, void balls drifting from the crack to the rift, tap to dodge or burst. Checked in desktop Godot. |
 
 ### Changelog
+
+#### The Godot port: the Rift Altar hub (`08cd289` to `20b1e1b`)
+
+The port moves the game to Godot 4.8 beta 4 .NET (C#), mobile-first, one system at a time. The browser build stays the full game until the adventure is ported. Section 18 covers what the port holds now.
+
+- **Added** the Rift Altar with its six station screens (Pool, Void Rite, Rift Gate, Sigils, Relics, Journal) and the save. The rules are plain C# shared with the tests, checked against fixtures from the browser game.
+- **Added** an Android build. The six stations passed by touch on a phone, with the save kept safe.
+- **Added** the blob's 15 forms, drawn in code. The altar and the Pool screen show the pool's dominant form, and equipped relics float over their pedestals.
+- **Changed** the scaling for phones: bigger pixels and fonts, a camera that frames the hub, and screens that page their content when it does not fit.
+- **Changed** the Rift Gate into a pixelfx rift painted in the chosen rift's nature, turning counter-clockwise as it drains. The Void Rite became a crack in space-time with void seeping out.
+- **Added** a floating island for each station, faceted rock under the islands and the altar, and stones, pedestals, lectern and tome redrawn with depth.
+- **Changed** the hub's void flames into void balls. Each one leaves the Rite's crack, drifts on a smooth curve through one to three stops at its own pace and on its own depth lane, and is drawn into the rift. A Rite draw releases a burst. Tapping a ball makes it dart away or burst.
+
+#### Iteration 9: void trails, deep space, the hub lit on hover (`96f41a9`)
+
+Your words for this iteration were not recorded in this reference. The changes are from the brief's Features list.
+
+- **Changed** the hub's flames into balls with real tails from a new pixelfx effect: each ball sheds flame that cools from lavender to deep violet and rises. The four altar pillars and their fire are gone.
+- **Added** a deep-space background from a fragment shader: a drifting violet nebula with dark dust lanes and a teal vein, in exact palette colours with a 4×4 ordered dither.
+- **Changed** hovering a station: the object itself lights up with a pale-gold outline, a breathing ring and a sweep of light, in place of a dashed circle. Stations carry no names; keys 1 to 6 still open them.
+- **Changed** the stars to hold still, each brightening and fading on its own 6 to 18 s cycle.
+- **Changed** the lobby's props to code-drawn pixel sprites.
+
+#### Iteration 8: pixel-perfect (`e31844b`)
+
+Your words for this iteration were not recorded in this reference. The changes are from the brief's Features list.
+
+- **Changed** the rendering to pixel-perfect: one pixel is one colour, every pixel is the same size, no blur or glow, whole-number scaling only, screen shake in whole pixels. A small rasteriser fills every shape at pixel centres, so no edge is blended.
+- **Changed** the text to Spleen, a pixel font by Frederic Cambus (BSD-2-Clause), at its native sizes.
+- **Changed** bolts to leave the view past the top or the bottom instead of bouncing, except orbit guards and boomerangs. Lodestone (Greed + Humility) now flies out and swings back.
+- **Changed** the hub's fireflies into pixelfx spirit flames flowing round the altar, and the Void Rite's crack into a narrow pixelfx void rift.
 
 #### Iteration 7: the deck is found in the adventure (`ef7b610`)
 
@@ -828,6 +867,9 @@ Your words: *"Cards/innate natures are discovered in adventures as achievement r
 | The deck starts as one void card; the loadout is the pool | Your note after iteration 6: too much power from the start | you; the drop chances are guessed |
 | Free roam, no leak damage | Iteration 6, finished from its config | earlier session |
 | A hub with stations, sigils, relics and the Rift Rest | Your note: progression between adventures, less like a flash game | you; the contents are guessed |
+| Port to Godot 4 .NET, mobile-first, the hub first | The browser build proved the fun; Android now, iOS later | you |
+| Lobby art drawn in code, not by an image model | Your choice for the forms, then kept for the lobby | you |
+| Void balls drift slowly with quick moves kept for taps; a tap bursts or dodges | Your notes in the lobby reviews | you; the burst chance (40%) is guessed |
 | Browser game first, engine later | No engine set; the one-shot proves the fun before an engine is chosen | the workflow |
 | Rigor `minimal` | No scope signals at the start; `design/game-brief.md` is the design record | guessed, you saved it |
 | Stage shape like Ball x Pit; the town replaced by the Altar | Your direction | you |
@@ -849,10 +891,64 @@ Your words: *"Cards/innate natures are discovered in adventures as achievement r
 | `design/chapter-2-the-silent-foundry.md` | The Chapter II plan (not built) |
 | `design/concepts/` | Your original concept notes and mindmap |
 | `design/voidwalker-reference.md` | The same reference as text |
+| `README.md` | How to build, run, test-play as a developer, test and export the Godot port |
+| `project.godot`, `Voidwalker.sln` | The Godot port's project and its C# solution |
+| `src/core/` | The port's rules in plain C# (game data, the save's model, the Altar's rules, void-ball paths) |
+| `src/hub/`, `src/ui/` | The hub scene and the six station screens |
+| `src/data/game_data.json`, `src/data/hub_config.tres` | The game data (shared with the browser build) and the hub's tuning values |
+| `tests/unit/Rules/` | The port's tests (`dotnet test Voidwalker.sln`) |
+| `tools/art/` | The code-drawn lobby art and the pixelfx bakes |
+| `production/qa/evidence/` | The port's check screenshots and device results |
 
-## 18. Known gaps and next steps
+## 18. The Godot port
 
-**Not checked yet:** these were tested only by a headless harness. Your play is the check.
+The port runs the **Rift Altar hub** in Godot 4.8 beta 4 .NET (C#), on desktop and Android. The adventure (the rift, combat, Ybasogs, the Rift Rest) is not ported yet and is played in the browser build. How to build, run, test-play and export: `README.md`.
+
+**What is in it**
+
+- The six stations with their screens: Pool, Void Rite, Rift Gate, Sigils, Relics, Journal. The rules match the browser build.
+- **The lobby:** each station floats on its own island in deep space, with stars that blink on their own cycles and far asteroids drifting by. The altar holds the blob in the pool's dominant form, and equipped relics float over the pedestals.
+- **The Void Rite** is a crack in space-time with void seeping out. **The Rift Gate** holds a rift painted in the chosen rift's nature, turning counter-clockwise as it drains.
+- **Void balls** leave the crack and drift on smooth curves to the rift, and a Rite draw releases a burst. Some pass behind the islands and some in front.
+- **The look:** a 640×360 game area scaled by whole numbers (4× on a wide phone, 2× on a 1280×720 window), the Spleen pixel font, code-drawn sprites.
+
+**Controls**
+
+| Where | Input | Does |
+|---|---|---|
+| Hub, touch | Tap a station, then tap it again | Light it, then open its screen |
+| Hub, desktop | Hover, then click | Light a station, open its screen |
+| Hub | Tap or click a void ball | It darts away, or bursts (40%) |
+| A screen | Back button or Escape | Close it |
+| Journal, Natures tab | RESET TO DEMO, twice | Reset the collection to the demo |
+
+**The save:** `user://save.json` (on Windows `%APPDATA%\Godot\app_userdata\Voidwalker\save.json`). A first launch starts the demo collection. A save that cannot be read is left untouched, and the HUD shows SAVE PROTECTED. The port's save is separate from the browser's.
+
+**Tuning values** (`src/data/hub_config.tres`)
+
+| Value | Now | What it does |
+|---|---|---|
+| `FlowAmbient` | 4 | Void balls the crack keeps in the air on its own |
+| `FlowMax` | 9 | The most balls at once, Rite draws included |
+| `FlowGapMin`, `FlowGapMax` | 1.2, 3.2 s | Time between the crack's own balls |
+| `FlowBurstGap` | 0.35 s | Time between balls released by a Rite draw |
+| `FlowBoundsMin`, `FlowBoundsMax` | (70, 80), (570, 320) | The area balls wander in, in hub pixels |
+| `FlowStopsMin`, `FlowStopsMax` | 1, 3 | Waypoints a ball's curve passes near before it turns to the rift |
+| `FlowSpeedMin`, `FlowSpeedMax` | 15, 50 px/s | The slowest and fastest pace; each ball has its own |
+| `FlowMinHop`, `FlowMaxHop` | 80, 200 px | Distance from one stop to the next |
+| `FlowSway` | 0.25 | How far a ball's speed swells and ebbs round its pace |
+| `FlowSpiralRadius`, `FlowSpiralTurns` | 26 px, 1.5 | The spiral into the rift |
+| `FlowDartDistance`, `FlowDartTime` | 40 px, 0.45 s | A tapped ball's dart |
+| `FlowTapRadius` | 10 px | How close a tap must land to touch a ball |
+| `FlowPopChance` | 0.4 | Chance a tapped ball bursts instead of darting |
+| `TrailLifetime`, `TrailAmount`, `TrailLift` | 2 s, 60, 14 px/s | Each ball's trail: how long a puff lives, puffs at once, how fast they rise |
+| `StarDensity` | 0.07 | Share of the sky's 7×7 cells that hold a star |
+| `StarBlinkMin`, `StarBlinkMax` | 6, 18 s | A star's blink cycle |
+| `AsteroidDrift` | 3 px/s | How fast the far asteroids drift |
+
+## 19. Known gaps and next steps
+
+**Not checked yet (browser):** these were tested only by a headless harness. Your play is the check.
 
 - How the start feels with one card, and whether the drop chances fill the deck at a good pace.
 - The first adventure: its pool is only six cards, and the harness took far more damage than in later runs.
@@ -867,7 +963,13 @@ Your words: *"Cards/innate natures are discovered in adventures as achievement r
 - The open-world void to glide through, with planets: grow it.
 - The story (fireflies, the Akashic Records, the 1000 days, the morality endings): add it as a feature.
 - More stages and characters: grow it.
-- Godot 4 .NET (C#) as the engine, once the browser build is settled.
+- The Godot port: the adventure (the rift, combat, Ybasogs, falling matter, the Rift Rest) next, then iOS.
+
+**Open in the port:**
+
+- The serpent and swan forms show no eyes at the hub's size.
+- About 400 colours on screen; no global palette snap yet.
+- The lobby islands are checked in desktop Godot only, not yet on the phone.
 
 **Next:** play several adventures, then say what to change.
 
