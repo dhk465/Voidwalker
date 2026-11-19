@@ -12,7 +12,7 @@ namespace Voidwalker.Ui;
 public partial class RiteScreen : StationScreen
 {
 	private const double Step = 0.3, FlashTime = 0.1;
-	private const int CardW = 56, CardH = 72, CardGap = 8, RevealY = 92;
+	private const int CardW = 84, CardH = 64, CardGap = 8, LabelH = 18;
 	private List<Reveal> _reveal = new();
 	private double _t, _flash;
 	private int _shown;
@@ -25,43 +25,46 @@ public partial class RiteScreen : StationScreen
 	protected override void Build()
 	{
 		Ui.Text(Body, "FOCUS", 0, 0, Pal.Mid);
+		int focusW = Math.Min(32, (BodyW - 52) / Math.Max(1, R.Meta.Discovered.Count) - 4); // up to 14 natures in one row
 		for (int i = 0; i < R.Meta.Discovered.Count; i++)
 		{
 			string n = R.Meta.Discovered[i];
 			bool on = R.Meta.Focus == n;
 			var colour = new Color(D.Natures[n].Color);
-			var tile = Ui.Tile(Body, i * 34, 14, 30, 26, () => { R.ToggleFocus(n); Commit(); }, colour: on ? colour : Pal.Line);
+			var tile = Ui.Tile(Body, 52 + i * (focusW + 4), 0, focusW, 26, () => { R.ToggleFocus(n); Commit(); }, colour: on ? colour : Pal.Line);
 			tile.Fill = on ? Pal.Chosen : Pal.Ink;
-			tile.Paint = t => t.DrawTexture(PixelIcons.Sigil(n, colour), new Vector2(10, 8));
+			int sx = (focusW - PixelIcons.SigilSize) / 2;
+			tile.Paint = t => t.DrawTexture(PixelIcons.Sigil(n, colour), new Vector2(sx, 8));
 		}
 		int one = R.RiteCost(1), ten = R.RiteCost(10);
-		Ui.Tile(Body, 0, 50, 128, 26, () => DrawCards(1), $"RITE  {one}", Pal.Void, R.Meta.Bank >= one, big: true);
-		Ui.Tile(Body, 136, 50, 128, 26, () => DrawCards(10), $"X10  {ten}", Pal.Gold, R.Meta.Bank >= ten, big: true);
-		Ui.Text(Body, $"VOID {R.Meta.Bank}", 300, 50, Pal.Void, width: 316, align: HorizontalAlignment.Right);
-		Ui.Text(Body, $"MYTHIC IN {R.MythicIn()}", 300, 64, Pal.Mid, width: 316, align: HorizontalAlignment.Right);
+		Ui.Tile(Body, 0, 36, 150, 34, () => DrawCards(1), $"RITE {one}", Pal.Void, R.Meta.Bank >= one, big: true);
+		Ui.Tile(Body, 158, 36, 150, 34, () => DrawCards(10), $"X10 {ten}", Pal.Gold, R.Meta.Bank >= ten, big: true);
+		Ui.Text(Body, $"VOID {R.Meta.Bank}", 316, 36, Pal.Void, width: BodyW - 316, align: HorizontalAlignment.Right);
+		Ui.Text(Body, $"MYTHIC IN {R.MythicIn()}", 316, 54, Pal.Mid, width: BodyW - 316, align: HorizontalAlignment.Right);
+		int revealY = 80, perRow = Math.Min(5, Ui.Fits(BodyW, CardW, CardGap));
 
 		// a tap anywhere on the reveal shows every card at once
-		var skip = new Control { Position = new Vector2(0, RevealY - 6), Size = new Vector2(BodyW, BodyH - RevealY + 6), MouseFilter = MouseFilterEnum.Stop };
+		var skip = new Control { Position = new Vector2(0, revealY - 4), Size = new Vector2(BodyW, BodyH - revealY + 4), MouseFilter = MouseFilterEnum.Stop };
 		skip.GuiInput += e => { if (e is InputEventMouseButton { Pressed: true } && _shown < _reveal.Count) { _t = 1e6; } };
 		Body.AddChild(skip);
 
-		int cols = Math.Min(5, Math.Max(1, _reveal.Count));
+		int cols = Math.Min(perRow, Math.Max(1, _reveal.Count));
 		int x0 = (BodyW - (cols * (CardW + CardGap) - CardGap)) / 2;
 		for (int i = 0; i < _shown; i++)
 		{
 			var r = _reveal[i];
-			int x = x0 + i % 5 * (CardW + CardGap), y = RevealY + i / 5 * (CardH + 30);
+			int x = x0 + i % perRow * (CardW + CardGap), y = revealY + 6 + i / perRow * (CardH + LabelH);
 			var card = CardFace.Make(Body, R, r.Natures, r.Level, x, y, CardW, CardH);
 			card.MouseFilter = MouseFilterEnum.Ignore;
 			if (r.Rarity == "mythic") card.Inner = Pal.Gold;
 			else if (r.Rarity == "rare") card.Inner = Pal.Rare;
 			string label = r.Rarity == "common" ? "" : r.Rarity.ToUpperInvariant();
-			if (label.Length > 0) Ui.Text(Body, label, x - 8, y + CardH + 2, r.Rarity == "mythic" ? Pal.Gold : Pal.Rare, width: CardW + 16, align: HorizontalAlignment.Center);
+			if (label.Length > 0) Ui.Text(Body, label, x - 8, y + CardH + 1, r.Rarity == "mythic" ? Pal.Gold : Pal.Rare, width: CardW + 16, align: HorizontalAlignment.Center);
 			if (r.IsNew)
 			{
-				var badge = Ui.Tile(Body, x + CardW - 24, y - 6, 28, 14);
+				var badge = Ui.Tile(Body, x + CardW - 30, y - 6, 32, 18);
 				badge.Fill = Pal.Gold; badge.Border = Pal.Gold; badge.MouseFilter = MouseFilterEnum.Ignore;
-				Ui.Text(badge, "NEW", 0, 1, Pal.Abyss, width: 28, align: HorizontalAlignment.Center);
+				Ui.Text(badge, "NEW", 0, 1, Pal.Abyss, width: 32, align: HorizontalAlignment.Center);
 			}
 		}
 	}

@@ -7,7 +7,7 @@ namespace Voidwalker.Ui;
 /// <summary>
 /// A card as a tile: framed in its recipe's colour (a fusion gets a second inner line), its nature sigils at 1x
 /// (each in its own nature's colour), its name, and a pip per level.
-/// <example><code>CardFace.Make(body, rules, new[] { "wrath" }, 2, 0, 0, 56, 64, () => GD.Print("tapped"));</code></example>
+/// <example><code>CardFace.Make(body, rules, new[] { "wrath" }, 2, 0, 0, 88, 64, () => GD.Print("tapped")); // 10 letters of name fit 88 px</code></example>
 /// </summary>
 public static class CardFace
 {
@@ -20,7 +20,7 @@ public static class CardFace
 		tile.Fill = chosen ? Pal.Chosen : Pal.Panel;
 		if (natures.Length > 1) tile.Inner = colour;
 		var data = rules.Data;
-		int iconY = (int)Math.Floor(h * 0.22f);
+		int iconY = (int)Math.Floor(h * 0.2f); // sigils, then the name (16 rows) below them, pips along the bottom
 		tile.Paint = t =>
 		{
 			int s = PixelIcons.SigilSize, total = natures.Length == 0 ? s : natures.Length * (s + 2) - 2;
@@ -32,8 +32,8 @@ public static class CardFace
 			for (int i = 0; i < level; i++) t.DrawTexture(PixelIcons.Pip(colour), new Vector2(px + i * 5, (int)h - 8));
 		};
 		string name = rules.RecipeOf(natures)?.Name ?? "Unstable";
-		Ui.Text(tile, Ui.Fit(name, ((int)w - 4) / 6), 0, iconY + 13, colour, width: w, align: HorizontalAlignment.Center);
-		if (count > 0) Ui.Text(tile, $"{count}", 0, 2, Pal.Mid, width: w - 4, align: HorizontalAlignment.Right);
+		Ui.Text(tile, Ui.FitPx(name, w - 4), 0, iconY + 12, colour, width: w, align: HorizontalAlignment.Center);
+		if (count > 0) Ui.Text(tile, $"{count}", 0, 1, Pal.Mid, width: w - 4, align: HorizontalAlignment.Right);
 		return tile;
 	}
 }

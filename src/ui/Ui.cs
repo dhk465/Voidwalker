@@ -53,24 +53,29 @@ public static class Pal
 }
 
 /// <summary>
-/// Pixel-font text and frames for the station screens. Spleen at its native sizes only (6x12 at 12, 8x16 at 16),
-/// with no smoothing, hinting or subpixel placement, so every glyph pixel lands on a game pixel.
+/// Pixel-font text and frames for the station screens and the HUD. Spleen at its native sizes only (8x16 at 16 for
+/// body text, 12x24 at 24 for titles), with no smoothing, hinting or subpixel placement, so every glyph pixel lands
+/// on a game pixel. Sized for phones: at the 4x zoom a 2772x1280 phone gets, body text is 64 screen pixels tall.
 /// <example><code>Ui.Text(body, "POOL", 0, 0, Pal.Bright, big: true);
 /// Ui.Text(body, longText, 0, 20, Pal.Mid, width: 200); // wraps at 200 px</code></example>
 /// </summary>
 public static class Ui
 {
-	/// <summary>Spleen 6x12's native size.</summary>
-	public const int SmallSize = 12;
-	/// <summary>Spleen 8x16's native size.</summary>
-	public const int BigSize = 16;
+	/// <summary>Body text's line height: Spleen 8x16's native size.</summary>
+	public const int SmallSize = 16;
+	/// <summary>Title text's line height: Spleen 12x24's native size.</summary>
+	public const int BigSize = 24;
+	/// <summary>Body text's character width (monospaced).</summary>
+	public const int SmallW = 8;
+	/// <summary>Title text's character width (monospaced).</summary>
+	public const int BigW = 12;
 
 	private static FontFile? _small, _big;
 
-	/// <summary>Spleen 6x12.</summary>
-	public static FontFile Small => _small ??= LoadFont("res://assets/fonts/spleen-6x12.otf");
-	/// <summary>Spleen 8x16.</summary>
-	public static FontFile Big => _big ??= LoadFont("res://assets/fonts/spleen-8x16.otf");
+	/// <summary>Spleen 8x16, the body font.</summary>
+	public static FontFile Small => _small ??= LoadFont("res://assets/fonts/spleen-8x16.otf");
+	/// <summary>Spleen 12x24, the title font.</summary>
+	public static FontFile Big => _big ??= LoadFont("res://assets/fonts/spleen-12x24.otf");
 
 	private static FontFile LoadFont(string path)
 	{
@@ -100,7 +105,25 @@ public static class Ui
 	}
 
 	/// <summary>Cuts text to fit <paramref name="chars"/> characters.</summary>
-	public static string Fit(string text, int chars) => text.Length <= chars ? text : text[..chars];
+	public static string Fit(string text, int chars) => text.Length <= chars ? text : text[..System.Math.Max(0, chars)];
+
+	/// <summary>Cuts text to fit <paramref name="width"/> pixels in the body (or title) font.</summary>
+	public static string FitPx(string text, float width, bool big = false) => Fit(text, (int)width / (big ? BigW : SmallW));
+
+	/// <summary>How many tiles of <paramref name="size"/> with <paramref name="gap"/> between them fit in <paramref name="room"/> (at least 1).</summary>
+	public static int Fits(float room, float size, float gap) => System.Math.Max(1, (int)((room + gap) / (size + gap)));
+
+	/// <summary>Page buttons and a "2/5" count across <paramref name="w"/> pixels; draws nothing for a single page.</summary>
+	public static void Pager(Control parent, float x, float y, float w, int page, int pages, Action<int> go)
+	{
+		if (pages <= 1) return;
+		Tile(parent, x, y, 32, PagerH, () => go(page - 1), "<", Pal.Void, page > 0);
+		Text(parent, $"{page + 1}/{pages}", x + 32, y + 3, Pal.Mid, width: w - 64, align: HorizontalAlignment.Center);
+		Tile(parent, x + w - 32, y, 32, PagerH, () => go(page + 1), ">", Pal.Void, page < pages - 1);
+	}
+
+	/// <summary>The height of <see cref="Pager"/>'s buttons.</summary>
+	public const int PagerH = 22;
 
 	/// <summary>A tappable frame at a place, with an optional centred caption.</summary>
 	public static PixelTile Tile(Control parent, float x, float y, float w, float h, Action? tapped = null, string caption = "", Color? colour = null, bool enabled = true, bool big = false)

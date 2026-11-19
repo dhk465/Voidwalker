@@ -7,13 +7,14 @@ namespace Voidwalker.Ui;
 
 /// <summary>
 /// The Pool (the Deck station): the collection on the left, a tap puts a copy into the pool taken into the rift; the
-/// pool on the right, a tap on a row takes a copy out. Below, the form the pool's leading nature gives the blob.
+/// pool on the right, a tap on a row takes a copy out; at the bottom right, the form the pool's leading nature gives
+/// the blob. Both lists page to fit the body.
 /// </summary>
 public partial class PoolScreen : StationScreen
 {
-	private const int Cols = 5, Rows = 3, TileW = 64, TileH = 64, GapX = 6, GapY = 16, RightX = 356, RightW = BodyW - RightX, RowW = 128;
+	private const int TileW = 84, TileH = 64, GapX = 6, UnderH = 18, RowH = 18, RowStep = 20, FormH = 80, Gap = 10;
 	private int _page, _poolPage;
-	private const int PoolPageSize = 16;
+	private bool _hinted;
 
 	/// <inheritdoc/>
 	protected override string Title => "POOL";
@@ -21,58 +22,54 @@ public partial class PoolScreen : StationScreen
 	/// <inheritdoc/>
 	protected override void Build()
 	{
+		if (!_hinted) { _hinted = true; Say("Tap a card to add it, a row to take it out", Pal.Mid); }
+		int rightW = BodyW >= 600 ? 260 : 230, rightX = BodyW - rightW, leftW = rightX - Gap;
+
+		// the collection
 		var list = AltarRules.Stacks(R.Meta.Cards);
-		int per = Cols * Rows, pages = Math.Max(1, (list.Count + per - 1) / per);
+		int cols = Ui.Fits(leftW, TileW, GapX), rows = Math.Max(1, (BodyH - Ui.PagerH - 4) / (TileH + UnderH));
+		int per = cols * rows, pages = Math.Max(1, (list.Count + per - 1) / per);
 		_page = Math.Min(_page, pages - 1);
 		for (int i = 0; i < per && _page * per + i < list.Count; i++)
 		{
 			var st = list[_page * per + i];
-			int x = i % Cols * (TileW + GapX), y = i / Cols * (TileH + GapY);
+			int x = i % cols * (TileW + GapX), y = i / cols * (TileH + UnderH);
 			int inPool = R.Meta.Loadout.GetValueOrDefault(st.Sk);
 			CardFace.Make(Body, R, st.Natures, st.Level, x, y, TileW, TileH, () => Add(st.Sk), chosen: inPool > 0, count: st.N);
 			if (inPool > 0) Ui.Text(Body, $"{inPool} IN", x, y + TileH + 1, Pal.Mint, width: TileW, align: HorizontalAlignment.Center);
 		}
-		if (pages > 1)
-		{
-			Ui.Tile(Body, 0, 238, 40, 22, () => { _page--; Rebuild(); }, "<", Pal.Void, _page > 0);
-			Ui.Text(Body, $"{_page + 1}/{pages}", 0, 243, Pal.Mid, width: 344, align: HorizontalAlignment.Center);
-			Ui.Tile(Body, 304, 238, 40, 22, () => { _page++; Rebuild(); }, ">", Pal.Void, _page < pages - 1);
-		}
+		Ui.Pager(Body, 0, BodyH - Ui.PagerH, cols * (TileW + GapX) - GapX, _page, pages, p => { _page = p; Rebuild(); });
 
 		// the pool
 		int count = R.DeckCount();
-		Ui.Text(Body, "IN THE POOL", RightX, 2, Pal.Mid);
-		Ui.Text(Body, $"{count} / {R.DeckMax()}", RightX + 72, 0, count < R.DeckMin() ? Pal.Warn : Pal.Bright, big: true);
+		Ui.Text(Body, "IN THE POOL", rightX, 5, Pal.Mid);
+		Ui.Text(Body, $"{count} / {R.DeckMax()}", rightX, 0, count < R.DeckMin() ? Pal.Warn : Pal.Bright, big: true, width: rightW, align: HorizontalAlignment.Right);
 		var pool = AltarRules.Stacks(R.Meta.Loadout);
-		int poolPages = Math.Max(1, (pool.Count + PoolPageSize - 1) / PoolPageSize);
+		int rowsTop = 30, room = BodyH - FormH - 6 - rowsTop;
+		int poolPer = Math.Max(1, room / RowStep);
+		if (pool.Count > poolPer) poolPer = Math.Max(1, (room - Ui.PagerH - 4) / RowStep);
+		int poolPages = Math.Max(1, (pool.Count + poolPer - 1) / poolPer);
 		_poolPage = Math.Min(_poolPage, poolPages - 1);
-		int start = _poolPage * PoolPageSize;
-		for (int i = 0; i < PoolPageSize && start + i < pool.Count; i++)
+		int start = _poolPage * poolPer;
+		for (int i = 0; i < poolPer && start + i < pool.Count; i++)
 		{
 			var st = pool[start + i];
 			var colour = new Color(R.CardColor(st.Natures));
-			var row = Ui.Tile(Body, RightX + i % 2 * (RowW + 4), 20 + i / 2 * 17, RowW, 15, () => { R.RemoveFromPool(st.Sk); Commit(); }, colour: colour);
+			var row = Ui.Tile(Body, rightX, rowsTop + i * RowStep, rightW, RowH, () => { R.RemoveFromPool(st.Sk); Commit(); }, colour: colour);
 			string nature = st.Natures.Length > 0 ? st.Natures[0] : "";
-			row.Paint = t => t.DrawTexture(PixelIcons.Sigil(nature, colour), new Vector2(3, 3));
-			Ui.Text(row, Ui.Fit(R.CardName(st.Natures, st.Level) + (st.N > 1 ? $" x{st.N}" : ""), (RowW - 18) / 6), 15, 1, colour);
+			row.Paint = t => t.DrawTexture(PixelIcons.Sigil(nature, colour), new Vector2(4, 4));
+			Ui.Text(row, Ui.FitPx(R.CardName(st.Natures, st.Level) + (st.N > 1 ? $" x{st.N}" : ""), rightW - 22), 17, 1, colour);
 		}
+		Ui.Pager(Body, rightX, BodyH - FormH - 6 - Ui.PagerH, rightW, _poolPage, poolPages, p => { _poolPage = p; Rebuild(); });
 
 		// the form the pool gives the blob
 		string? lead = R.DominantNature();
 		var formColour = lead != null ? new Color(D.Natures[lead].Color) : new Color("#b9a6ff");
-		if (poolPages > 1)
-		{
-			Ui.Tile(Body, RightX, 158, 32, 18, () => { _poolPage--; Rebuild(); }, "<", Pal.Void, _poolPage > 0);
-			Ui.Text(Body, $"{_poolPage + 1}/{poolPages}", RightX + 32, 161, Pal.Mid, width: RightW - 64, align: HorizontalAlignment.Center);
-			Ui.Tile(Body, BodyW - 32, 158, 32, 18, () => { _poolPage++; Rebuild(); }, ">", Pal.Void, _poolPage + 1 < poolPages);
-		}
-		int formY = poolPages > 1 ? 182 : Math.Max(146, 24 + (pool.Count + 1) / 2 * 17);
-		var form = Ui.Tile(Body, RightX, formY, RightW, 92, colour: formColour);
+		var form = Ui.Tile(Body, rightX, BodyH - FormH, rightW, FormH, colour: formColour);
 		form.Fill = Pal.Panel;
-		Ui.Icon(form, GD.Load<Texture2D>($"res://assets/sprites/lobby/form-{R.DominantForm()}.png"), 6, 23); // 46x46, centred in the panel's left 58 px
-		Ui.Text(form, lead != null ? D.Natures[lead].FormName : "Shapeless", 60, 8, formColour, big: true);
-		Ui.Text(form, lead != null ? D.Natures[lead].TraitText : "no trait", 60, 30, Pal.Soft, width: RightW - 68);
-		Ui.Text(Body, "Tap a card to put it in the pool. Tap a row to take it out.", RightX, formY + 100, Pal.Mid, width: RightW);
+		Ui.Icon(form, GD.Load<Texture2D>($"res://assets/sprites/lobby/form-{R.DominantForm()}.png"), 4, (FormH - 46) / 2); // 46x46
+		Ui.Text(form, lead != null ? D.Natures[lead].FormName : "Shapeless", 54, 4, formColour, big: true);
+		Ui.Text(form, lead != null ? D.Natures[lead].TraitText : "no trait", 54, 30, Pal.Soft, width: rightW - 60);
 	}
 
 	private void Add(string sk)

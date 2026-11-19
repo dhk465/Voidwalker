@@ -7,8 +7,9 @@ using Voidwalker.Ui;
 namespace Voidwalker.Hub;
 
 /// <summary>
-/// The Rift Altar hub. Drawn in a 640x360 stage (the browser hub's layout at half scale), centred in a viewport that
-/// may be wider on phones. Deep space is a shader with fixed blinking stars; the stations are code-drawn pixel
+/// The Rift Altar hub. The world is a 640x360 stage (the browser hub's layout at half scale) seen through a camera
+/// that frames its content (the tome down to the altar's crystals) in whatever game area <see cref="PixelScreen"/>
+/// gives, whole pixels only; the bank, the counts and the version sit on a HUD pinned to the screen's edges. Deep space is a shader with fixed blinking stars; the stations are code-drawn pixel
 /// sprites; void flames ride a tide round the altar; the Rite's rift is a baked pixelfx loop. Touch-first: a tap on a
 /// station lights it and opens its screen. The lobby shows the save: cards in the pool, sigils bought (stars lit),
 /// relic slots open, the chosen rift's colour, the bank and what is known.
@@ -21,22 +22,31 @@ public partial class Hub : Node2D
 	/// <summary>The hub's tuning (tide, trails, sky); defaults apply when unset.</summary>
 	[Export] public HubConfig? Config { get; set; }
 
-	private const int StageW = 640, StageH = 360;
+	/// <summary>
+	/// The world point the camera centres on. The hub's content runs from y 62 (the constellation, tome and pedestals)
+	/// to 342 (the altar's crystals); with this centre, even the 300-row minimum area leaves a 22-row band at the top
+	/// for the HUD.
+	/// </summary>
+	private static readonly Vector2 FrameCentre = new(320, 190);
 	private static readonly Vector2 BlobCentre = new(320, 245); // where the form floats before the lectern
 	private string _blobForm = "";
 	private static readonly Vector2[] Constellation =
 	{
-		new(115, 65), new(131, 55), new(150, 62), new(165, 52), new(176, 70), new(159, 85),
-		new(141, 91), new(123, 88), new(113, 105), new(135, 107), new(157, 103), new(175, 98),
+		new(115, 80), new(131, 70), new(150, 77), new(165, 67), new(176, 85), new(159, 100),
+		new(141, 106), new(123, 103), new(113, 120), new(135, 122), new(157, 118), new(175, 113),
 	};
 
 	private readonly List<Station> _stations = new();
 	private readonly Dictionary<string, Station> _byId = new();
 	private readonly List<(Sprite2D sprite, int i)> _rocks = new();
 	private readonly List<Sprite2D> _cards = new(), _stars = new(), _pedestals = new(), _relicIcons = new();
-	private const float PedestalX0 = 465, PedestalStep = 30, RelicIconY = 83; // the relic floats above its pedestal
+	private const float PedestalX0 = 465, PedestalStep = 30, RelicIconY = 98, PedestalY = 131; // the relic floats above its pedestal
 	private Node2D _stage = null!;
+	private Camera2D _camera = null!;
 	private ColorRect _sky = null!;
+	private CanvasLayer _hud = null!;
+	private Sprite2D _voidIcon = null!;
+	private Label _version = null!;
 	private ShaderMaterial _swirl = null!;
 	private Station? _hovered;
 	private Sprite2D? _tome, _blob;
@@ -60,10 +70,15 @@ public partial class Hub : Node2D
 		var highlight = _highlight = GD.Load<Shader>("res://src/shaders/canvas_ui_station_highlight.gdshader");
 
 		// deep space fills the whole viewport, behind the stage
+		var back = new CanvasLayer { Layer = -10, Name = "Sky" }; // the sky ignores the camera and always fills the screen
+		AddChild(back);
 		_sky = new ColorRect { Material = SkyMaterial(cfg), MouseFilter = Control.MouseFilterEnum.Ignore };
-		AddChild(_sky);
+		back.AddChild(_sky);
 		_stage = new Node2D { Name = "Stage" };
 		AddChild(_stage);
+		_camera = new Camera2D { Name = "Camera", AnchorMode = Camera2D.AnchorModeEnum.FixedTopLeft }; // placed on whole pixels in Layout
+		AddChild(_camera);
+		_camera.MakeCurrent();
 
 		for (int i = 0; i < 5; i++) // far asteroids drifting behind everything
 		{
@@ -99,16 +114,16 @@ public partial class Hub : Node2D
 		gate.AddArt(art.Make("gate-arch", new Vector2(548, 144) - gate.Position, flipH: true), highlight);
 
 		// the Sigils: a constellation, a star lit for each sigil level bought
-		var sigils = AddStation("sigils", new Vector2(145, 82), 40);
+		var sigils = AddStation("sigils", new Vector2(145, 97), 40);
 		var lines = new Line2D { Width = 1, DefaultColor = new Color("#3b3350"), Antialiased = false };
 		foreach (var p in Constellation) lines.AddPoint(p - sigils.Position);
 		sigils.AddChild(lines);
 
 		// the Relics: three pedestals, open as far as the slots go
-		AddStation("relics", new Vector2(495, 86), 40);
+		AddStation("relics", new Vector2(495, 101), 40);
 
 		// the Journal: an open tome, floating
-		var journal = AddStation("journal", new Vector2(320, 59), 33);
+		var journal = AddStation("journal", new Vector2(320, 82), 33);
 		_tome = journal.AddArt(art.Make("tome", Vector2.Zero), highlight);
 
 		// void energy flowing: flames riding the tide round the altar
@@ -117,23 +132,20 @@ public partial class Hub : Node2D
 			var flow = new VoidFlow { Name = $"Flow{i}" }; flow.Setup(art, cfg, i, cfg.FlowCount); _stage.AddChild(flow);
 		}
 
-		// the top bar: the bank, and how much is known
-		_stage.AddChild(art.Make("void-icon", new Vector2(14, 12)));
-		_bank = MakeLabel(true, new Color("#d8c8ff"));
-		_bank.Position = new Vector2(24, 3);
-		_stage.AddChild(_bank);
+		// the HUD, pinned to the screen's edges (placed in Layout): the bank, how much is known, the build, save trouble
+		_hud = new CanvasLayer { Layer = 5, Name = "Hud" };
+		AddChild(_hud);
+		_voidIcon = art.Make("void-icon", Vector2.Zero); _hud.AddChild(_voidIcon);
+		_bank = MakeLabel(true, new Color("#d8c8ff")); _hud.AddChild(_bank);
 		_counts = MakeLabel(false, new Color("#9d92bb"));
 		_counts.HorizontalAlignment = HorizontalAlignment.Right;
-		_counts.Size = new Vector2(480, 14); _counts.Position = new Vector2(StageW - 8 - 480, 6);
-		_stage.AddChild(_counts);
-		var version = MakeLabel(false, new Color("#3b3350")); // which build this is, so a phone install can be checked
-		version.Text = BuildVersion(); version.Position = new Vector2(8, StageH - 14);
-		_stage.AddChild(version);
+		_hud.AddChild(_counts);
+		_version = MakeLabel(false, new Color("#3b3350")); // which build this is, so a phone install can be checked
+		_version.Text = BuildVersion();
+		_hud.AddChild(_version);
 		_saveNotice = MakeLabel(false, Pal.Warn);
 		_saveNotice.HorizontalAlignment = HorizontalAlignment.Right;
-		_saveNotice.Size = new Vector2(372, 14);
-		_saveNotice.Position = new Vector2(StageW - 380, StageH - 14);
-		_stage.AddChild(_saveNotice);
+		_hud.AddChild(_saveNotice);
 
 		// station screens draw above everything
 		_ui = new CanvasLayer { Layer = 10, Name = "Screens" };
@@ -143,7 +155,24 @@ public partial class Hub : Node2D
 		GetViewport().SizeChanged += Layout;
 		Layout();
 		foreach (var arg in OS.GetCmdlineUserArgs()) // checks and screenshots: `-- --open=gate` opens a station's screen at start
+		{
 			if (arg.StartsWith("--open=")) Callable.From(() => Open(arg["--open=".Length..])).CallDeferred();
+			else if (arg.StartsWith("--shot=")) _shotPath = arg["--shot=".Length..]; // `-- --shot=out.png`: save the game-pixel frame, then quit
+		}
+	}
+
+	private string? _shotPath;
+	private int _shotFrames;
+
+	/// <summary>For checks: after 30 frames, saves what the game area shows (in game pixels) to <see cref="_shotPath"/> and quits.</summary>
+	private void TakeShot()
+	{
+		if (_shotPath == null || ++_shotFrames < 30) return;
+		var image = GetViewport().GetTexture().GetImage();
+		var err = image.SavePng(_shotPath);
+		GD.Print($"shot {image.GetWidth()}x{image.GetHeight()} -> {_shotPath} ({err})");
+		_shotPath = null;
+		GetTree().Quit();
 	}
 
 	private Station AddStation(string id, Vector2 centre, float radius)
@@ -183,7 +212,7 @@ public partial class Hub : Node2D
 		_pedestals.Clear();
 		int slots = rules.RelicSlots();
 		for (int i = 0; i < 3; i++)
-			_pedestals.Add(relics.AddArt(_art.Make(i < slots ? "pedestal-open" : "pedestal-locked", new Vector2(PedestalX0 + PedestalStep * i, 116) - relics.Position), _highlight));
+			_pedestals.Add(relics.AddArt(_art.Make(i < slots ? "pedestal-open" : "pedestal-locked", new Vector2(PedestalX0 + PedestalStep * i, PedestalY) - relics.Position), _highlight));
 		foreach (var r in _relicIcons) relics.RemoveArt(r);
 		_relicIcons.Clear();
 		for (int i = 0; i < Mathf.Min(slots, meta.Equipped.Count); i++) // each equipped relic glows above its open pedestal
@@ -229,22 +258,33 @@ public partial class Hub : Node2D
 		return m;
 	}
 
-	/// <summary>Centres the 640x360 stage in the viewport (whole pixels) and stretches the sky over all of it.</summary>
+	/// <summary>
+	/// Puts the camera's top-left corner on the whole pixel that centres <see cref="FrameCentre"/>, stretches the sky
+	/// over the screen and pins the HUD to its edges.
+	/// </summary>
 	private void Layout()
 	{
 		var vp = GetViewportRect().Size;
-		_stage.Position = new Vector2(Mathf.Floor((vp.X - StageW) / 2), Mathf.Floor((vp.Y - StageH) / 2));
+		_camera.Position = (FrameCentre - vp / 2).Floor();
 		_sky.Size = vp;
+		const int edge = 6, line = Ui.Ui.SmallSize;
+		_voidIcon.Position = new Vector2(edge + 8, edge + 12);
+		_bank.Position = new Vector2(edge + 20, edge);
+		_counts.Size = new Vector2(vp.X - 140, line); _counts.Position = new Vector2(vp.X - edge - _counts.Size.X, edge);
+		_version.Position = new Vector2(edge, vp.Y - edge - line);
+		_saveNotice.Size = new Vector2(vp.X - 200, line); _saveNotice.Position = new Vector2(vp.X - edge - _saveNotice.Size.X, vp.Y - edge - line);
 	}
 
 	/// <inheritdoc/>
 	public override void _Process(double delta)
 	{
 		_t += delta;
+		TakeShot();
 		var cfg = _cfg;
-		float span = GetViewportRect().Size.X + 100;
-		foreach (var (rock, i) in _rocks) // far rocks drift across slowly; they never turn (pixels stay square)
-			rock.Position = new Vector2(Mathf.Floor((float)((i * 145 + _t * cfg.AsteroidDrift) % span) - 50 - _stage.Position.X), 40 + (i * 68.5f) % 280).Round();
+		var view = GetViewportRect().Size;
+		float span = view.X + 100, left = _camera.Position.X, top = _camera.Position.Y;
+		foreach (var (rock, i) in _rocks) // far rocks drift across the view slowly; they never turn (pixels stay square)
+			rock.Position = new Vector2(Mathf.Floor((float)((i * 145 + _t * cfg.AsteroidDrift) % span) - 50 + left), top + 20 + (i * 68.5f) % (view.Y - 40)).Round();
 		for (int i = 0; i < _cards.Count; i++) // the fan of cards breathes over the lectern
 		{
 			float k = i - (_cards.Count - 1) / 2f;
@@ -303,7 +343,7 @@ public partial class Hub : Node2D
 
 	private Station? StationAt(Vector2 viewportPoint)
 	{
-		var p = viewportPoint - _stage.Position;
+		var p = GetViewport().CanvasTransform.AffineInverse() * viewportPoint; // through the camera, into the world
 		Station? best = null; float bd = float.MaxValue;
 		foreach (var s in _stations) { float d = p.DistanceTo(s.Position); if (s.Hits(p) && d < bd) { bd = d; best = s; } }
 		return best;
