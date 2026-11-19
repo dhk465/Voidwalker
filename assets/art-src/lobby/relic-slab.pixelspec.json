@@ -1,0 +1,97 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "relic-slab",
+ "canvas": [
+  145,
+  58
+ ],
+ "anchor_px": [
+  72,
+  30
+ ],
+ "palette": {
+  "E": "#3b3350",
+  "F": "#9d92bb",
+  "a": "#1a1229",
+  "b": "#241a3a",
+  "c": "#353a44",
+  "d": "#45404d",
+  "e": "#6d6488",
+  "f": "#8a8296",
+  "h": "#cfc6e6",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "145.",
+    "123.10f12.",
+    "123.5fde2db12.",
+    "123.hfd2fde2db12.",
+    "123.2Fdfe4db12.",
+    "123.hfd2e4db12.",
+    "123.hFdfe4db12.",
+    "123.hfd2e4db12.",
+    "123.hFdfe4db12.",
+    "123.hFdfede2db12.",
+    "13.10f100.hFdFe4db12.",
+    "13.5fdedEb100.hFd2f4db12.",
+    "13.hFdfe3dEb100.hFdfe4db12.",
+    "13.hFd2fde2db100.hFd2fde2db12.",
+    "13.2hdfe3dEb100.hFdFfdedEb12.",
+    "13.hFdfe4db100.hfd2fde2db12.",
+    "13.2hdFe4db100.2FdFede2db12.",
+    "13.hFd2f4db100.hfd2fde2db12.",
+    "13.hFdfe3dEb100.2FdFfde2db12.",
+    "13.hfdfede2db100.hfd2fde2db12.",
+    "13.hFdfede2db100.2Fd2fde2db12.",
+    "13.hfdefde2db100.hfdefde2db12.",
+    "13.2Fdfe3dEb100.2Fdfede2db12.",
+    "13.hFd2fdedEb26.hF9hd7hFhFhdh7FhFhd2Fh7Ff27.hfd2f4db12.",
+    "13.hFdFfdedEb11.2hdFhFhF6hd2hF7hFdFhF3hFhFhFd3Fh3Fh3FdFhFh3Fh2FfdFhF3hFhFhFdFf12.hFdfe4db12.",
+    "13.hfd2fde2d2b.3hFhF5hdh3FhFhFhFhdFfFfFfFfFfFdF5fF3fFdF3fF3fFfFdF4fe3fefd7FfFfFdFe3FfFfF2f2.2hFd2fde2db12.",
+    "13.2Fdfede2dbhd2h3FhFhFhFdfF3f5Ffdf3Ff3FfFfdf3F3fFfFfdfFfFfF3fFfd4fe3fefede7fe2fdf5F4fed2f2hdFe4db12.",
+    "13.hfd2ede2dbhdFfF7fFd6f3F2fdFfF3fF4fd2fF2fe5fd7fe3fdfefefef4ed2efe3f3efdfefef2ed2eFdfehFd2f4db12.",
+    "12.hfFdFfde2dbfdfF5fFf2FdfF5f3FfdfF5fF3fd11fd2fe8fdefe3fefefede5fef3edefefefef3edehfhdfe3dEbf11.",
+    "11.h2fe3d2E2b2dE6fFfFfFdF10fdfefefe5fdf3ef5efdf3ef2e2fefd10efdfef6eded8ef2edh2fed2E4b2db10.",
+    "11.2h2Ff4e2dedb5fFfFfFfd11fdefefefe4fd3efef3efed5efe3fed11edef6ede3d3ed5e2d2h2F2f6edb10.",
+    "11.3F2fef2e4dbfefefe5fd3f3efef2ed4efefefefdf9efdf5ef4ed3eded4efd3edededede3dedede3dedf2F4fef2e2db10.",
+    "12.f2dfF2f2e3bdefefe5fede3f3efefed3efe5fedefef3efefed3efef5ed4ed2ef3ed2ed5ede3dede5de2dbfde4f2e3b11.",
+    "12.2edeEd2Eb3Ede2dEdE4ded2ef8ed4efefef2ed5ed5edfd7ededede3d5edededede5de2EbE6bd4be4Ebda12.",
+    "11.edcdcbc2d2efebd3Eb4EeEdEdEdE3dEdE2df3ef5ed3ef7ed4ed5e3d3ededede2d6EbEbEbd12bd3ed2cbcd2ca11.",
+    "11.2b3cbcb2cdcdb4ef2ebcEbd11b4dEd2Eb3Ed4Ed2Eb2E3d2Eb7Ed3EbEbE4bd11bd2bebed3edeb5cbcb3cba11.",
+    "12.b2acb2cb4db3d3edbd2efefeb3d3edb2EbEbE9b3E5bE7bE16bde3d2eb3ef2ecbc5dcb3cd3cbc3a12.",
+    "15.2b2a2cdcdb2c3d2cbdc3dcdbd3cd2cbed4efb3ede2dbedededebedededebedededebed3edeb7cbdc3d2cbdcdc3dbcb3c2aba2d13.",
+    "16.2cdb4ab2cb2cdcbc3dcdcb2c5db4c2dcbcd5cbcd3c2dbcdc3dcb3cdcdcbcdc3dcbcdcdcdc2b6db3cdc2db5acbcad14.",
+    "17.a2dcdcdab6abacd4cb2c3dcdb4c3db2cd2cbcb6cdb2cdc2dcb2cdcd2cbdcdcd2cbdcd4cb2c3dcab10a6ba15.",
+    "20.3dab3aba3cab5ab3ab3ab3c3dcbc2de3cb3c4dbcd3cdcbc2ded2cb2dced2cb7ab6ab9a3bcb19.",
+    "21.d7ababa7ba8db6ab7ab7ab7ab7ab7acd7cabcbcbcbcbcb2a5b21.",
+    "23.3abababa2bc2bc2ba6d5a5dc3a2c3bcb12dede3d2adcdcdc3dcd6cdcbabcbcbcbcba3b23.",
+    "24.3ababa7bab16a2d4ba5badcdcdcdc3dc4d3a7d3ca6cdac3bc3bc2ba26.",
+    "25.abababa.3bc3b18a2bcbcbcbcbc6dc4d5a2babababab2d8cdabcbcbcbcbc28.",
+    "35.b2ab19a3ba7bacdcdcdc2d2ab3abababababad6cbcbca6bcba29.",
+    "40.19a10badadcdc2d2abab3a3bababab11cabc2b2a32.",
+    "41.16ababa8b2ad2cd2a.4ac2abababab4ad2acbcbcbc4a35.",
+    "43.14a2bab3a5b2ada5.babababababababab2ad3c3d41.",
+    "45.12abababcb4a2d8.9ababab5a48.",
+    "46.12abababa14.bab7ababababa49.",
+    "47.12ab2a16.9ab7a50.",
+    "47.11aba19.ab7ab3a53.",
+    "81.7a57.",
+    "82.b4a58.",
+    "84.2a59.",
+    "145.",
+    "145."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

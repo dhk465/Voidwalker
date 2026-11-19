@@ -18,6 +18,9 @@ public partial class RiteScreen : StationScreen
 	private int _shown;
 	private ColorRect? _flashRect;
 
+	/// <summary>Raised with the number of cards a draw brought (the lobby sends that many void balls out of the crack).</summary>
+	public event Action<int>? Drew;
+
 	/// <inheritdoc/>
 	protected override string Title => "VOID RITE";
 
@@ -76,6 +79,7 @@ public partial class RiteScreen : StationScreen
 		Say("");
 		_reveal = drawn; _t = 0; _shown = 0;
 		Commit();
+		Drew?.Invoke(drawn.Count);
 	}
 
 	/// <inheritdoc/>

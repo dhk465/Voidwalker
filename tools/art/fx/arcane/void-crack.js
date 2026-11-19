@@ -1,5 +1,5 @@
 // Voidwalker's Void Rite: a crack in space-time that leaks void. Written by Claude (claude-opus-5-5) for the Voidwalker
-// hub, 2026-11-19. Source of truth: tools/art/fx/arcane/void-crack.js (tools/art/bake_rite_crack.py copies it into pixelfx).
+// hub, 2026-11-19. Source of truth: tools/art/fx/arcane/void-crack.js (tools/art/bake_void_fx.py copies it into pixelfx).
 import { fit, mix, clamp, TAU, cycle, fly, rng } from "../../core/index.js";
 
 export const meta = {

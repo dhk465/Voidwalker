@@ -7,7 +7,7 @@
     <RootNamespace>Voidwalker.Tests.Rules</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../../src/core/GameData.cs;../../../src/core/Meta.cs;../../../src/core/Rng.cs;../../../src/core/AltarRules.cs" />
+    <Compile Include="../../../src/core/GameData.cs;../../../src/core/Meta.cs;../../../src/core/Rng.cs;../../../src/core/AltarRules.cs;../../../src/core/FlowPath.cs" />
     <Compile Include="../../../src/hub/Session.cs" />
     <!-- fixtures travel inside the test assembly: the tests read no files -->
     <EmbeddedResource Include="../../../src/data/game_data.json" LogicalName="game_data.json" />

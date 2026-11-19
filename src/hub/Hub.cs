@@ -40,7 +40,10 @@ public partial class Hub : Node2D
 	private readonly Dictionary<string, Station> _byId = new();
 	private readonly List<(Sprite2D sprite, int i)> _rocks = new();
 	private readonly List<Sprite2D> _cards = new(), _stars = new(), _pedestals = new(), _relicIcons = new();
-	private const float PedestalX0 = 465, PedestalStep = 30, RelicIconY = 98, PedestalY = 131; // the relic floats above its pedestal
+	private const float PedestalX0 = 465, PedestalStep = 30, RelicIconY = 86, PedestalY = 122; // the relic floats above its pedestal
+	private static readonly Vector2 RiteAt = new(118, 250), GateAt = new(512, 286); // their islands' top centres
+	private static readonly Vector2 Crack = new(118, 213), Rift = new(512, 225);   // where void balls leave and go in
+	private static readonly Vector2 TomeRest = new(0, 13); // the tome's resting edge, from the Journal station (just above the stand)
 	private Node2D _stage = null!;
 	private Camera2D _camera = null!;
 	private ColorRect _sky = null!;
@@ -48,6 +51,7 @@ public partial class Hub : Node2D
 	private Sprite2D _voidIcon = null!;
 	private Label _version = null!;
 	private ShaderMaterial _swirl = null!;
+	private VoidField _field = null!;
 	private Station? _hovered;
 	private Sprite2D? _tome, _blob;
 	private Label _bank = null!, _counts = null!;
@@ -82,9 +86,15 @@ public partial class Hub : Node2D
 
 		for (int i = 0; i < 5; i++) // far asteroids drifting behind everything
 		{
-			var rock = art.Make($"asteroid-{i % 3}", Vector2.Zero); _stage.AddChild(rock); _rocks.Add((rock, i));
+			var rock = art.Make($"asteroid-{i % 3}", Vector2.Zero); rock.ZIndex = -2; _stage.AddChild(rock); _rocks.Add((rock, i));
 		}
 
+		// every station floats on its own island or ruin; the Deck's is the altar
+		_stage.AddChild(art.Make("sigil-disc", new Vector2(145, 138)));
+		_stage.AddChild(art.Make("journal-rock", new Vector2(320, 98)));
+		_stage.AddChild(art.Make("relic-slab", new Vector2(495, PedestalY)));
+		_stage.AddChild(art.Make("rite-isle", RiteAt));
+		_stage.AddChild(art.Make("gate-dais", GateAt));
 		_stage.AddChild(art.Make("altar", new Vector2(320, 257)));
 
 		// the Deck: a lectern with the pool's cards fanned above it, and the blob standing before it
@@ -93,44 +103,44 @@ public partial class Hub : Node2D
 		_blob = art.Make("form-blob", BlobCentre); _stage.AddChild(_blob); // RefreshState gives it the pool's form
 
 		// the Void Rite: a ring of standing stones round a crack in space-time, void seeping out of it
-		var rite = AddStation("rite", new Vector2(150, 215), 43);
+		var rite = AddStation("rite", new Vector2(RiteAt.X, 225), 45);
 		var ring = new List<(float depth, Vector2 at)>();
 		for (int i = 0; i < 9; i++)
 		{
-			float a = i / 9f * Mathf.Tau; ring.Add((Mathf.Sin(a), new Vector2(150 + Mathf.Cos(a) * 35, 235 + Mathf.Sin(a) * 10)));
+			float a = i / 9f * Mathf.Tau; ring.Add((Mathf.Sin(a), new Vector2(RiteAt.X + Mathf.Cos(a) * 38, RiteAt.Y - 2 + Mathf.Sin(a) * 7)));
 		}
 		ring.Sort((p, q) => p.depth.CompareTo(q.depth));
 		foreach (var (depth, at) in ring) if (depth < 0) rite.AddArt(art.Make("standing-stone-far", at - rite.Position), highlight);
-		rite.AddArt(SheetPlayer.Load("res://assets/fx/", "rite-crack", new Vector2(150, 239) - rite.Position), highlight); // pivot: the ground under the crack
+		rite.AddArt(SheetPlayer.Load("res://assets/fx/", "rite-crack", RiteAt - rite.Position), highlight); // pivot: the ground under the crack
 		foreach (var (depth, at) in ring) if (depth >= 0) rite.AddArt(art.Make("standing-stone-lit", at - rite.Position), highlight);
 
 		// the Rift Gate: two stone horns round a rift (a stepped pixelfx portal) painted in the chosen rift's prevailing
-		// nature; its pivot is the portal's floor, 49 px under the rift's centre (205)
-		var gate = AddStation("gate", new Vector2(492, 205), 48);
-		var rift = SheetPlayer.Load("res://assets/fx/", "gate-rift", new Vector2(492, 254) - gate.Position);
+		// nature; its pivot is the portal's floor, 49 px under the rift's centre; the horns stand on the dais
+		var gate = AddStation("gate", Rift, 50);
+		var rift = SheetPlayer.Load("res://assets/fx/", "gate-rift", Rift + new Vector2(0, 49) - gate.Position);
 		_swirl = new ShaderMaterial { Shader = GD.Load<Shader>("res://src/shaders/canvas_env_rift_tint.gdshader") };
-		rift.Material = _swirl; gate.AddChild(rift);
-		gate.AddArt(art.Make("gate-arch", new Vector2(437, 144) - gate.Position), highlight);
-		gate.AddArt(art.Make("gate-arch", new Vector2(548, 144) - gate.Position, flipH: true), highlight);
+		rift.Material = _swirl; rift.ZIndex = VoidFlow.BehindZ - 1; gate.AddChild(rift); // behind both lanes of void balls, so either is seen going in
+		float hornTop = GateAt.Y - 122; // a horn is 122 px tall
+		gate.AddArt(art.Make("gate-arch-l", new Vector2(GateAt.X - 55, hornTop) - gate.Position), highlight);
+		gate.AddArt(art.Make("gate-arch-r", new Vector2(GateAt.X + 9, hornTop) - gate.Position), highlight); // drawn mirrored, its side face still on the right
 
 		// the Sigils: a constellation, a star lit for each sigil level bought
-		var sigils = AddStation("sigils", new Vector2(145, 97), 40);
+		var sigils = AddStation("sigils", new Vector2(145, 108), 45);
 		var lines = new Line2D { Width = 1, DefaultColor = new Color("#3b3350"), Antialiased = false };
 		foreach (var p in Constellation) lines.AddPoint(p - sigils.Position);
 		sigils.AddChild(lines);
 
 		// the Relics: three pedestals, open as far as the slots go
-		AddStation("relics", new Vector2(495, 101), 40);
+		AddStation("relics", new Vector2(495, 100), 42);
 
-		// the Journal: an open tome, floating
-		var journal = AddStation("journal", new Vector2(320, 82), 33);
+		// the Journal: an open tome lying on its stand (its anchor is the bottom edge it rests on), floating a little
+		var journal = AddStation("journal", new Vector2(320, 82), 36);
 		_tome = journal.AddArt(art.Make("tome", Vector2.Zero), highlight);
 
-		// void energy flowing: flames riding the tide round the altar
-		for (int i = 0; i < cfg.FlowCount; i++)
-		{
-			var flow = new VoidFlow { Name = $"Flow{i}" }; flow.Setup(art, cfg, i, cfg.FlowCount); _stage.AddChild(flow);
-		}
+		// void balls welling out of the Rite's crack and sucked into the Gate's rift
+		_field = new VoidField { Name = "VoidBalls" };
+		_field.Setup(art, cfg, Crack, Rift);
+		_stage.AddChild(_field);
 
 		// the HUD, pinned to the screen's edges (placed in Layout): the bank, how much is known, the build, save trouble
 		_hud = new CanvasLayer { Layer = 5, Name = "Hud" };
@@ -158,10 +168,13 @@ public partial class Hub : Node2D
 		{
 			if (arg.StartsWith("--open=")) Callable.From(() => Open(arg["--open=".Length..])).CallDeferred();
 			else if (arg.StartsWith("--shot=")) _shotPath = arg["--shot=".Length..]; // `-- --shot=out.png`: save the game-pixel frame, then quit
+			else if (arg == "--auto-tap") _autoTap = AutoTapEvery; // `-- --auto-tap`: tap a void ball every so often (checks, recordings)
 		}
 	}
 
 	private string? _shotPath;
+	private const float AutoTapEvery = 1.2f;
+	private float _autoTap = -1f;
 	private int _shotFrames;
 
 	/// <summary>For checks: after 30 frames, saves what the game area shows (in game pixels) to <see cref="_shotPath"/> and quits.</summary>
@@ -280,6 +293,7 @@ public partial class Hub : Node2D
 	{
 		_t += delta;
 		TakeShot();
+		if (_autoTap > 0 && (_autoTap -= (float)delta) <= 0) { _field.TapAny(); _autoTap = AutoTapEvery; }
 		var cfg = _cfg;
 		var view = GetViewportRect().Size;
 		float span = view.X + 100, left = _camera.Position.X, top = _camera.Position.Y;
@@ -293,7 +307,7 @@ public partial class Hub : Node2D
 		var relicsAt = _byId["relics"].Position;
 		for (int i = 0; i < _relicIcons.Count; i++) // equipped relics bob over their pedestals, each in its own phase
 			_relicIcons[i].Position = (new Vector2(PedestalX0 + PedestalStep * i, RelicIconY + Mathf.Sin((float)_t * 2 + i) * 2) - relicsAt).Round();
-		if (_tome != null) _tome.Position = new Vector2(0, Mathf.Sin((float)_t * 1.5f) * 2).Round();
+		if (_tome != null) _tome.Position = (TomeRest + new Vector2(0, Mathf.Sin((float)_t * 1.5f) * 1.5f)).Round();
 		if (_blob != null) _blob.Position = (BlobCentre + new Vector2(0, Mathf.Sin((float)_t * 2) * 2)).Round();
 	}
 
@@ -308,6 +322,7 @@ public partial class Hub : Node2D
 		}
 		else if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } press) // a tap (touch arrives as this too)
 		{
+			if (_field.Tap(ToWorld(press.Position))) return; // a void ball darts away; the station under it stays shut
 			if (StationAt(press.Position) is { } hit) Open(hit);
 		}
 	}
@@ -334,16 +349,21 @@ public partial class Hub : Node2D
 			_ => new JournalScreen(),
 		};
 		screen.Open(_session);
-		screen.Closed += () => { _open = null; _hovered = null; Relight(null); RefreshState(); };
+		if (screen is RiteScreen riteScreen) riteScreen.Drew += _field.Burst; // each card drawn sends a void ball out of the crack
+		screen.Closed += () => { _open = null; _field.Hold = false; _hovered = null; Relight(null); RefreshState(); };
+		_field.Hold = true; // balls from a draw wait until the lobby is seen again
 		_open = screen;
 		Relight(station);
 		_ui.AddChild(screen);
 		EmitSignal(SignalName.StationOpened, station.Id);
 	}
 
+	/// <summary>A point on the screen (viewport pixels) in the world, through the camera.</summary>
+	private Vector2 ToWorld(Vector2 viewportPoint) => GetViewport().CanvasTransform.AffineInverse() * viewportPoint;
+
 	private Station? StationAt(Vector2 viewportPoint)
 	{
-		var p = GetViewport().CanvasTransform.AffineInverse() * viewportPoint; // through the camera, into the world
+		var p = ToWorld(viewportPoint);
 		Station? best = null; float bd = float.MaxValue;
 		foreach (var s in _stations) { float d = p.DistanceTo(s.Position); if (s.Hits(p) && d < bd) { bd = d; best = s; } }
 		return best;

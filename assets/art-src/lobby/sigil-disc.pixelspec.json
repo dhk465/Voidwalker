@@ -1,0 +1,90 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "sigil-disc",
+ "canvas": [
+  115,
+  50
+ ],
+ "anchor_px": [
+  55,
+  14
+ ],
+ "palette": {
+  "E": "#3b3350",
+  "H": "#e0a040",
+  "I": "#ffd27a",
+  "V": "#4a3a7a",
+  "a": "#1a1229",
+  "b": "#241a3a",
+  "c": "#353a44",
+  "d": "#45404d",
+  "e": "#6d6488",
+  "f": "#8a8296",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "115.",
+    "115.",
+    "115.",
+    "115.",
+    "115.",
+    "40.2edede23dE45.",
+    "30.edededede32I2dE3d38.",
+    "23.ededede8I2dEdEdEdEdEdEdEd2H3Ed9EdEd6I37.",
+    "19.5e6I5dEdEHEdEdE3dEdEdEdEdEdEdEd3EdEdEdEdH6E37.",
+    "15.edede5IdEdEdE3dEdEd3EH3Ed11Ed10EH5Eb3Eb36.",
+    "13.2ede5Id2HEdEdE7dEd2E10V8E10V11E35.",
+    "11.eded5IEd3EdEdEdEd2HEd6V9Ed2Eb5EbEbEb3E6V2E2H2b3dE31.",
+    "10.eded4IdE3dEd3b3dEd5V6Ed5EdEd3Ed2Eb3Eb8E5V3E2.2IEdEd3E24.",
+    "9.e2dE5I3Ed3Ed2E2b2E5Vd2EbEb11Eb3EbEbEbEbEb3EbEb5VbE2.2E6I2Ed2E20.",
+    "9.Ed2E5HdEd5Ed2E8bEd7Ed6Eb3EbEbEb3Eb7E5VEbE2.EbEbEb5Ib2Edb16.",
+    "10.bEbE4H12E2bE3VbV4Eb7EbEbEbE5bEbE3bEbEbE5VEbEb2.6E2HE5I4E14.",
+    "10.e2b2E5HdEdEd3Ed3E2H2EVb4V2Ed6Eb3EbEbEbEb3EbEb6V2E2HEbE2.Eb3Eb3E2b5IEbEb12.",
+    "9.fcecbaEb5HE2HEb7Eb2E6b8V2bEbEbEb10VE3bEbEbE3bE2.9EbEb4I3Eb11.",
+    "9.b3dec2babE5H2Eb2Ed8EbEHE2b2EbEbEbEbEbEbEbEbEbEbEbHbE3bEbEbEbEb2.bEb3EbE4b5IE2ba10.",
+    "10.bdcdcbde2b3ab6HbEbEbEbEHEbEbE7bEbEbEbEbE3bE7bHa2bE4b2H3.b3EbE5b5Hb3a10.",
+    "11.ba2cb3de2fcb2ababa8H2bEbEbEbEbEbEbEb2H3EbE3bEbE2b3a8H2a3.2bE8b4H4a11.",
+    "13.babcdc3dceded2ec9a32H9a2f3.bEbEbEbEb5H4ae11.",
+    "15.b3ade2dc6db3d5ecb29af2edfbf3de2d3.3b2Hb5H4aedcb10.",
+    "19.b3acb5db3d3c8dbc6dede3deb2efdedede3cdcb3c2dec3.3b5H5a2ecdca10.",
+    "23.5ababde2dc5d2cbcbcb6cd3c2dbde2d3c3dcdcdbd3cb2a3.4H5af2e2dcdca11.",
+    "25.d3cdb9ad4cb2cb2cd7cdb5d3cd5ab7a3.5ad2eb4dcd2a12.",
+    "26.dcd2acbabaca2bc4ab4ab9ab9a4d9a3.4ed2cdb3dc2a14.",
+    "27.d3ababab3abacbcbcbcbcd2ababa5bababadc3dc2d8a4.cdcd3cb4a16.",
+    "28.3babcba4badcb6ca16b8d8a4.cb2c3ab20.",
+    "29.babacabababadbcbcbcbdabababa5bababadcdcdcdcd4a7.4a24.",
+    "31.ab3ababac2adcb2cdabababab2a4b4acdcdcdc2da10.2a26.",
+    "33.babab7adbd3abababab11adcdcdcd11.a27.",
+    "35.ab3ab3ab4acdc3ba2b6ac4a2dcdcd40.",
+    "38.7abad5c3d14a2da42.",
+    "40.2ab3ab2dcdcacd2cd13a44.",
+    "50.8cd11a45.",
+    "52.6cdac6ac3a44.",
+    "53.3cacb12a44.",
+    "53.4d7a51.",
+    "53.2ababab2a53.",
+    "53.abac2b2a54.",
+    "54.6a55.",
+    "115.",
+    "115.",
+    "115.",
+    "115.",
+    "115.",
+    "115.",
+    "115.",
+    "115."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

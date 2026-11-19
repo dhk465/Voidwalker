@@ -1,4 +1,5 @@
-# Bakes the Rift Gate's rift: pixelfx arcane/portal (MIT, tools/pixelfx) rendered at the gate's size, then cut to
+# Bakes the Rift Gate's rift: our gate-portal effect (tools/art/fx/arcane/gate-portal.js, a copy of pixelfx's
+# arcane/portal, MIT) rendered by pixelfx (tools/pixelfx) at the gate's size, then cut to
 # 7 hard brightness steps so canvas_env_rift_tint.gdshader can paint each step in an exact colour from the chosen
 # rift's nature. The sheet stores a step per pixel (grey = step * 36, alpha 255; empty pixels alpha 0), not colour.
 #
@@ -9,13 +10,14 @@
 #
 # Two sizes: gate-rift for the hub (between the stone horns), gate-rift-small for the Gate screen's rift cards.
 # Run from the repo root: python tools/art/bake_gate_rift.py   (needs Node for pixelfx)
-import json, os, subprocess, sys
+import json, os, shutil, subprocess, sys
 import numpy as np
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PFX = os.path.join(ROOT, "tools", "pixelfx")
 OUT = os.path.join(ROOT, "assets", "fx")
+SRC = os.path.join(ROOT, "tools", "art", "fx", "arcane", "gate-portal.js")
 VOID = ["#07040d", "#1a1229", "#2a1636", "#4a3a7a", "#7b5bdf", "#b9a6ff", "#d8c8ff", "#efe6ff"]  # the game's void violets
 STEPS = [0.0, 0.06, 0.14, 0.26, 0.42, 0.62, 0.82]  # brightness where each of the 7 steps begins
 STEP_GREY = 36  # step k is stored as grey k * 36
@@ -26,11 +28,13 @@ SIZES = {"gate-rift": (18, 44, 12), "gate-rift-small": (10, 22, 4)}  # pixelfx w
 
 def render(width, height):
     """Renders the portal sheet with pixelfx; returns (sheet RGBA floats, pixelfx meta)."""
-    opts = json.dumps({"width": width, "height": height, "palette": VOID, "seed": 4})
-    subprocess.run(["node", "tools/render.mjs", "arcane/portal", "--sheet", "--opts", opts], cwd=PFX, check=True, capture_output=True)
-    rec = os.path.join(PFX, "records", "arcane", "portal")
-    meta = json.load(open(os.path.join(rec, "portal.json"), encoding="utf-8"))["meta"]["pixelfx"]
-    return np.asarray(Image.open(os.path.join(rec, "portal.png")).convert("RGBA"), dtype=float) / 255, meta
+    # wind -1: the arms wind the way the motes fall in, a drain; flip: mirrored, so it all turns counter-clockwise
+    shutil.copy(SRC, os.path.join(PFX, "src", "fx", "arcane", "gate-portal.js"))
+    opts = json.dumps({"width": width, "height": height, "palette": VOID, "seed": 4, "wind": -1, "flip": True})
+    subprocess.run(["node", "tools/render.mjs", "arcane/gate-portal", "--sheet", "--opts", opts], cwd=PFX, check=True, capture_output=True)
+    rec = os.path.join(PFX, "records", "arcane", "gate-portal")
+    meta = json.load(open(os.path.join(rec, "gate-portal.json"), encoding="utf-8"))["meta"]["pixelfx"]
+    return np.asarray(Image.open(os.path.join(rec, "gate-portal.png")).convert("RGBA"), dtype=float) / 255, meta
 
 
 def steps(frame, pivot, width, height, reach):
@@ -66,8 +70,9 @@ def bake(name, width, height, reach):
         tile[m, :3] = (c[m] * STEP_GREY)[:, None]; tile[m, 3] = 255
     Image.fromarray(out).save(os.path.join(OUT, name + ".png"))
     info = {
-        "source": f"pixelfx {json.load(open(os.path.join(PFX, 'package.json')))['version']} arcane/portal (MIT, https://github.com/patch-gg/pixelfx), "
-                  f"width {width}, height {height}, reach {reach}, seed 4, the game's void violets; cut to {len(STEPS)} brightness steps by tools/art/bake_gate_rift.py",
+        "source": f"tools/art/fx/arcane/gate-portal.js (pixelfx arcane/portal, MIT, https://github.com/patch-gg/pixelfx) rendered by pixelfx "
+                  f"{json.load(open(os.path.join(PFX, 'package.json')))['version']}, width {width}, height {height}, reach {reach}, seed 4, wind -1, mirrored, "
+                  f"the game's void violets; cut to {len(STEPS)} brightness steps by tools/art/bake_gate_rift.py",
         "encoding": f"grey = step * {STEP_GREY}, steps 0..{len(STEPS) - 1}; colour comes from canvas_env_rift_tint.gdshader",
         "frame_size": [int(w), int(h)], "columns": COLUMNS, "frames": count, "fps": meta["fps"],
         "pivot": [int(meta["pivot"][0] - x0), int(meta["pivot"][1] - y0)],

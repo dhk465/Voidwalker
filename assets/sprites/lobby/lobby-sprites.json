@@ -8,11 +8,11 @@
   "altar": {
    "file": "altar.png",
    "size": [
-    358,
+    254,
     137
    ],
    "anchor": [
-    179,
+    127,
     44
    ],
    "qa": "pass"
@@ -20,11 +20,11 @@
   "asteroid-0": {
    "file": "asteroid-0.png",
    "size": [
-    28,
-    25
+    31,
+    27
    ],
    "anchor": [
-    14,
+    15,
     13
    ],
    "qa": "pass"
@@ -32,24 +32,24 @@
   "asteroid-1": {
    "file": "asteroid-1.png",
    "size": [
-    37,
-    31
+    41,
+    34
    ],
    "anchor": [
-    19,
-    15
+    21,
+    17
    ],
    "qa": "pass"
   },
   "asteroid-2": {
    "file": "asteroid-2.png",
    "size": [
-    48,
-    39
+    54,
+    44
    ],
    "anchor": [
-    24,
-    19
+    27,
+    22
    ],
    "qa": "pass"
   },
@@ -257,11 +257,11 @@
    ],
    "qa": "pass"
   },
-  "gate-arch": {
-   "file": "gate-arch.png",
+  "gate-arch-l": {
+   "file": "gate-arch-l.png",
    "size": [
-    52,
-    128
+    58,
+    130
    ],
    "anchor": [
     3,
@@ -269,39 +269,111 @@
    ],
    "qa": "pass"
   },
+  "gate-arch-r": {
+   "file": "gate-arch-r.png",
+   "size": [
+    58,
+    130
+   ],
+   "anchor": [
+    3,
+    3
+   ],
+   "qa": "pass"
+  },
+  "gate-dais": {
+   "file": "gate-dais.png",
+   "size": [
+    161,
+    91
+   ],
+   "anchor": [
+    81,
+    23
+   ],
+   "qa": "pass"
+  },
+  "journal-rock": {
+   "file": "journal-rock.png",
+   "size": [
+    81,
+    56
+   ],
+   "anchor": [
+    41,
+    16
+   ],
+   "qa": "pass"
+  },
   "lectern": {
    "file": "lectern.png",
    "size": [
-    38,
-    31
+    42,
+    41
    ],
    "anchor": [
-    19,
-    27
+    21,
+    33
    ],
    "qa": "pass"
   },
   "pedestal-locked": {
    "file": "pedestal-locked.png",
    "size": [
-    28,
-    31
+    29,
+    40
    ],
    "anchor": [
-    14,
-    27
+    15,
+    33
    ],
    "qa": "pass"
   },
   "pedestal-open": {
    "file": "pedestal-open.png",
    "size": [
-    28,
-    31
+    29,
+    40
    ],
    "anchor": [
-    14,
-    27
+    15,
+    33
+   ],
+   "qa": "pass"
+  },
+  "relic-slab": {
+   "file": "relic-slab.png",
+   "size": [
+    151,
+    64
+   ],
+   "anchor": [
+    75,
+    33
+   ],
+   "qa": "pass"
+  },
+  "rite-isle": {
+   "file": "rite-isle.png",
+   "size": [
+    126,
+    81
+   ],
+   "anchor": [
+    63,
+    20
+   ],
+   "qa": "pass"
+  },
+  "sigil-disc": {
+   "file": "sigil-disc.png",
+   "size": [
+    121,
+    56
+   ],
+   "anchor": [
+    58,
+    17
    ],
    "qa": "pass"
   },
@@ -332,36 +404,36 @@
   "standing-stone-far": {
    "file": "standing-stone-far.png",
    "size": [
-    17,
-    23
+    22,
+    35
    ],
    "anchor": [
     9,
-    19
+    30
    ],
    "qa": "pass"
   },
   "standing-stone-lit": {
    "file": "standing-stone-lit.png",
    "size": [
-    17,
-    23
+    22,
+    35
    ],
    "anchor": [
     9,
-    19
+    30
    ],
    "qa": "pass"
   },
   "tome": {
    "file": "tome.png",
    "size": [
-    62,
-    38
+    68,
+    41
    ],
    "anchor": [
-    31,
-    19
+    33,
+    27
    ],
    "qa": "pass"
   },

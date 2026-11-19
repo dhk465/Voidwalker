@@ -2,12 +2,12 @@
  "schema": "codeart2d.pixelspec.v1",
  "name": "pedestal",
  "canvas": [
-  22,
-  25
+  23,
+  34
  ],
  "anchor_px": [
-  11,
-  24
+  12,
+  30
  ],
  "palette": {
   "E": "#3b3350",
@@ -18,6 +18,7 @@
   "f": "#8a8296",
   "h": "#cfc6e6",
   "o": "#0e0a18",
+  "u": "#2e5a55",
   "v": "#5ac8b9"
  },
  "layers": [
@@ -28,31 +29,40 @@
     0
    ],
    "segments": [
-    "22.",
-    "2.2F5fFfFfF3fFfe2.",
-    "2.F16vE2.",
-    "2.2f9efe3fdE2.",
-    "2.4ef3efe3fefdEb2.",
-    "3.15d4.",
-    "4.2ef3e3fefdE5.",
-    "5.3fdfedefdeE5.",
-    "5.fFfd2fdfeded5.",
-    "5.3fdfed2edeE5.",
-    "5.3fdefdfedeE5.",
-    "5.3fdfedefdeE5.",
-    "5.e2fdefd2f2dE5.",
-    "6.efdfedefdE6.",
-    "6.Ffd2ed2edE6.",
-    "6.2fd2e2de2d6.",
-    "6.fed2ed2edE6.",
-    "6.efdfe2dedE6.",
-    "6.2fdefd2edE6.",
-    "5.3f4ede2d6.",
-    "4.h2Fef3ef4e5.",
-    "3.FfF11efd3.",
-    "2.hfedede5dededE3.",
-    "2.dEbEbEbEbEb3Eb2Ed2.",
-    "22."
+    "23.",
+    "23.",
+    "11.F11.",
+    "3.hFhFhFhFv7Ff3.",
+    "2.hFhF2v7u2vfF2d2.",
+    ".hf3F11uF3dE.",
+    ".2h2fef4ev5e4db.",
+    ".3F7f3ede4dEb.",
+    "2.F2e6fef2eded3b2.",
+    "4.2e6EbE5b4.",
+    "5.fF4f4e2db5.",
+    "6.ed2EbEbE3b6.",
+    "6.hFdfdebe2db6.",
+    "6.hFdfd2be2db6.",
+    "6.hFdf2b4db6.",
+    "6.hFdf2bde2db6.",
+    "6.hFdfdbde2db6.",
+    "6.hFdFdbde2db6.",
+    "6.hFdfbe4db6.",
+    "6.hFdbde4db6.",
+    "6.hFdbde3dEb6.",
+    "6.hFdfbe4db6.",
+    "6.hFdfbe3dEb6.",
+    "6.hFdbde4db6.",
+    "5.2hFdbde3dE2b5.",
+    "4.3hFdfdede2dbFe4.",
+    "2.2h2FfFdfde4dbf2Ff2.",
+    "2.2f3FfEd2E4b3fed2.",
+    "2.hfFefef9edEb2.",
+    "2.F2fF4f2e6dEdb2.",
+    "2.fdFfF2fef2e6d2b2.",
+    "4.edEdbE9b4.",
+    "23.",
+    "23."
    ]
   }
  ],
@@ -65,7 +75,9 @@
    "f": "#45404d",
    "F": "#45404d",
    "h": "#6d6488",
-   "v": "#241a3a"
+   "v": "#241a3a",
+   "u": "#1a1229",
+   "b": "#1a1229"
   }
  },
  "outline": {

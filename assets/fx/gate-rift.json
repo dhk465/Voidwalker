@@ -1,5 +1,5 @@
 {
- "source": "pixelfx 0.3.1 arcane/portal (MIT, https://github.com/patch-gg/pixelfx), width 18, height 44, reach 12, seed 4, the game's void violets; cut to 7 brightness steps by tools/art/bake_gate_rift.py",
+ "source": "tools/art/fx/arcane/gate-portal.js (pixelfx arcane/portal, MIT, https://github.com/patch-gg/pixelfx) rendered by pixelfx 0.3.1, width 18, height 44, reach 12, seed 4, wind -1, mirrored, the game's void violets; cut to 7 brightness steps by tools/art/bake_gate_rift.py",
  "encoding": "grey = step * 36, steps 0..6; colour comes from canvas_env_rift_tint.gdshader",
  "frame_size": [
   69,

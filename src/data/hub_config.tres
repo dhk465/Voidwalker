@@ -4,12 +4,26 @@
 
 [resource]
 script = ExtResource("1")
-FlowCount = 5
-FlowSpeed = 0.12
-FlowSurge = 0.35
-FlowRadius = Vector2(235, 95)
-FlowCentre = Vector2(320, 165)
-FlowBob = 13.0
+FlowAmbient = 4
+FlowMax = 9
+FlowGapMin = 1.2
+FlowGapMax = 3.2
+FlowBurstGap = 0.35
+FlowBoundsMin = Vector2(70, 80)
+FlowBoundsMax = Vector2(570, 320)
+FlowStopsMin = 1
+FlowStopsMax = 3
+FlowSpeedMin = 15.0
+FlowSpeedMax = 50.0
+FlowMinHop = 80.0
+FlowMaxHop = 200.0
+FlowSway = 0.25
+FlowSpiralRadius = 26.0
+FlowSpiralTurns = 1.5
+FlowDartDistance = 40.0
+FlowDartTime = 0.45
+FlowTapRadius = 10.0
+FlowPopChance = 0.4
 TrailLifetime = 2.0
 TrailAmount = 60
 TrailLift = 14.0

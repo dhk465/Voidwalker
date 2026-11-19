@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cq4fav63qa0a7"
-path="res://.godot/imported/gate-arch.png-bfb38c21a507f21210cee09df8b74744.ctex"
+uid="uid://cx8eljoankutv"
+path="res://.godot/imported/journal-rock.png-dbf651af42444f0f3386fa91c87e68e1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/lobby/gate-arch.png"
-dest_files=["res://.godot/imported/gate-arch.png-bfb38c21a507f21210cee09df8b74744.ctex"]
+source_file="res://assets/sprites/lobby/journal-rock.png"
+dest_files=["res://.godot/imported/journal-rock.png-dbf651af42444f0f3386fa91c87e68e1.ctex"]
 
 [params]
 
