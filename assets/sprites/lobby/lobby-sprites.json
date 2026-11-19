@@ -77,6 +77,186 @@
    ],
    "qa": "pass"
   },
+  "form-bee": {
+   "file": "form-bee.png",
+   "size": [
+    46,
+    46
+   ],
+   "anchor": [
+    23,
+    23
+   ],
+   "qa": "pass"
+  },
+  "form-bird": {
+   "file": "form-bird.png",
+   "size": [
+    46,
+    46
+   ],
+   "anchor": [
+    23,
+    23
+   ],
+   "qa": "pass"
+  },
+  "form-blob": {
+   "file": "form-blob.png",
+   "size": [
+    46,
+    46
+   ],
+   "anchor": [
+    23,
+    23
+   ],
+   "qa": "pass"
+  },
+  "form-dragon": {
+   "file": "form-dragon.png",
+   "size": [
+    46,
+    46
+   ],
+   "anchor": [
+    23,
+    23
+   ],
+   "qa": "pass"
+  },
+  "form-humanoid": {
+   "file": "form-humanoid.png",
+   "size": [
+    46,
+    46
+   ],
+   "anchor": [
+    23,
+    23
+   ],
+   "qa": "pass"
+  },
+  "form-lion": {
+   "file": "form-lion.png",
+   "size": [
+    46,
+    46
+   ],
+   "anchor": [
+    23,
+    23
+   ],
+   "qa": "pass"
+  },
+  "form-manta": {
+   "file": "form-manta.png",
+   "size": [
+    46,
+    46
+   ],
+   "anchor": [
+    23,
+    23
+   ],
+   "qa": "pass"
+  },
+  "form-moth": {
+   "file": "form-moth.png",
+   "size": [
+    46,
+    46
+   ],
+   "anchor": [
+    23,
+    23
+   ],
+   "qa": "pass"
+  },
+  "form-rat": {
+   "file": "form-rat.png",
+   "size": [
+    46,
+    46
+   ],
+   "anchor": [
+    23,
+    23
+   ],
+   "qa": "pass"
+  },
+  "form-serpent": {
+   "file": "form-serpent.png",
+   "size": [
+    46,
+    46
+   ],
+   "anchor": [
+    23,
+    23
+   ],
+   "qa": "pass"
+  },
+  "form-snail": {
+   "file": "form-snail.png",
+   "size": [
+    46,
+    46
+   ],
+   "anchor": [
+    23,
+    23
+   ],
+   "qa": "pass"
+  },
+  "form-stag": {
+   "file": "form-stag.png",
+   "size": [
+    46,
+    46
+   ],
+   "anchor": [
+    23,
+    23
+   ],
+   "qa": "pass"
+  },
+  "form-swan": {
+   "file": "form-swan.png",
+   "size": [
+    46,
+    46
+   ],
+   "anchor": [
+    23,
+    23
+   ],
+   "qa": "pass"
+  },
+  "form-toad": {
+   "file": "form-toad.png",
+   "size": [
+    46,
+    46
+   ],
+   "anchor": [
+    23,
+    23
+   ],
+   "qa": "pass"
+  },
+  "form-tortoise": {
+   "file": "form-tortoise.png",
+   "size": [
+    46,
+    46
+   ],
+   "anchor": [
+    23,
+    23
+   ],
+   "qa": "pass"
+  },
   "gate-arch": {
    "file": "gate-arch.png",
    "size": [

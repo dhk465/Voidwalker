@@ -198,6 +198,29 @@ public class AltarRulesTests
 	}
 
 	[Fact]
+	public void DominantForm_TheDemoPool_IsWrathsDragon()
+	{
+		Assert.Equal("dragon", Demo().DominantForm());
+	}
+
+	[Fact]
+	public void DominantForm_EmptyPool_StaysShapeless()
+	{
+		var rules = Demo();
+		rules.Meta.Loadout.Clear();
+		Assert.Equal("blob", rules.DominantForm());
+	}
+
+	[Fact]
+	public void DominantForm_OnlyVoidBolts_StaysShapeless()
+	{
+		var rules = Demo();
+		rules.Meta.Loadout.Clear();
+		rules.Meta.Loadout["|1"] = 3;
+		Assert.Equal("blob", rules.DominantForm());
+	}
+
+	[Fact]
 	public void Meta_RoundTrip_KeepsFieldsThisPortDoesNotRead()
 	{
 		var meta = Meta.FromJson("{\"v\":1,\"bank\":5,\"tempered\":{\"a\":1}}");

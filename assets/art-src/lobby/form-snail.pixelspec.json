@@ -1,0 +1,73 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-snail",
+ "canvas": [
+  40,
+  40
+ ],
+ "anchor_px": [
+  20,
+  20
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "S": "#9a8fc8",
+  "T": "#d7d2e9",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "40.",
+    "40.",
+    "40.",
+    "40.",
+    "40.",
+    "40.",
+    "17.T4.T17.",
+    "17.5TS17.",
+    "16.T6ST16.",
+    "16.TKS2.TKS16.",
+    "16.TKS2TSKS16.",
+    "16.TK4SKS16.",
+    "16.TKT2STKS16.",
+    "16.TKT2STKS16.",
+    "16.T2K2S2KS16.",
+    "16.TS4K2S16.",
+    "16.T4K4S15.",
+    "16.TK6S2T14.",
+    "16.T2S4KSKS2T12.",
+    "15.TS2K6S2KST11.",
+    "15.TK3S3K2S3KS11.",
+    "14.T3S6K2S2KST10.",
+    "14.T2S3K3SK3S2KS10.",
+    "14.T2S2K2SK3SKS2KS10.",
+    "13.T2S3KS3K2SKS2KST9.",
+    "13.T2S2K2S3K2SKS2K2S9.",
+    "14.TS3KS4K3S2KS10.",
+    "14.T2S2K2S3K2S3KS10.",
+    "14.T2S3K5S3K2S10.",
+    "15.T2S5K2S2K2S11.",
+    "15.T3S4KS2K3S11.",
+    "16.T11S12.",
+    "16.TK8S14.",
+    "16.T7S16.",
+    "17.T5S17.",
+    "40.",
+    "40.",
+    "40.",
+    "40.",
+    "40."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

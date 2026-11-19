@@ -102,6 +102,9 @@ public sealed class AltarRules
 		return best;
 	}
 
+	/// <summary>The blob's form for this pool: the main nature's form id (e.g. "dragon"), or "blob" when it holds no nature.</summary>
+	public string DominantForm() => DominantNature() is { } n ? _d.Natures[n].Form : "blob";
+
 	// ---- the Pool -----------------------------------------------------------------------------
 
 	/// <summary>Puts one more copy of a stack into the pool. Returns a message when it cannot ("" when it did).</summary>

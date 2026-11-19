@@ -135,12 +135,14 @@ def clean_corners(img, rounds=6):
                 if 0 <= y + dy < img.shape[0] and 0 <= x + dx < img.shape[1] and img[y + dy, x + dx] != ".": img[y, x] = img[y + dy, x + dx]; break
     return img
 
-def spec(name, img, anchor, variants=None, outline=True):
+def spec(name, img, anchor, variants=None, outline=True, pal=None):
+    """Writes the PixelSpec; `pal` adds or overrides palette characters for this sprite alone."""
+    pal = {**PAL, **(pal or {})}
     if outline: img = clean_corners(img)
     h, w = img.shape
     used = sorted(set(ch for ch in img.flatten() if ch != "."))
     sp = {"schema": "codeart2d.pixelspec.v1", "name": name, "canvas": [w, h], "anchor_px": [px(anchor[0]), px(anchor[1])],
-          "palette": {k: PAL[k] for k in sorted(set(used) | ({"o"} if outline else set()))},
+          "palette": {k: pal[k] for k in sorted(set(used) | ({"o"} if outline else set()))},
           "layers": [{"name": "body", "origin": [0, 0], "segments": segments(img)}]}
     if variants: sp["variants"] = {k: {c: v for c, v in o.items() if c in sp["palette"]} for k, o in variants.items()}
     if outline: sp["outline"] = {"mode": "solid", "color": "o"}
@@ -318,6 +320,179 @@ def puffs():
         img = canvas(14, 14); x, y = grid(); img[np.hypot(x - 7, y - 7) < rad] = "Z"
         spec(f"puff-{k}", img, [7, 7], outline=False)
 
-for f in (altar, lectern, standing_stone, gate_arch, sigil_star, pedestal, tome, asteroids, void_icon, card_back, void_ball, blob, puffs):
+# ---- the blob's 15 forms: shapeless plus one per nature, transcribed from the browser's FORM_PATHS ------------------
+# Each form is the prototype's canvas path (facing up, about 68 layout units across) on an 80x80 canvas centred at
+# (40, 40). Every subpath is filled (implicitly closed, as canvas fill does) into an inky body; every drawn segment is
+# stroked in the nature's colour, so open strokes (antlers, bee stripes) and inner edges (lion mane, tortoise shell)
+# read as glowing lines. The rim lights up on its top-left; the eyes are two pale pixels at the path's eye
+# height, each in a ring of ink so it stands clear of the strokes.
+FORM_CX, FORM_CY = 40, 40
+
+class Path:
+    """A tiny canvas-path recorder: subpaths as polylines in layout units, plus whether each was closed."""
+    def __init__(self): self.subs = []; self.cur = None
+    def _pt(self, x, y): self.cur[0].append((FORM_CX + x, FORM_CY + y))
+    def moveTo(self, x, y): self.cur = [[], False]; self.subs.append(self.cur); self._pt(x, y)
+    def lineTo(self, x, y):
+        if self.cur is None: self.moveTo(x, y)
+        else: self._pt(x, y)
+    def last(self): x, y = self.cur[0][-1]; return x - FORM_CX, y - FORM_CY
+    def quadraticCurveTo(self, cx, cy, x, y, n=10):
+        x0, y0 = self.last()
+        for i in range(1, n + 1):
+            t = i / n; u = 1 - t; self._pt(u * u * x0 + 2 * u * t * cx + t * t * x, u * u * y0 + 2 * u * t * cy + t * t * y)
+    def bezierCurveTo(self, c1x, c1y, c2x, c2y, x, y, n=14):
+        x0, y0 = self.last()
+        for i in range(1, n + 1):
+            t = i / n; u = 1 - t
+            self._pt(u ** 3 * x0 + 3 * u * u * t * c1x + 3 * u * t * t * c2x + t ** 3 * x, u ** 3 * y0 + 3 * u * u * t * c1y + 3 * u * t * t * c2y + t ** 3 * y)
+    def arc(self, cx, cy, r, a0, a1, n=12):
+        for i in range(n + 1):
+            a = a0 + (a1 - a0) * i / n; self.lineTo(cx + math.cos(a) * r, cy + math.sin(a) * r)
+    def closePath(self): self.cur[1] = True
+
+def _blob(p, t, w):
+    for i in range(15):
+        a = i / 14 * 6.283; r = 18 + math.sin(a * 3 + t * 2.4) * 2.5 + math.sin(a * 5 - t * 1.7) * 1.5; p.lineTo(math.cos(a) * r, math.sin(a) * r)
+    p.closePath(); return -4
+
+def _dragon(p, t, w):
+    p.moveTo(0, -24); p.lineTo(5, -18); p.lineTo(9, -26); p.lineTo(8, -14); p.quadraticCurveTo(14, -8, 30, -16 + w); p.lineTo(26, -6 + w); p.lineTo(34, -2 + w); p.lineTo(24, 2 + w); p.lineTo(28, 8 + w)
+    p.quadraticCurveTo(14, 4, 8, 10); p.quadraticCurveTo(6, 22, 12, 30); p.quadraticCurveTo(0, 22, -8, 10); p.quadraticCurveTo(-14, 4, -28, 8 - w); p.lineTo(-24, 2 - w); p.lineTo(-34, -2 - w); p.lineTo(-26, -6 - w); p.lineTo(-30, -16 - w)
+    p.quadraticCurveTo(-14, -8, -8, -14); p.lineTo(-9, -26); p.lineTo(-5, -18); p.closePath(); return -17
+
+def _bird(p, t, w):
+    p.moveTo(0, -26); p.lineTo(5, -16); p.quadraticCurveTo(18, -14, 34, -4 + w * 2); p.quadraticCurveTo(20, 0, 9, 4); p.lineTo(10, 16); p.lineTo(4, 12); p.lineTo(0, 22); p.lineTo(-4, 12); p.lineTo(-10, 16); p.lineTo(-9, 4)
+    p.quadraticCurveTo(-20, 0, -34, -4 - w * 2); p.quadraticCurveTo(-18, -14, -5, -16); p.closePath(); return -17
+
+def _rat(p, t, w):
+    p.moveTo(0, -24); p.quadraticCurveTo(6, -18, 7, -14); p.arc(12, -15, 6, math.pi * 0.9, math.pi * 2.4); p.quadraticCurveTo(16, 0, 10, 12); p.quadraticCurveTo(4, 18, 2, 18)
+    p.quadraticCurveTo(14 + w * 3, 26, 4 + w * 3, 34); p.quadraticCurveTo(10 + w * 3, 24, -2, 18); p.quadraticCurveTo(-8, 18, -10, 12); p.quadraticCurveTo(-16, 0, -12, -9); p.arc(-12, -15, 6, math.pi * 0.6, math.pi * 2.1); p.quadraticCurveTo(-6, -18, 0, -24); p.closePath(); return -16
+
+def _humanoid(p, t, w):
+    p.moveTo(0, -27); p.quadraticCurveTo(8, -27, 7, -19); p.quadraticCurveTo(6, -15, 4, -14); p.quadraticCurveTo(14, -13, 15, -6); p.lineTo(19, 10 + w); p.lineTo(14, 10 + w); p.lineTo(11, -2); p.lineTo(9, 14)
+    p.quadraticCurveTo(6, 22, 3, 28 + w); p.lineTo(0, 20); p.lineTo(-3, 28 - w); p.quadraticCurveTo(-6, 22, -9, 14); p.lineTo(-11, -2); p.lineTo(-14, 10 - w); p.lineTo(-19, 10 - w); p.lineTo(-15, -6)
+    p.quadraticCurveTo(-14, -13, -4, -14); p.quadraticCurveTo(-6, -15, -7, -19); p.quadraticCurveTo(-8, -27, 0, -27); p.closePath(); return -21
+
+def _lion(p, t, w):
+    p.moveTo(-11, 2); p.quadraticCurveTo(-15, 18, -8, 26); p.lineTo(8, 26); p.quadraticCurveTo(15, 18, 11, 2); p.closePath()
+    p.moveTo(6, 24); p.quadraticCurveTo(18 + w * 2, 30, 20 + w * 2, 18); p.lineTo(25 + w * 2, 14); p.lineTo(18 + w * 2, 13); p.quadraticCurveTo(16, 26, 6, 21)
+    p.moveTo(19, -12)
+    for i in range(1, 17):
+        a = i / 16 * 6.283; r = 14 if i % 2 else 20; p.lineTo(math.cos(a) * r, -12 + math.sin(a) * r)
+    p.closePath(); return -14
+
+def _serpent(p, t, w):
+    pts = [(math.sin(i * 0.65 + t * 3) * 10, -12 + i * 3.6, 6 - i * 0.35) for i in range(13)]
+    p.moveTo(0, -30); p.lineTo(9, -20); p.lineTo(pts[0][0] + pts[0][2], pts[0][1])
+    for x, y, r in pts: p.lineTo(x + r, y)
+    for x, y, r in reversed(pts): p.lineTo(x - r, y)
+    p.lineTo(-9, -20); p.closePath(); return -22
+
+def _moth(p, t, w):
+    f = 1 + math.sin(t * 9) * 0.08
+    p.moveTo(0, -12); p.bezierCurveTo(14 * f, -28, 34 * f, -18, 30 * f, -2); p.quadraticCurveTo(14, 0, 3, 0); p.bezierCurveTo(18 * f, 6, 22 * f, 20, 8, 20); p.lineTo(2, 12); p.lineTo(0, 22)
+    p.lineTo(-2, 12); p.lineTo(-8, 20); p.bezierCurveTo(-22 * f, 20, -18 * f, 6, -3, 0); p.quadraticCurveTo(-14, 0, -30 * f, -2); p.bezierCurveTo(-34 * f, -18, -14 * f, -28, 0, -12); p.closePath()
+    p.moveTo(-1, -12); p.quadraticCurveTo(-6, -24, -13, -29); p.lineTo(-12, -26); p.quadraticCurveTo(-5, -22, 1, -12)
+    p.moveTo(1, -12); p.quadraticCurveTo(6, -24, 13, -29); p.lineTo(12, -26); p.quadraticCurveTo(5, -22, -1, -12); return -9
+
+def _toad(p, t, w):
+    p.moveTo(-15, -16); p.quadraticCurveTo(-15, -26, -8, -25); p.quadraticCurveTo(-3, -24, -3, -19); p.lineTo(3, -19); p.quadraticCurveTo(3, -24, 8, -25); p.quadraticCurveTo(15, -26, 15, -16)
+    p.quadraticCurveTo(22, -6, 20, 6); p.lineTo(30, 4 + w); p.lineTo(26, 12 + w); p.lineTo(18, 14); p.quadraticCurveTo(10, 22, 0, 22); p.quadraticCurveTo(-10, 22, -18, 14); p.lineTo(-26, 12 - w); p.lineTo(-30, 4 - w); p.lineTo(-20, 6); p.quadraticCurveTo(-22, -6, -15, -16); p.closePath(); return -20
+
+def _snail(p, t, w):
+    p.moveTo(-6, -8); p.quadraticCurveTo(-8, -20, -5, -26); p.lineTo(-2, -25); p.quadraticCurveTo(-3, -16, 0, -10); p.quadraticCurveTo(3, -16, 2, -25); p.lineTo(5, -26); p.quadraticCurveTo(8, -20, 6, -8)
+    p.quadraticCurveTo(12, 6, 6, 28); p.lineTo(-6, 28); p.quadraticCurveTo(-12, 6, -6, -8); p.closePath()
+    p.moveTo(20, 10); p.arc(4, 10, 16, 0, 6.283, n=24); p.closePath()  # the shell, solid at this size (the browser fills the spiral)
+    p.moveTo(20, 10)
+    for i in range(31):
+        a = i * 0.42; r = 16 - i * 0.45; p.lineTo(4 + math.cos(a) * r, 10 + math.sin(a) * r)
+    return -24
+
+def _tortoise(p, t, w):
+    p.moveTo(0, -30); p.quadraticCurveTo(7, -30, 6, -20); p.lineTo(10, -18); p.lineTo(22, -24 + w); p.lineTo(18, -12); p.quadraticCurveTo(22, 2, 18, 12); p.lineTo(24, 22 - w); p.lineTo(12, 20)
+    p.lineTo(4, 26); p.lineTo(0, 30); p.lineTo(-4, 26); p.lineTo(-12, 20); p.lineTo(-24, 22 + w); p.lineTo(-18, 12); p.quadraticCurveTo(-22, 2, -18, -12); p.lineTo(-22, -24 - w); p.lineTo(-10, -18); p.lineTo(-6, -20); p.quadraticCurveTo(-7, -30, 0, -30); p.closePath()
+    p.moveTo(-8, -6); p.lineTo(0, -12); p.lineTo(8, -6); p.lineTo(8, 6); p.lineTo(0, 12); p.lineTo(-8, 6); p.closePath(); return -25
+
+def _stag(p, t, w):
+    p.moveTo(0, -12); p.quadraticCurveTo(8, -12, 8, -2); p.quadraticCurveTo(14, 4, 12, 18); p.lineTo(6, 28); p.lineTo(-6, 28); p.lineTo(-12, 18); p.quadraticCurveTo(-14, 4, -8, -2); p.quadraticCurveTo(-8, -12, 0, -12); p.closePath()
+    for s in (-1, 1):
+        p.moveTo(s * 5, -10); p.lineTo(s * 12, -22); p.lineTo(s * 22, -28); p.moveTo(s * 12, -22); p.lineTo(s * 10, -34); p.moveTo(s * 17, -25); p.lineTo(s * 26, -20); p.moveTo(s * 8, -4); p.lineTo(s * 18, -8)
+    return -5
+
+def _swan(p, t, w):
+    p.moveTo(-2, -30); p.lineTo(5, -32); p.lineTo(3, -27); p.quadraticCurveTo(-8, -20, 2, -8); p.quadraticCurveTo(18, 0, 22, -14 + w * 2); p.quadraticCurveTo(26, 8, 10, 20); p.quadraticCurveTo(0, 28, -10, 20)
+    p.quadraticCurveTo(-18, 10, -10, 0); p.quadraticCurveTo(-6, -4, -4, -8); p.quadraticCurveTo(-14, -20, -2, -30); p.closePath(); return -29
+
+def _manta(p, t, w):
+    p.moveTo(-6, -20); p.lineTo(-4, -12); p.lineTo(4, -12); p.lineTo(6, -20); p.lineTo(9, -10); p.quadraticCurveTo(24, -8, 36, 4 + w * 2); p.quadraticCurveTo(18, 6, 8, 14); p.lineTo(2, 16); p.lineTo(1, 34)
+    p.lineTo(-1, 34); p.lineTo(-2, 16); p.lineTo(-8, 14); p.quadraticCurveTo(-18, 6, -36, 4 - w * 2); p.quadraticCurveTo(-24, -8, -9, -10); p.closePath(); return -7
+
+def _bee(p, t, w):
+    f = math.sin(t * 30) * 3
+    p.moveTo(0, -22); p.quadraticCurveTo(9, -20, 8, -10); p.quadraticCurveTo(12, 6, 6, 18); p.lineTo(0, 28); p.lineTo(-6, 18); p.quadraticCurveTo(-12, 6, -8, -10); p.quadraticCurveTo(-9, -20, 0, -22); p.closePath()
+    p.moveTo(8, -6); p.quadraticCurveTo(28, -22 + f, 26, -4); p.quadraticCurveTo(20, 2, 8, -2); p.closePath()
+    p.moveTo(-8, -6); p.quadraticCurveTo(-28, -22 + f, -26, -4); p.quadraticCurveTo(-20, 2, -8, -2); p.closePath()
+    p.moveTo(-10, 2); p.lineTo(10, 2); p.moveTo(-10, 10); p.lineTo(10, 10); return -15
+
+FORM_PATHS = {"blob": _blob, "lion": _lion, "rat": _rat, "dragon": _dragon, "serpent": _serpent, "moth": _moth, "toad": _toad, "snail": _snail,
+              "tortoise": _tortoise, "bird": _bird, "humanoid": _humanoid, "stag": _stag, "swan": _swan, "manta": _manta, "bee": _bee}
+
+def _mix(a, b, k):
+    a = [int(a[i:i + 2], 16) for i in (1, 3, 5)]; b = [int(b[i:i + 2], 16) for i in (1, 3, 5)]
+    return "#" + "".join(f"{round(x + (y - x) * k):02x}" for x, y in zip(a, b))
+
+def _seg_mask(x0, y0, x1, y1, half):
+    """Pixels whose centre lies within `half` layout units of the segment."""
+    x, y = grid(); dx, dy = x1 - x0, y1 - y0; L = dx * dx + dy * dy
+    t = np.clip(((x - x0) * dx + (y - y0) * dy) / L, 0, 1) if L else np.zeros_like(x)
+    return np.hypot(x - (x0 + t * dx), y - (y0 + t * dy)) <= half
+
+def form_sprite(form, color):
+    """One form: inky body (K), a deep inner glow (R), the rim and strokes in the nature's colour (S), lit top-left (T)."""
+    img = canvas(80, 80); p = Path(); ey = FORM_PATHS[form](p, 0.0, 0.0)
+    body = np.zeros(SHAPE, bool); stroke = np.zeros(SHAPE, bool); half = 0.6 / S
+    for pts, closed in p.subs:
+        if len(pts) >= 3: body |= poly_mask(pts)
+        segs = list(zip(pts, pts[1:])) + ([(pts[-1], pts[0])] if closed else [])
+        for (x0, y0), (x1, y1) in segs: stroke |= _seg_mask(x0, y0, x1, y1, half)
+    sil = body | stroke
+    edge = sil & (dist_in(sil) <= 1.0)
+    img[sil] = "K"; img[sil & (dist_in(sil) <= 1.5)] = "R"; img[edge | stroke] = "S"
+    up = np.zeros(SHAPE, bool); up[1:, :] = ~sil[:-1, :]; up[0, :] = True
+    left = np.zeros(SHAPE, bool); left[:, 1:] = ~sil[:, :-1]; left[:, 0] = True
+    img[(edge | stroke) & (up | left)] = "T"
+    # the eyes: one pale column each side of the centre line (symmetric in pixels), in a ring of ink that may cover the
+    # inner glow but never the rim; nothing is drawn past the silhouette
+    # The browser's eye height often sits on the rim at this size, so the eyes slide down to the first rows where both
+    # land on interior ink with ink all round them
+    # (a head too thin for that takes the first rows where the eyes themselves are on ink, and one too thin for two
+    # eyes gets one).
+    c = px(FORM_CX); r0 = px(FORM_CY + ey) - (1 if SMALL else 2); hgt = 2 if SMALL else 3; gap = 1 if SMALL else 2
+    cols = (c - 1 - gap, c + gap)
+    inner = lambda r: all(0 <= yy < SHAPE[0] and 0 <= xx < SHAPE[1] and img[yy, xx] in ("K", "R")
+                          for x0 in cols for yy in range(r - 1, r + hgt + 1) for xx in (x0 - 1, x0, x0 + 1))
+    bare = lambda r: all(0 <= yy < SHAPE[0] and img[yy, x0] in ("K", "R") for x0 in cols for yy in range(r, r + hgt))
+    hit = next((r for r in range(r0, r0 + px(12)) if inner(r)), None)
+    if hit is None: hit = next((r for r in range(r0, r0 + px(12)) if bare(r)), None)  # thin heads: no ring
+    if hit is None:  # too thin for two eyes: one, on the interior pixel nearest the browser's eye point
+        ys, xs = np.nonzero(np.isin(img, ["K", "R"]))
+        k = np.argmin((ys - px(FORM_CY + ey)) ** 2 + (xs + 0.5 - c) ** 2); img[ys[k], xs[k]] = "T"
+    else:
+        for x0 in cols:
+            for yy in range(hit - 1, hit + hgt + 1):
+                for xx in range(x0 - 1, x0 + 2):
+                    if 0 <= yy < SHAPE[0] and 0 <= xx < SHAPE[1] and sil[yy, xx] and img[yy, xx] in ("K", "R"): img[yy, xx] = "K"
+            for yy in range(hit, hit + hgt): img[yy, x0] = "T"
+    pal = {"R": _mix(color, PAL["K"], 0.6), "S": color, "T": _mix(color, "#ffffff", 0.6)}
+    return spec("form-" + form, img, [FORM_CX, FORM_CY], pal=pal)
+
+def forms():
+    data = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "src", "data", "game_data.json"), encoding="utf-8"))
+    form_sprite("blob", PAL["X"])
+    for n in data["natures"].values():
+        if n.get("form") in FORM_PATHS: form_sprite(n["form"], n["color"])
+
+for f in (altar, lectern, standing_stone, gate_arch, sigil_star, pedestal, tome, asteroids, void_icon, card_back, void_ball, blob, forms, puffs):
     f()
 print("ok", OUT, "scale", S)

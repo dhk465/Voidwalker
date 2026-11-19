@@ -1,0 +1,74 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-humanoid",
+ "canvas": [
+  40,
+  40
+ ],
+ "anchor_px": [
+  20,
+  20
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "R": "#496179",
+  "S": "#8fe3ff",
+  "T": "#d2f4ff",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "40.",
+    "40.",
+    "40.",
+    "40.",
+    "40.",
+    "40.",
+    "17.6T17.",
+    "16.TS4KST16.",
+    "16.T6KS16.",
+    "16.TKT2KTKS16.",
+    "16.TKT2KTKS16.",
+    "16.T6KS16.",
+    "17.T4KS17.",
+    "14.3TS4KS3T14.",
+    "13.TS10KST13.",
+    "12.TS12KST12.",
+    "12.T14KS12.",
+    "12.T14KS12.",
+    "12.TKS10KSKS12.",
+    "11.TRKS10KSKRT11.",
+    "11.T2KS10KS2KS11.",
+    "11.TK2S10K2SKS11.",
+    "11.TK3S8K3SKS11.",
+    "10.TRK3S8K3SKRT10.",
+    "10.T3S.T8KS.T3S10.",
+    "10.T2S2.T8KS2.T2S10.",
+    "15.T8KS15.",
+    "15.T8KS15.",
+    "15.TS6K2S15.",
+    "16.T6KS16.",
+    "16.TSK2SK2S16.",
+    "17.TK2SKS17.",
+    "17.T5S17.",
+    "18.T2.T18.",
+    "18.T2.T18.",
+    "40.",
+    "40.",
+    "40.",
+    "40.",
+    "40."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

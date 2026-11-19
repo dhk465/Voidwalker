@@ -1,0 +1,74 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-dragon",
+ "canvas": [
+  40,
+  40
+ ],
+ "anchor_px": [
+  20,
+  20
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "R": "#76242a",
+  "S": "#ff4b3a",
+  "T": "#ffb7b0",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "40.",
+    "40.",
+    "40.",
+    "40.",
+    "40.",
+    "40.",
+    "15.T8.T15.",
+    "15.2T6.2T15.",
+    "15.3T.2T.2TS15.",
+    "15.TS.T2ST.TS15.",
+    "15.TRTS2KSTRS15.",
+    "15.TKS4KSKS15.",
+    "5.3T7.TS6K2S7.3T5.",
+    "5.TKS3T3.TS2KT2KT2KST3.3TSKS5.",
+    "5.TS3KS3TS3KT2KT3KS3TS3K2S5.",
+    "6.T26KS6.",
+    "6.T26KS6.",
+    "5.TS26KST5.",
+    "3.2TR28KR2T3.",
+    "3.T2S28K3S3.",
+    "4.2T2S24K4S4.",
+    "5.T.T24KS.S5.",
+    "6.TS24KST6.",
+    "6.T8S10K9S6.",
+    "14.TSR7K2S14.",
+    "15.2T6K2S15.",
+    "16.TS5KS16.",
+    "17.TS4KS16.",
+    "18.TR3KS16.",
+    "19.TR2KS16.",
+    "20.TRKST15.",
+    "21.TRKS15.",
+    "22.T2S15.",
+    "23.TST14.",
+    "24.TS14.",
+    "40.",
+    "40.",
+    "40.",
+    "40.",
+    "40."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

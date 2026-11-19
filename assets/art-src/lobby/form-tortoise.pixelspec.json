@@ -1,0 +1,74 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-tortoise",
+ "canvas": [
+  40,
+  40
+ ],
+ "anchor_px": [
+  20,
+  20
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "R": "#604944",
+  "S": "#c8a77a",
+  "T": "#e9dcca",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "40.",
+    "40.",
+    "40.",
+    "40.",
+    "19.2T19.",
+    "17.2T2S2T17.",
+    "17.T4KS17.",
+    "16.TS4KST16.",
+    "9.2T5.TS4K2S5.2T9.",
+    "9.TR2T2.2TS4K3S2.2TRS9.",
+    "9.TRKR3TS6KS3TRKRS9.",
+    "10.T7KT2KT7KS10.",
+    "10.T7KT2KT7KS10.",
+    "10.T18KS10.",
+    "10.T7K4S7KS10.",
+    "10.T6K2S2K2S6KS10.",
+    "10.T5K2S4K2S5KS10.",
+    "10.T4K2S6K2S4KS10.",
+    "10.T4K2S6K2S4KS10.",
+    "9.TS4K2S6K2S4KST9.",
+    "9.TS4K2S6K2S4K2S9.",
+    "9.TS4K2S6K2S4K2S9.",
+    "10.T4K2S6K2S4KS10.",
+    "10.T5K2S4K2S5KS10.",
+    "10.T6K2S2K2S6KS10.",
+    "10.T7K4S7KS10.",
+    "10.T18KS10.",
+    "9.TS18KST9.",
+    "9.T20KS9.",
+    "8.TS3KS12KS3KST8.",
+    "8.T7S8K8S8.",
+    "8.T6.TS6K2S6.T8.",
+    "16.TSR2KR2S16.",
+    "18.T2RS18.",
+    "19.TS19.",
+    "40.",
+    "40.",
+    "40.",
+    "40.",
+    "40."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

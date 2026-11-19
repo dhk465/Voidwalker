@@ -22,6 +22,8 @@ public partial class Hub : Node2D
 	[Export] public HubConfig? Config { get; set; }
 
 	private const int StageW = 640, StageH = 360;
+	private static readonly Vector2 BlobCentre = new(320, 245); // where the form floats before the lectern
+	private string _blobForm = "";
 	private static readonly Vector2[] Constellation =
 	{
 		new(115, 65), new(131, 55), new(150, 62), new(165, 52), new(176, 70), new(159, 85),
@@ -72,7 +74,7 @@ public partial class Hub : Node2D
 		// the Deck: a lectern with the pool's cards fanned above it, and the blob standing before it
 		var deck = AddStation("deck", new Vector2(320, 159), 43);
 		deck.AddArt(art.Make("lectern", new Vector2(320, 220) - deck.Position), highlight);
-		_blob = art.Make("blob", new Vector2(320, 252)); _stage.AddChild(_blob);
+		_blob = art.Make("form-blob", BlobCentre); _stage.AddChild(_blob); // RefreshState gives it the pool's form
 
 		// the Void Rite: a ring of standing stones round a narrow void rift
 		var rite = AddStation("rite", new Vector2(150, 215), 43);
@@ -149,7 +151,7 @@ public partial class Hub : Node2D
 		return s;
 	}
 
-	/// <summary>Redraws what the lobby shows from the save: the card fan, lit stars, open pedestals, the swirl's colour and the top bar.</summary>
+	/// <summary>Redraws what the lobby shows from the save: the blob's form, the card fan, lit stars, open pedestals, the swirl's colour and the top bar.</summary>
 	public void RefreshState()
 	{
 		var rules = _session.Rules; var meta = rules.Meta; var data = _session.Data;
@@ -159,6 +161,14 @@ public partial class Hub : Node2D
 		_cards.Clear();
 		int fan = Mathf.Clamp(rules.DeckCount(), 1, 5);
 		for (int i = 0; i < fan; i++) _cards.Add(deck.AddArt(_art.Make("card-back", Vector2.Zero), _highlight));
+
+		var form = rules.DominantForm(); // the blob takes the shape of the pool's main nature
+		if (_blob != null && form != _blobForm)
+		{
+			var shaped = _art.Make("form-" + form, BlobCentre);
+			_blob.Texture = shaped.Texture; _blob.Offset = shaped.Offset; _blobForm = form;
+			shaped.Free();
+		}
 
 		var sigils = _byId["sigils"];
 		foreach (var s in _stars) sigils.RemoveArt(s);
@@ -232,7 +242,7 @@ public partial class Hub : Node2D
 			_cards[i].Position = new Vector2(k * 17, 6 + Mathf.Abs(k) * 4 + Mathf.Sin((float)_t * 2 + i) * 1.5f).Round();
 		}
 		if (_tome != null) _tome.Position = new Vector2(0, Mathf.Sin((float)_t * 1.5f) * 2).Round();
-		if (_blob != null) _blob.Position = new Vector2(320, 252 + Mathf.Sin((float)_t * 2) * 2).Round();
+		if (_blob != null) _blob.Position = (BlobCentre + new Vector2(0, Mathf.Sin((float)_t * 2) * 2)).Round();
 	}
 
 	/// <inheritdoc/>
