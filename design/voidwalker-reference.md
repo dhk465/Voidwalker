@@ -1,8 +1,8 @@
 # Voidwalker: Game Reference
 
-*Generated 2026-11-18 from `prototypes/voidwalker/config.js` (game data and tuning) and the project history. Numbers are the current `config.js` values; change them there and regenerate.*
+*Updated 2026-11-19 from `prototypes/voidwalker/config.js` (game data and tuning) and the project history. Numbers are the current `config.js` values; change them there and regenerate.*
 
-**Build:** `prototypes/voidwalker/index.html` (open in a browser) · **Brief:** `design/game-brief.md` · **Checkpoints:** tag `one-shot/voidwalker`, commit `708c5d9` (iteration 3)
+**Build:** `prototypes/voidwalker/index.html` (open in a browser) · **Brief:** `design/game-brief.md` · **Checkpoints:** tag `one-shot/voidwalker`, commit `ef7b610` (iteration 7)
 
 ## Contents
 - 1. The game in one page
@@ -26,62 +26,167 @@
 
 ## 1. The game in one page
 
-A blob born of the void holds the bottom of a vertical rift while Ybasogs (a hive of organic creatures) and falling matter (asteroids, space debris, ruins) pour down. Its **deck of nature cards is its ammunition**: each bolt fired is the next card in the deck, and bolts ricochet off the rift walls, enemies and matter. The fourteen **innate natures** are the seven sins and seven virtues, each an element. Two natures fuse into one of **84 fusions**; two **opposites annul** each other into void.
+A blob born of the void roams a vertical rift while Ybasogs (an organic hive out of Lovecraftian horror) and falling matter (asteroids, space wrecks, ruins) pour in, and whole families hunt it from the walls, the deep and the dark above. Its **deck of nature cards is its ammunition**: each bolt fired is the next card, and bolts ricochet off the walls, the floor, the Ybasogs and the matter. The fourteen **innate natures** are the seven sins and seven virtues, each an element. Two natures fuse into one of **84 fusions**; two **opposites annul** into void.
 
-The loop: **prepare** a deck at the **Rift Altar** → **adventure** through 3 stages of waves ending on the **Mother** → **bank** the void energy gathered → spend it on the **Void Rite** (gacha) and the **Forge** (fusion) → prepare again. **Natures are discovered by achievements** during adventures and join the collection at the Altar, never mid-adventure. The deck's most common nature shapes the blob into one of 15 **forms**, each with a trait. **Omens** and **depth** change each adventure, so the deck is prepared for what waits.
+The loop: at the **Rift Altar**, a hub floating in the void, grow the collection with the **Void Rite** (gacha), choose the **pool** of cards an adventure can find, buy **sigils**, equip **relics** and pick a rift at the **Rift Gate**. Then **adventure**: you begin with **one void card** and find the rest of your deck in the rift (drops, a pick after each wave, an offer at the Rift Rest), through three stages that end on The Mother. Void energy is **banked** win or lose. Natures are **discovered by achievements**. The deck's most common nature shapes the blob into one of 15 forms.
 
-Genres: survivors-like (the horde, movement) x roguelike deckbuilder (the collection, deck, fusion). Stage shape inspired by Ball x Pit; the town is replaced by the Altar.
+Survivors-like × roguelite deckbuilder. The stage shape takes inspiration from Ball x Pit; its town is replaced by the Altar, with no buildings, only preparation.
 
 ## 2. Controls
 
 | Where | Input | Does |
 |---|---|---|
-| Title | Enter, Space or click | Begin (first time) or go to the Altar |
-| Adventure | WASD or arrow keys | Move inside the bottom band |
-| Adventure | Mouse | Aim (always kept upward) |
+| Title | Enter, Space or click | Begin (the first time) or go to the Altar |
+| Adventure | WASD or arrow keys | Move anywhere in the rift |
+| Adventure | Mouse | Aim in any direction |
 | Adventure | Hold left mouse button | Fire |
 | Adventure | Q | Auto-fire on or off |
 | Adventure | Space, P or Esc | Pause |
+| Wave-clear pick | Click, or 1 to 3; Esc | Take a card (or temper); skip |
+| Rift Rest | Mouse; Enter | Merge, temper, take the found card, choose a path; onward |
 | Anywhere | M | Mute |
-| Altar | Mouse | Everything; 1-5 switch tabs; Enter begins the adventure; Esc to title |
+| Altar | Mouse; Enter at the Gate | Visit a station; enter the rift |
 | End screen | Enter, R or click | Return to the Altar |
 
 ## 3. The adventure
 
-- **Energy is life.** Start at 20 (plus the form's bonus). A bite costs 2, a glob 1, a body-check from matter 1. A Ybasog slipping past the bottom costs 3, matter 1. After a hit you are safe for 0.8 s. Clearing a stage restores 5.
-- **Bolts:** one every 0.17 s at 640 px/s, 4 ricochets before fading. Base damage 1; +50% per card level above I; fused cards +30%.
-- **The deck is the magazine.** Shuffled at the start of each wave. Each shot draws the next card; an empty draw pile reshuffles the discard (0.35 s with no fire). The left panel shows the next bolts in order.
-- **Void energy** motes drop from kills and broken matter and fly to you within 120 px (all of them at a wave's end).
-- **Structure:** 3 stages x 3 waves. Stage 3 wave 3 is the Mother. Win: the Mother falls. Loss: energy reaches 0.
-- **The first adventure** begins alone in the dark: a firefly whispers "take it" beside a crack of light; touching it gives a random innate nature of the 14, 4 Void Bolts and 2 cards of that nature.
+- **Energy is life.** Start at 20 plus the form's bonus. A bite costs 2, a glob 1, a body-check from matter 1, a gaze beam, lash or tidal wall 2, a ring 1. After a hit you are safe for 0.8 s. Clearing a stage restores 5. Nothing costs energy by slipping past the bottom; it only spoils a sealed wave.
+- **The whole rift is yours.** The blob moves anywhere and aims in any direction; bolts ricochet off the walls, the top and the floor.
+- **Bolts:** one every 0.17 s at 640 px/s, 4 ricochets before fading. Base damage 1; +50% per level above I; fused cards +30%.
+- **The deck is the magazine, and it starts small.** Every adventure begins with **one void card** (plus a card of your form's nature with the Inborn sigil, and a card chosen at the Gate with the Chosen sigil). An empty draw pile reshuffles the discard (0.35 s without fire), so a small deck fires slowly and each found card speeds it up. The next bolts show bottom left; a card mark shows the deck's size.
+- **Void energy** motes drop from kills and broken matter and fly to you within 120 px, and all at once when a wave ends.
+- **Structure:** 3 stages of 3 waves; stage 2 ends on The Choir, The Hollow Eye or The Drowned King, stage 3 on The Mother. Win when she falls; lose when energy reaches 0.
+- **The first adventure** begins alone in the dark: a firefly whispers "take it" beside a crack of light. Touching it grants a random innate nature of the 14 and a pool of four Void Bolts and two cards of that nature; you start with one Void Bolt and find the rest.
+
+### Finding cards
+
+The cards you find come from your **pool**, the loadout chosen at the Altar. Each one joins the deck at once. Chances are multiplied by `card_drop` (1).
+
+| Source | Chance |
+|---|---|
+| Plain Ybasog | 0.5% |
+| Natured Ybasog | 4% |
+| Mini-boss | 60% |
+| Boss | 100% |
+| Broken wreck | 10% |
+| Broken ruin piece | 15% |
+| After waves 1 and 2 | Take one of three pool cards, or skip; 30% of the time one offer is "temper a card +1" instead |
+| Rift Rest | One found card, free to take |
+| Trial card | 2% of found cards are from *outside* your pool: marked TRIAL, kept for this adventure only, never added to the collection |
+
+### The Rift Rest
+
+Between stages: 2 rites to **merge** two of this adventure's cards (a new fusion fills the Codex and pays 15; opposites annul for 8 back; twins rise a level, up to 3) or **temper** one (+1 level). All of it lasts this adventure only. Take the found card, then choose the next stage's path:
+
+- **Sunken Path**: More ruins, relics and logs.
+- **Hive Path**: More Ybasogs, +25% void energy.
+- **Storm Path**: More rocks and comets, +1 ricochet.
+- **Tide Path**: Nature surges every wave; natured drop double.
+
+### Stages and waves
+
+- Stage 1, wave 1 is fixed: an asteroid and three pods, more pods, a slab of debris at 27 s with three grazers behind it, pods to finish.
+- Every other wave opens with a debut of kinds not yet met, then beats (formations, swarms, rockfalls, wreck fields, ruin walls, elite pairs, lulls); see the Bestiary.
+- Each wave rolls a nature tide: a void tide, a mixed tide or a nature surge.
 
 ## 4. The Rift Altar
 
-The hub between adventures, in five tabs. The collection (every card owned, stacked by kind and level) is always on the left.
+The hub: a floating altar in the void with six stations around it. No buildings, only preparation.
 
-| Tab | What you do |
+| Station | What you do |
 |---|---|
-| 1 Prepare | Click collection cards to add them to the deck (6 to 12 cards); click a deck row to remove one. See the form the deck gives and its trait, the omen of the next adventure, and choose the depth. Begin. |
-| 2 Void Rite | The gacha. Draw from the natures you have discovered: one rite 30, ten rites 270. Optional focus on one nature (+10 per draw): 50% of draws land on it. Odds: rare (level II) 20%, mythic (an already-fused card, written into the Codex) 7%, and a mythic is certain within 10 draws (pity). New kinds are marked NEW. |
-| 3 Forge | Fuse two cards for 20. Two natures make their fusion (unknown ones show "?" until forged); a first-time fusion pays 15 and fills its Codex cell. Twins rise a level (up to III). Opposites annul: both cards are gone, 8 back. A Void Bolt melts into any nature card (a way to trim plain bolts). |
-| 4 Codex | The 84 fusions as a grid; point at a cell to read it. A brighter "?" can already be made from natures you know. |
-| 5 Discoveries | The 14 natures, each one's achievement and progress, and the form each gives. "Forget everything" (click twice) wipes the save. |
+| **Pool** | Choose the cards this adventure can find (6 to 12, more with Breadth); click a row to remove one. See the form the pool gives and its trait. |
+| **Void Rite** | The gacha, drawing only from discovered natures, with a reveal ceremony. One rite 30, ten rites 270. Focus on one nature for +10 per draw: 50% of draws land on it. Rare (level II) 20%; mythic (an already-fused card, written into the Codex) 7%; a mythic is certain within 10 draws. New kinds are marked NEW. |
+| **Rift Gate** | Choose one of two rifts (three after a win), each with an omen, a prevailing nature and a boon; choose the depth; with the Chosen sigil, choose the first card. Enter. |
+| **Sigils** | Permanent upgrades bought with void energy, and the unlocks list. |
+| **Relics** | 16 relics found in adventures (ruins, mini-bosses, bosses); equip them in slots (1, a second unlocked by finding 3, a third with Shrine). |
+| **Journal** | Quests, the 16 logs found in wrecks and ruins, the 84-cell Codex, the Bestiary and the natures with their achievements. "Forget all" wipes the save. |
+
+### Sigils
+
+| Sigil | Gives | Costs by level | Needs |
+|---|---|---|---|
+| **Vessel** | +3 max energy | 60 / 140 / 300 |  |
+| **Reach** | +50 px void energy pull | 50 / 120 / 250 |  |
+| **Swiftness** | +8% speed | 80 / 180 |  |
+| **Ricochet** | +1 ricochet | 200 / 450 |  |
+| **Resonance** | +0.1 damage to opposites | 120 / 260 / 420 |  |
+| **Warding** | begin with a ward | 120 / 280 |  |
+| **Recovery** | +3 energy between stages | 90 / 220 |  |
+| **Rites** | +1 rite at each Rift Rest | 250 / 500 |  |
+| **Breadth** | +2 cards in the pool | 100 / 250 |  |
+| **Favor** | +2% mythic chance at the Rite | 150 / 300 / 500 |  |
+| **Keeping** | keep +10% void after a fall | 70 / 160 / 320 |  |
+| **Shrine** | +1 relic slot | 400 |  |
+| **Inborn** | begin with your form's nature card | 150 |  |
+| **Chosen** | begin with a card chosen at the Gate | 300 | after: The Chosen sigil |
+
+**Unlocks:**
+
+- A third rift at the Gate: 1 wins
+- Darker omens: 4 runs
+- A second relic slot: 3 relics
+- Deeper rifts: 1 wins
+- The Chosen sigil: 1 wins
+
+### Rifts and boons
+
+- **Relic-rich**: Relics and logs turn up twice as often.
+- **Rich veins**: +30% void energy.
+- **Teeming**: One more new kind each wave; more natured Ybasogs.
+- **Still**: No boon, and no added danger.
+
+**All 16 relics**
+
+| Relic | Gives |
+|---|---|
+| **Drowned Bell** | A ward at the start of each stage. |
+| **Star-Map Shard** | +15% void energy. |
+| **Hollow Lens** | Warnings last 0.4 s longer. |
+| **Chitin Charm** | Shells no longer halve your damage. |
+| **First Ember** | Nature effects last 20% longer. |
+| **Tide Stone** | +0.2 to opposite-nature damage. |
+| **Pilgrim's Lamp** | +80 px void energy pull. |
+| **Broken Crown** | +10% bolt damage. |
+| **Hive Tooth** | +10% fire rate. |
+| **Vial of Black Salt** | +3 max energy. |
+| **Mirror Scale** | 15% of globs pass through you. |
+| **Keel Nail** | +1 ricochet. |
+| **Brass Orrery** | +3 energy between stages. |
+| **Idol's Eye** | Relics and logs turn up more often. |
+| **Sealed Psalm** | One more rite at each Rift Rest. |
+| **Void Pearl** | Keep 15% more void energy after a fall. |
+
+**All 12 quests**
+
+| Quest | Goal | Reward |
+|---|---|---|
+| **The Brood Ends** | Fell the Mother | 150 void |
+| **Silence the Hymn** | Fell the Choir | 100 void |
+| **Close the Eye** | Fell the Hollow Eye | 100 void |
+| **Wardens and Knights** | Fell 6 mini-bosses | 120 void |
+| **Seven and Seven** | Discover 6 natures | 200 void |
+| **Archivist** | Find 6 logs | 100 void |
+| **Reliquary** | Find 4 relics | 1 relic |
+| **Deeper** | Win at depth 1+ | 250 void |
+| **Naturalist** | Meet 20 Ybasog kinds | 150 void |
+| **Opposites** | Slay 100 with opposites | 150 void |
+| **Untouched** | Clear a stage unhurt | 1 relic |
+| **Codex Keeper** | Record 12 fusions | 250 void |
 
 ## 5. The economy
 
 | Source or sink | Void energy |
 |---|---|
-| Pod / grazer / feeder kill | 2 / 3 / 5 motes |
-| Mother | 30 motes |
-| Asteroid / big asteroid / chunk | 3 / 5 / 1 |
-| Debris / ruin | 2 / 8 |
-| Banked after a win | everything gathered x omen x depth, + 100 |
-| Banked after a fall | 60% of it |
+| Kills and broken matter | each kind's drop (Bestiary), +2 if natured |
+| Banked after a win | all gathered × omen × boon × depth, + 100 |
+| Banked after a fall | 60% of it (more with Keeping, Void Pearl) |
 | Discovering a nature | +40, and 2 cards |
-| First time forging a fusion | +15 |
-| Annulling opposites | +8 (after paying 20) |
-| One rite / ten rites | -30 / -270 (+10 each when focused) |
-| Fusion | -20 |
+| First time making a fusion | +15 |
+| Annulling opposites at the Rest | +8 |
+| Quests | 100 to 250, or a relic |
+| One rite / ten rites | −30 / −270, +10 each when focused |
+| Sigils | 50 to 500 a level |
 
 ## 6. The fourteen natures
 
@@ -122,12 +227,12 @@ The nature most present in the deck (card levels count; ties go to your innate n
 | Tortoise | Humility | hits hurt 1 less, +2 max energy, 15% slower | armor 1, max_energy 2, speed 0.85 |
 | Dove | Charity | heal 2 after each wave, 15% faster | wave_heal 2, speed 1.15 |
 | Wanderer | Patience | longer safety after hits, instant reshuffle | iframes 0.5, quick_shuffle 1 |
-| Stag | Kindness | slowly regrows energy, leaks hurt 1 less | regen 0.06, leak_guard 1 |
+| Stag | Kindness | regrows energy steadily | regen 0.1 |
 | Swan | Chastity | 40% of globs pass through you | glob_dodge 0.4 |
-| Manta | Temperance | 30% faster, a taller band to roam | speed 1.3, band 60 |
+| Manta | Temperance | 30% faster, longer safety after hits | speed 1.3, iframes 0.2 |
 | Bee | Diligence | +30% fire rate, -15% bolt damage | fire_rate 1.3, damage 0.85 |
 
-Trait keys: damage and fire_rate multiply; max_energy adds; magnet adds px; mote_bonus is the chance of an extra void energy per mote; bite adds to bite damage; bounces adds ricochets; status multiplies effect durations; contact_charm is the chance a biting Ybasog is charmed instead; speed multiplies movement; aura slows Ybasogs within 160 px; armor reduces each hit (never below 1); wave_heal heals after every wave; iframes adds safety time; quick_shuffle removes the reshuffle pause; regen is energy per second; leak_guard reduces leak damage; glob_dodge is the chance a glob passes through; band raises the top of the band you can roam (px).
+Trait keys: damage and fire_rate multiply; max_energy adds; magnet adds px; mote_bonus is the chance of an extra void energy per mote; bite adds to bite damage; bounces adds ricochets; status multiplies effect durations; contact_charm is the chance a biting Ybasog is charmed instead; speed multiplies movement; aura slows Ybasogs within 160 px; armor reduces each hit (never below 1); wave_heal heals after every wave; iframes adds safety time; quick_shuffle removes the reshuffle pause; regen is energy per second; glob_dodge is the chance a glob passes through.
 
 ## 8. The 84 fusions
 
@@ -333,7 +438,7 @@ Your innate nature is known from the start; each other nature is discovered when
 | Gluttony | Slay 400 pods before they hatch | `pods` >= 400 |
 | Sloth | Slay 300 Ybasogs while standing still | `stillkills` >= 300 |
 | Humility | Break 150 asteroids | `asteroids` >= 150 |
-| Charity | Clear 15 waves with nothing slipping past | `sealedwave` >= 15 |
+| Charity | Clear 15 waves with nothing escaping | `sealedwave` >= 15 |
 | Patience | Clear 8 waves without being hurt | `cleanwave` >= 8 |
 | Kindness | Clear 5 waves on 5 energy or less | `lowwave` >= 5 |
 | Chastity | Shatter 40 ruins | `ruins` >= 40 |
@@ -342,23 +447,23 @@ Your innate nature is known from the start; each other nature is discovered when
 
 ## 11. Omens and depth
 
-After every adventure a new omen is rolled; it shows at the Altar so the deck can be prepared for it.
+After every adventure the Rift Gate offers new rifts (two, three after a win). Each names an omen, a prevailing nature (most natured Ybasogs carry it, and it is weak to its opposite) and a boon, so the pool can be prepared for it. The first rift is always calm.
 
 | Omen | Effect | Data |
 |---|---|---|
-| A Quiet Drift | Nothing stirs but the Ybasogs. | none |
-| The Brood Wakes | Half again as many pods; void energy +25%. | pods 1.5, void 1.25 |
-| Rockfall | Twice the asteroids, and they drop twice the void energy. | rocks 2, rockVoid 2 |
-| Ruinwake | Ruins drift from the first stage and drop triple. | ruinsEarly 1, ruinVoid 3 |
-| The Hungry Dark | Feeders spit faster; every kill drops one more. | spit 0.7, killVoid 1 |
-| Eclipse | Bolts ricochet once more; Ybasogs have 20% more life. | bounces 1, hp 1.2 |
-| Resonance | Nature effects last half again as long. | status 1.5 |
+| **A Quiet Drift** | Nothing stirs but the Ybasogs. | none |
+| **The Brood Wakes** | Half again as many pods; void energy +25%. | pods 1.5, void 1.25 |
+| **Rockfall** | Twice the asteroids, and they drop twice the void energy. | rocks 2, rockVoid 2 |
+| **Ruinwake** | Ruins drift from the first stage and drop triple. | ruinsEarly 1, ruinVoid 3 |
+| **The Hungry Dark** | Feeders spit faster; every kill drops one more. | spit 0.7, killVoid 1 |
+| **Eclipse** | Bolts ricochet once more; Ybasogs have 20% more life. | bounces 1, hp 1.2 |
+| **Resonance** | Nature effects last half again as long. | status 1.5 |
 
-**Depth:** each win opens the next depth. Each depth adds 25% Ybasog life and 20% void energy. Choose any depth up to the deepest opened.
+**Depth:** a win opens the next depth. Each depth adds 25% Ybasog life and 20% void energy; choose any depth up to the deepest opened.
 
 ## 12. Ybasogs
 
-The hive draws on Lovecraftian horror: flesh, clusters of eyes, tendrils and hooded choirs, in original creatures. Each kind appears first in the stage shown (one stage earlier from depth 2).
+The hive draws on Lovecraftian horror: flesh, clusters of eyes, tendrils and hooded choirs, in original creatures. 58 kinds: 48 in 12 families of four variants, 6 mini-bosses and 4 bosses. Since iteration 6 the reachers, the deep, the jellies and the gaunts hunt you across the whole rift; hunters tire and leave after 24 s, and reachers withdraw into the wall after 13 s. Each kind appears first in the stage shown (one stage earlier from depth 2).
 
 | Family | Ybasog | Life | Speed | From stage | Behaviour | Void |
 |---|---|---|---|---|---|---|
@@ -375,27 +480,51 @@ The hive draws on Lovecraftian horror: flesh, clusters of eyes, tendrils and hoo
 | Feeders | **Lobber** | 7 | 24 px/s | 2 | Lobs a sac that bursts into droplets above you. | 6 |
 | Feeders | **Sniper** | 6 | 30 px/s | 3 | Aims a line, then fires a fast glob along it. | 6 |
 | Eyes | **Watcher** | 6 | 30 px/s | 2 | Marks your column, then burns it with its gaze. | 5 |
-| Eyes | **Blinker** | 5 | 0 px/s | 2 | Vanishes and reappears, spitting after each blink. | 5 |
+| Eyes | **Blinker** | 5 | clings to a wall | 2 | Vanishes and reappears, spitting after each blink. | 5 |
 | Eyes | **Weeper** | 6 | 20 px/s | 1 | Drips tears that fall straight down. | 4 |
+| Eyes | **Oracle** | 7 | 26 px/s | 2 | Many eyes, one will: its globs seek you. | 5 |
 | Devourers | **Devourer** | 9 | 40 px/s | 2 | Chases and eats your void energy, growing as it feeds. | 6 |
 | Devourers | **Gorger** | 14 | 20 px/s | 2 | Eats falling matter it touches to heal and grow. | 7 |
 | Devourers | **Maw** | 10 | 26 px/s | 3 | Its open mouth swallows bolts from below: strike it from the sides or bank shots off the top. | 6 |
+| Devourers | **Void Leech** | 5 | 70 px/s | 2 | Latches on and drains you until shot off. | 4 |
 | Deacons | **Warder** | 10 | 22 px/s | 2 | Shields Ybasogs around it. | 8 |
 | Deacons | **Mender** | 9 | 22 px/s | 2 | Heals Ybasogs around it. | 8 |
 | Deacons | **Herald** | 11 | 20 px/s | 3 | Calls pods out of the dark. | 8 |
-| Mites | **Mite** (x5) | 1 | 80 px/s | 1 | A flickering swarm. | 1 |
-| Mites | **Lancer** (x4) | 1.5 | 60 px/s | 2 | Hovers, then darts at you. | 1 |
-| Mites | **Thief Mite** (x3) | 1 | 90 px/s | 2 | Steals void energy on touch and flees. | 1 |
+| Deacons | **Cantor** | 9 | 22 px/s | 2 | Sings a ring that spreads across the rift. | 8 |
+| Mites | **Mite** | 1 | 80 px/s | 1 | A flickering swarm. | 1 |
+| Mites | **Lancer** | 1.5 | 60 px/s | 2 | Hovers, then darts at you. | 1 |
+| Mites | **Thief Mite** | 1 | 90 px/s | 2 | Steals void energy on touch and flees. | 1 |
+| Mites | **Biter Gnat** | 1 | 120 px/s | 1 | Circles you, then bites. | 1 |
 | Wall crawlers | **Creeper** | 7 | 35 px/s | 2 | Crawls down a rift wall, spitting across. | 5 |
 | Wall crawlers | **Lasher** | 12 | 30 px/s | 3 | Clings to a wall and sweeps a tendril across the rift. | 7 |
 | Wall crawlers | **Weaver** | 8 | 30 px/s | 2 | Spins webs across the rift that catch bolts. | 6 |
+| Wall crawlers | **Skitterer** | 7 | 90 px/s | 1 | Runs along the rift floor, spitting up at you. | 5 |
+| Reachers | **Grasping Limb** | 6 | clings to a wall | 1 | Reaches from a wall at your height, then lunges. | 4 |
+| Reachers | **Suckermouth** | 8 | clings to a wall | 2 | Clings to a wall and drags you toward its mouth. | 5 |
+| Reachers | **Thrasher** | 10 | clings to a wall | 2 | Hangs from the top and sweeps down at you. | 6 |
+| Reachers | **Stalk Eye** | 5 | clings to a wall | 1 | Peers from a wall on a stalk and fires at you. | 4 |
+| The deep | **Shambler** | 9 | 42 px/s | 1 | A drowned thing that walks straight at you. | 5 |
+| The deep | **Croaker** | 8 | 50 px/s | 2 | Keeps its distance and croaks out rings. | 5 |
+| The deep | **Harpooner** | 7 | 60 px/s | 2 | Aims a line at you, then throws. | 6 |
+| The deep | **Brine Priest** | 10 | 30 px/s | 3 | Marks where you stand; the brine there slows you. | 7 |
+| Jellies | **Polyp** | 6 | 34 px/s | 1 | Drifts after you and stings on touch, unharmed. | 4 |
+| Jellies | **Siphon Jelly** | 7 | 30 px/s | 2 | Drains your void energy while you are near. | 6 |
+| Jellies | **Lantern Jelly** | 9 | 24 px/s | 2 | Its light bends your bolts toward it. | 6 |
+| Jellies | **Man-o-War** | 8 | 28 px/s | 3 | Trails stinging tendrils far below it. | 6 |
+| Gaunts | **Faceless Gaunt** | 6 | 250 px/s | 1 | Swoops at you in long arcs. | 5 |
+| Gaunts | **Harrier** | 4 | 520 px/s | 2 | Marks your row, then strafes across it. | 4 |
+| Gaunts | **Shrieker** | 7 | 60 px/s | 2 | Screams a ring that throws you back. | 5 |
+| Gaunts | **Carrion Wing** | 6 | 120 px/s | 2 | Flies above you and drops bile bombs. | 5 |
 | Mini-bosses | **Brood Warden** | 90 | 30 px/s | 1 | A shelled brood-carrier that sows pods and mites. | 25 |
 | Mini-bosses | **Hive Knight** | 80 | 30 px/s | 1 | An armoured grazer that charges again and again. | 25 |
 | Mini-bosses | **Gazer Prime** | 70 | 30 px/s | 2 | Burns three columns at once; five when hurt. | 25 |
 | Mini-bosses | **Gorging Behemoth** | 110 | 26 px/s | 2 | Eats falling matter and hurls it back at you. | 30 |
+| Mini-bosses | **Tide Matron** | 95 | 30 px/s | 2 | Calls the drowned and sings rings of brine. | 25 |
+| Mini-bosses | **Gaunt Lord** | 85 | 220 px/s | 2 | A great faceless swooper that calls harriers. | 25 |
 | Bosses | **The Choir** · Pride | 260 | 30 px/s | 2 | Three hooded heads behind orbiting wards; sings rings of globs and calls deacons. | 40 |
 | Bosses | **The Hollow Eye** · Envy | 240 | 30 px/s | 2 | A vast eye that blinks across the rift and burns your column. | 40 |
 | Bosses | **The Mother** · Gluttony | 320 | 40 px/s | 3 | The hive itself: pods, grazers, spreads of globs, hurled matter. | 30 |
+| Bosses | **The Drowned King** · Sloth | 250 | 30 px/s | 2 | Dreaming in the deep: tidal walls, limbs from the rift walls, the drowned at his call. | 40 |
 
 Life x (1 + 0.35 per later stage) x omen x depth; speed x (1 + 0.1 per later stage). Mini-bosses and bosses are not slowed, charmed, slept, pulled or executed; touching one costs 3 energy. Gaze beams and lashes are telegraphed for 1 s and cost 2.
 
@@ -404,9 +533,9 @@ Life x (1 + 0.35 per later stage) x omen x depth; speed x (1 + 0.1 per later sta
 Some Ybasogs carry an innate nature, shown by an aura in its colour and its sigil. A natured Ybasog has 30% more life and drops 2 more void energy. **A bolt holding the opposite nature deals x1.6** ("WEAK"); **a bolt holding the same nature deals x0.5** ("RESISTS"); burns and venom follow the same multiplier. A fused bolt counts every nature it holds.
 
 - **How many:** 20% of stage 1 Ybasogs, +12% per later stage, in a mixed tide.
-- **Prevailing nature:** each adventure has one, shown at the Altar's Prepare tab; 60% of natured Ybasogs carry it (85% in a surge).
+- **Prevailing nature:** each adventure has one, shown with each rift at the Rift Gate; 60% of natured Ybasogs carry it (85% in a surge).
 - **Tides:** each wave rolls a void tide (5% natured), a mixed tide, or a nature surge (70% natured). Surges grow more common: stage 1 void 40% / mixed 50% / surge 10%; stage 2 25 / 50 / 25; stage 3 15 / 45 / 40.
-- **Bosses** have fixed natures: The Choir is Pride, The Hollow Eye is Envy, The Mother is Gluttony. Mini-bosses always carry a nature (60% the prevailing one).
+- **Bosses** have fixed natures: The Choir is Pride, The Hollow Eye is Envy, The Drowned King is Sloth, The Mother is Gluttony. Mini-bosses always carry a nature (60% the prevailing one).
 
 ## 13. Falling matter
 
@@ -435,20 +564,23 @@ Some Ybasogs carry an innate nature, shown by an aura in its colour and its sigi
 | Ruins | **Shrine** | 12 | 18 px/s | 2 | A small lit shrine; breaking it heals you 4. | 5 |
 | Ruins | **Monolith** | 40 | 14 px/s | 3 | A black slab that drinks light: bolts never ricochet off it. | 15 |
 
-Matter body-checks the blob and takes burn, chill and venom; it ignores sleep, charm and pulls. Matter that slips past costs 1 energy (scrap costs nothing).
+Matter body-checks the blob and takes burn, chill and venom; it ignores sleep, charm and pulls. Matter that slips past costs nothing; a drop-carrying piece spoils a sealed wave.
 
 ## 14. Stages and waves
 
 - **Stage 1, wave 1** is fixed: an asteroid and pods, a debris slab with three grazers behind it. It introduces pods, grazers, asteroids and the slab.
 - **Every other wave** opens with a **debut**: 1 Ybasog kind not yet met this adventure (never-met kinds first, earliest stage first), shown alone, and one new kind of matter. The first meeting ever shows a name card. The wave then plays **3 + 1 per later wave and stage beats**, drawn from kinds already met: trickle, line, V formation, column, flank, swarm, rockfall, wreck field, ruin wall, elite pair, lull.
-- **Mini-bosses** close stage 1 wave 3 and wave 2 of stages 2 and 3. **Bosses:** The Choir or The Hollow Eye end stage 2; The Mother ends stage 3.
+- **Mini-bosses** close stage 1 wave 3 and wave 2 of stages 2 and 3. **Bosses:** The Choir, The Hollow Eye or The Drowned King end stage 2; The Mother ends stage 3.
 - About 9 new kinds are met in one adventure, so the bestiary (counted at the Altar) fills over several adventures.
+- **Between waves 1 and 2, and 2 and 3,** a pick: take one of three pool cards (sometimes "temper a card +1"), or skip. After wave 3 comes the Rift Rest (section 3).
 
 ## 15. The save
 
-Saved in the browser (`localStorage`, key `voidwalker.save.v1`): innate nature, discovered natures, the collection, the deck, fusions found, achievement counters, banked void energy, adventures and wins, depth, rite pity and draws, the next omen, the focus. "Forget everything" on the Discoveries tab wipes it. Address options for testing: `?demo=1` (a sample collection, never saved), `?nosave=1`, `?scene=altar&tab=rite`, `?scene=figures`, `?seed=N`.
+Kept in the browser (`localStorage`, key `voidwalker.save.v1`): innate nature, discovered natures, collection, pool, fusions found, achievement counters, banked void energy, adventures and wins, depth, rite pity, sigils, relics and slots, logs, quests, the rifts offered and the chosen first card. Test addresses: `?demo=1` (a sample collection, never saved), `?nosave=1`, `?scene=altar&tab=gate`, `?scene=figures` (every Ybasog), `?stage=2&wave=1&autofire=1`, `?rest=1`, `?seed=N`.
 
 ## 16. Every tuning value
+
+All 131 values the game reads live, from `prototypes/voidwalker/config.js`.
 
 | Key | Value | Range | Step |
 |---|---|---|---|
@@ -461,8 +593,11 @@ Saved in the browser (`localStorage`, key `voidwalker.save.v1`): innate nature, 
 | `rare_chance` | 0.2 | 0 to 1 | 0.01 |
 | `mythic_chance` | 0.07 | 0 to 1 | 0.01 |
 | `mythic_pity` | 10 | 1 to 50 | 1 |
-| `fuse_cost` | 20 | 0 to 200 | 5 |
 | `void_refund` | 8 | 0 to 100 | 1 |
+| `rest_actions` | 2 | 0 to 6 | 1 |
+| `relic_chance` | 1 | 0 to 5 | 0.1 |
+| `hitstop` | 0.06 | 0 to 0.3 | 0.01 |
+| `music_volume` | 0.35 | 0 to 1 | 0.05 |
 | `first_fusion_bonus` | 15 | 0 to 200 | 5 |
 | `discovery_bonus` | 40 | 0 to 300 | 5 |
 | `discovery_copies` | 2 | 1 to 5 | 1 |
@@ -474,15 +609,12 @@ Saved in the browser (`localStorage`, key `voidwalker.save.v1`): innate nature, 
 | `deck_max` | 12 | 4 to 30 | 1 |
 | `max_level` | 3 | 1 to 6 | 1 |
 | `stage_heal` | 5 | 0 to 20 | 1 |
-| `player_speed` | 330 | 150 to 600 | 10 |
-| `band_top` | 520 | 400 to 640 | 10 |
+| `player_speed` | 470 | 150 to 600 | 10 |
 | `max_energy` | 20 | 5 to 60 | 1 |
 | `iframes` | 0.8 | 0 to 3 | 0.1 |
 | `hit_damage` | 2 | 0 to 10 | 1 |
 | `glob_damage` | 1 | 0 to 10 | 1 |
 | `bump_damage` | 1 | 0 to 10 | 1 |
-| `leak_enemy` | 3 | 0 to 10 | 1 |
-| `leak_matter` | 1 | 0 to 10 | 1 |
 | `magnet_radius` | 120 | 20 to 400 | 10 |
 | `mote_speed` | 560 | 100 to 1200 | 20 |
 | `fire_interval` | 0.17 | 0.05 to 0.6 | 0.01 |
@@ -491,6 +623,15 @@ Saved in the browser (`localStorage`, key `voidwalker.save.v1`): innate nature, 
 | `bolt_damage` | 1 | 0.2 to 5 | 0.1 |
 | `fused_bonus` | 0.3 | 0 to 2 | 0.05 |
 | `level_bonus` | 0.5 | 0 to 2 | 0.05 |
+| `card_drop` | 1 | 0 to 5 | 0.1 |
+| `card_plain` | 0.005 | 0 to 0.2 | 0.005 |
+| `card_natured` | 0.04 | 0 to 0.5 | 0.01 |
+| `card_mini` | 0.6 | 0 to 1 | 0.05 |
+| `card_boss` | 1 | 0 to 1 | 0.05 |
+| `card_wreck` | 0.1 | 0 to 1 | 0.01 |
+| `card_ruin` | 0.15 | 0 to 1 | 0.01 |
+| `trial_chance` | 0.02 | 0 to 0.5 | 0.01 |
+| `pick_temper` | 0.3 | 0 to 1 | 0.05 |
 | `reshuffle_time` | 0.35 | 0 to 2 | 0.05 |
 | `burn_dps` | 1.6 | 0 to 10 | 0.1 |
 | `burn_time` | 2 | 0 to 6 | 0.1 |
@@ -555,6 +696,15 @@ Saved in the browser (`localStorage`, key `voidwalker.save.v1`): innate nature, 
 | `mother_volley` | 7 | 1 to 20 | 1 |
 | `telegraph_time` | 1 | 0.2 to 3 | 0.1 |
 | `beam_damage` | 2 | 0 to 10 | 1 |
+| `pulse_speed` | 210 | 60 to 600 | 10 |
+| `pulse_damage` | 1 | 0 to 5 | 1 |
+| `brine_slow` | 0.5 | 0 to 0.9 | 0.05 |
+| `brine_time` | 5 | 1 to 12 | 0.5 |
+| `hunt_time` | 24 | 8 to 60 | 1 |
+| `reach_time` | 13 | 4 to 30 | 1 |
+| `leech_drain` | 1.3 | 0.3 to 5 | 0.1 |
+| `pull_speed` | 95 | 0 to 300 | 5 |
+| `shriek_push` | 520 | 0 to 1500 | 20 |
 | `nature_chance` | 0.2 | 0 to 1 | 0.05 |
 | `nature_chance_step` | 0.12 | 0 to 0.5 | 0.01 |
 | `prevailing_share` | 0.6 | 0 to 1 | 0.05 |
@@ -565,22 +715,65 @@ Saved in the browser (`localStorage`, key `voidwalker.save.v1`): innate nature, 
 | `beats_base` | 3 | 1 to 12 | 1 |
 | `beats_step` | 1 | 0 to 6 | 1 |
 | `debuts_per_wave` | 1 | 0 to 3 | 1 |
+
 ## 17. Development history and changelog
 
 ### Timeline
 
-| When (2026-11-18) | Step | Result |
+| When | Step | Result |
 |---|---|---|
-| Evening | `/start` onboarding | Existing work found: `design/concepts/voidwalker-concept-notes.md` and `voidwalker-mindmap.mm`. `design/references/2.5d-tactics-reference-gdd.md` was set aside as a different game. Settings saved: stage `Concept`, rigor `minimal`, goal `hobby`, automation `guided`. |
-| Evening | Design direction | You chose stages inspired by Ball x Pit, with the innate natures and deckbuilding in place of the town. |
-| Evening | `/prototype` brief | Genres: survivors-like x roguelike deckbuilder. Defaults taken "for fun". Your two changes before the build: falling space debris, ruins and asteroids alongside the Ybasogs, and room for 3- and 4-nature combinations later. |
-| 22:13 to 22:29 | **First build** (`f8326dd`, tag `one-shot/voidwalker`) | Playable in 14 minutes. Small check: boots, screenshot, brief words, emoji and outlines all passed. Brief checklist 32 of 32. |
-| 22:47 to 23:11 | **Iteration 1** (`2c3cd10`) | The collection game, all 14 natures, all 84 fusions, 15 forms, the Altar hub, the save. Light check: no errors, a play run and a screenshot of every Altar tab. |
-| 23:15 | This reference | Generated from `config.js`, then published as the Voidwalker Codex page. |
-| 23:22 to 23:30 | **Iteration 2** (`0053f63`) | Achievements made hard to get. |
-| 23:32 to 23:52 | **Iteration 3** (`708c5d9`) | 34 Ybasog kinds, natured Ybasogs, nature tides, procedural waves with debuts, 20 kinds of matter. |
+| 2026-11-18, evening | `/start` onboarding | Existing work found: `design/concepts/voidwalker-concept-notes.md` and `voidwalker-mindmap.mm`. `design/references/2.5d-tactics-reference-gdd.md` was set aside as a different game. Settings saved: stage `Concept`, rigor `minimal`, goal `hobby`, automation `guided`. |
+| 2026-11-18, evening | Design direction | You chose stages inspired by Ball x Pit, with the innate natures and deckbuilding in place of the town. |
+| 2026-11-18, evening | `/prototype` brief | Genres: survivors-like x roguelike deckbuilder. Defaults taken "for fun". Your two changes before the build: falling space debris, ruins and asteroids alongside the Ybasogs, and room for 3- and 4-nature combinations later. |
+| 2026-11-18, 22:13 to 22:29 | **First build** (`f8326dd`, tag `one-shot/voidwalker`) | Playable in 14 minutes. Small check: boots, screenshot, brief words, emoji and outlines all passed. Brief checklist 32 of 32. |
+| 2026-11-18, 22:47 to 23:11 | **Iteration 1** (`2c3cd10`) | The collection game, all 14 natures, all 84 fusions, 15 forms, the Altar hub, the save. Light check: no errors, a play run and a screenshot of every Altar tab. |
+| 2026-11-18, 23:15 | This reference | Generated from `config.js`, then published as the Voidwalker Codex page. |
+| 2026-11-18, 23:22 to 23:30 | **Iteration 2** (`0053f63`) | Achievements made hard to get. |
+| 2026-11-18, 23:32 to 23:52 | **Iteration 3** (`708c5d9`) | 34 Ybasog kinds, natured Ybasogs, nature tides, procedural waves with debuts, 20 kinds of matter. |
+| 2026-11-19 | **Iteration 4** (`1d5e28a`) | The rift widened to fill the screen; the adventure HUD made wordless. |
+| 2026-11-19 | **Iteration 5** (`9c8ad60`) | The hub became a place with six stations; Rift Rest; sigils, relics, logs, quests, rifts; pixel look, combat feel and a score. |
+| 2026-11-19 | **Iteration 6** (`f6c1dd9`) | Free roam, no leak damage, 23 new kinds and The Drowned King. Checked with a headless harness: each new kind alone for 30 s, three full seeded runs to a win, no errors. |
+| 2026-11-19 | Chapter II plan (`7edf2ca`) | `design/chapter-2-the-silent-foundry.md`: a civilization destroyed by its own AI, 34 machine kinds. Not built. |
+| 2026-11-19 | **Iteration 7** (`ef7b610`) | The deck is found in the adventure; Inborn and Chosen sigils; trial cards; full 1280×720. Three full runs (one from a new save) won with no errors. |
 
 ### Changelog
+
+#### Iteration 7: the deck is found in the adventure (`ef7b610`)
+
+Your words: *"There are too many cards (power) from the beginning. You purchase and gacha cards in preparation but you collect those cards in adventure. You do not use all the cards in your deck from the beginning of a new adventure session."* Your answers: start with 1 void card and upgrade cards temporarily in the adventure; permanent upgrades to start with an innate card or two; cards from kills, wave-clear picks, the Rift Rest and broken matter at different chances; the loadout as the pool, and very rarely a card from outside it, for that adventure only. And: *"we need also to increase the resolution of the game."*
+
+- **Changed** every adventure to begin with one void card; the Altar's deck became the **pool** the adventure's cards come from.
+- **Added** card drops (plain 0.5%, natured 4%, mini-boss 60%, boss always, wreck 10%, ruin 15%), a pick of one of three after waves 1 and 2 (sometimes "temper +1"), and a found card at the Rift Rest.
+- **Added** trial cards: 2% of found cards come from outside the pool, marked TRIAL, for that adventure only.
+- **Added** sigils Inborn (begin with your form's nature card) and Chosen (begin with a card picked at the Gate; unlocked by a win).
+- **Changed** merging at the Rest: allowed down to a single card.
+- **Changed** the screen to full 1280×720, same palette.
+- **Fixed** during the check: the Sigils page overflowed into the unlocks list, and badge text was hard to read.
+
+#### Iteration 6: free roam and the hunters (`f6c1dd9`)
+
+Your words for this iteration were not recorded in the brief; it was begun in an earlier session and finished from its config changes.
+
+- **Changed** movement: the blob roams the whole rift and aims anywhere; bolts bounce off the floor. Nothing drains energy by slipping past the bottom.
+- **Added** 23 Ybasog kinds: a fourth variant for every older family (Oracle, Void Leech, Cantor, Biter Gnat, Skitterer); four families that hunt you, reachers (Grasping Limb, Suckermouth, Thrasher, Stalk Eye), the deep (Shambler, Croaker, Harpooner, Brine Priest), jellies (Polyp, Siphon Jelly, Lantern Jelly, Man-o-War) and gaunts (Faceless Gaunt, Harrier, Shrieker, Carrion Wing); mini-bosses Tide Matron and Gaunt Lord; and a third stage 2 boss, The Drowned King.
+- **Added** spreading rings, slowing brine pools, latching leeches, bolt-bending lanterns, row strafes and tidal walls; hunters tire and leave after a while.
+- **Changed** the Stag (regrows energy) and the Manta (longer safety) traits, which had leaned on the old band and leaks.
+
+#### Iteration 5: the hub as a place, and progression (`9c8ad60`)
+
+Your words: *"Our game is roguelite. But we still want a HUB where the cards are prepared in deck. Just like the town in BALL x PIT. Just that there is no building but just card deck preps and gacha. The card upgrades and merge between stages is not that. There should be also some progression/upgrades/differences between adventure sessions. Make it less like some flash game or a simple browser game."*
+
+- **Changed** the Altar into a place: a floating altar with six stations (Deck, Void Rite, Rift Gate, Sigils, Relics, Journal), and a reveal ceremony for the Rite.
+- **Added** the Rift Rest between stages (merge and temper for that adventure only, then a path); the Forge's fusing moved there.
+- **Added** sigils, unlocks, a choice of rifts with boons, 16 relics in slots, 16 logs and 12 quests in the Journal.
+- **Changed** the look to pixels on a limited palette with a pixel font, and added hit-stop, impact flashes, layered sound and a score that follows the scene.
+
+#### Iteration 4: the wide rift (`1d5e28a`)
+
+Your words: *"Make the gameplay view (perspective) much larger, and adjust all elements behaviors to the enlarged view. Make the adventure UI simpler with less words / wordy = less fun."*
+
+- **Changed** the rift to fill the screen, with spawns and behaviours spread to the wider field.
+- **Changed** the adventure HUD to marks, not words: an energy bar, a void count, stage and wave pips, the tide mark, the next bolts as sigils, the form.
 
 #### Iteration 3: the hive grows (`708c5d9`)
 
@@ -632,6 +825,9 @@ Your words: *"Cards/innate natures are discovered in adventures as achievement r
 
 | Decision | Why | Who |
 |---|---|---|
+| The deck starts as one void card; the loadout is the pool | Your note after iteration 6: too much power from the start | you; the drop chances are guessed |
+| Free roam, no leak damage | Iteration 6, finished from its config | earlier session |
+| A hub with stations, sigils, relics and the Rift Rest | Your note: progression between adventures, less like a flash game | you; the contents are guessed |
 | Browser game first, engine later | No engine set; the one-shot proves the fun before an engine is chosen | the workflow |
 | Rigor `minimal` | No scope signals at the start; `design/game-brief.md` is the design record | guessed, you saved it |
 | Stage shape like Ball x Pit; the town replaced by the Altar | Your direction | you |
@@ -649,28 +845,29 @@ Your words: *"Cards/innate natures are discovered in adventures as achievement r
 | `prototypes/voidwalker/index.html` | The game (Canvas 2D, Web Audio, no libraries) |
 | `prototypes/voidwalker/config.js` | Every tuning value, plus the natures, recipes, discoveries and omens as data |
 | `design/game-brief.md` (copy in `prototypes/voidwalker/brief.md`) | The one-page brief: your words, Features, systems, scope |
-| `prototypes/voidwalker/evidence/` | Check results and screenshots (`figures.png` shows every figure; `iteration-1-altar-*.png` shows each Altar tab) |
+| `prototypes/voidwalker/evidence/` | Check results and screenshots (`iteration-6-figures.png` shows every Ybasog; `iteration-7-*.png` the pick, Rest, Gate and Sigils screens) |
+| `design/chapter-2-the-silent-foundry.md` | The Chapter II plan (not built) |
 | `design/concepts/` | Your original concept notes and mindmap |
-| `design/voidwalker-reference.md` | This document |
+| `design/voidwalker-reference.md` | The same reference as text |
 
 ## 18. Known gaps and next steps
 
-**Not checked yet:** these exist only in code. Nobody has seen them work on screen, and your play is the check.
-- Most of the 84 fusion effects in action.
-- The Mother fight.
+**Not checked yet:** these were tested only by a headless harness. Your play is the check.
+
+- How the start feels with one card, and whether the drop chances fill the deck at a good pace.
+- The first adventure: its pool is only six cards, and the harness took far more damage than in later runs.
+- Difficulty with hunters chasing across the whole rift, and how readable the new families are.
+- The Drowned King, the Tide Matron and the Gaunt Lord in real play.
 - Whether the economy's pace feels right over several adventures.
-- How achievable each discovery is.
-- Balance between the forms.
 
 **Later, by the brief:**
+
+- Chapter II, the Silent Foundry: add it as a feature (plan in `design/chapter-2-the-silent-foundry.md`).
 - 3-nature (364) and 4-nature (1,001) combinations: grow it.
 - The open-world void to glide through, with planets: grow it.
 - The story (fireflies, the Akashic Records, the 1000 days, the morality endings): add it as a feature.
 - More stages and characters: grow it.
+- Godot 4 .NET (C#) as the engine, once the browser build is settled.
 
-**Notes:**
-- The story's Ybasog hierarchy (devourers, deacons, eyes) and corruption are not in the game yet.
-- Twins can level a card up to III; levels IV and up are a `max_level` change.
-- To regenerate this document after changing `config.js`, ask Claude to "regenerate the Voidwalker reference".
+**Next:** play several adventures, then say what to change.
 
-**Next:** play several adventures. Then say what to change, or "let me tune it" for live sliders, or "grow it" to turn the prototype into a project.
