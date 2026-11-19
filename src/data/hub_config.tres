@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="HubConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/hub/HubConfig.cs" id="1"]
+
+[resource]
+script = ExtResource("1")
+FlowCount = 5
+FlowSpeed = 0.12
+FlowSurge = 0.35
+FlowRadius = Vector2(235, 95)
+FlowCentre = Vector2(320, 165)
+FlowBob = 13.0
+TrailLifetime = 2.0
+TrailAmount = 60
+TrailLift = 14.0
+StarDensity = 0.07
+StarBlinkMin = 6.0
+StarBlinkMax = 18.0
+AsteroidDrift = 3.0

@@ -1,0 +1,70 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "tome",
+ "canvas": [
+  56,
+  32
+ ],
+ "anchor_px": [
+  28,
+  16
+ ],
+ "palette": {
+  "H": "#e0a040",
+  "J": "#fff0b0",
+  "K": "#1a0a20",
+  "L": "#3a1746",
+  "M": "#5d2e6e",
+  "N": "#9b55b0",
+  "P": "#e8e6c0",
+  "o": "#0e0a18",
+  "r": "#6e6156"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "56.",
+    "56.",
+    "23.3MNK14.NMNMN8M.",
+    "14.2ML4M6P2K6P13ML3M2LK.",
+    "5.MNMN18P2K18PL5M2L.",
+    ".NM24P2K24PMK.",
+    ".MN24P2K24P2L.",
+    ".2M24P2K24PMK.",
+    ".2M3P5rP10rPr3P2K3PrP10rP5r3PML.",
+    ".2M24P2K24PMK.",
+    ".MN24P2K24P2L.",
+    ".2M3P3rP10r7P2K3P10rP4r6PMK.",
+    ".MN24P2K24P2L.",
+    ".2M24P2K24PLK.",
+    ".2M3PrP10rP5r3P2K3P8rP9r3P2L.",
+    ".ML24P2K24PLJ.",
+    ".2M24P2K24PLH.",
+    ".2M3P10rP3r7P2K3P6rP7r7PMJ.",
+    ".MN24P2K24P2L.",
+    ".2M24P2K24PMK.",
+    ".MN3P8rP8r4P2K3P4rP10rPr4PML.",
+    ".2M24P2K24PMK.",
+    ".2M24P2K24P2L.",
+    ".ML3P6rP7r7P2K3P2rP10r8PLK.",
+    ".2M24P2K24P2L.",
+    ".ML24P2K24PMK.",
+    ".2M24P2K24P2L.",
+    ".LKL3KM3LM9L3ML2M2K3MLMLM3LM8L3KL3K.",
+    "7.2LKLKL3KLKLK3MLMLM2KLMLMLMKLKLKLKLKLKLK8.",
+    "20.2LKLKL3KLKLKLK21.",
+    "56.",
+    "56."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

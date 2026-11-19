@@ -1,0 +1,53 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "blob",
+ "canvas": [
+  20,
+  18
+ ],
+ "anchor_px": [
+  10,
+  17
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "W": "#7b5bdf",
+  "X": "#b9a6ff",
+  "Y": "#d8c8ff",
+  "Z": "#efe6ff",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "20.",
+    "20.",
+    "20.",
+    "6.8X6.",
+    "4.3X6K3W4.",
+    "4.X10KW4.",
+    "3.2X10K2W3.",
+    "3.X4KZ3KZ3KW3.",
+    "2.2X4KZ3KZ3K2W2.",
+    "2.X5KY3KY4KW2.",
+    ".2X14K2W.",
+    ".2X14K2W.",
+    "2.X14KW2.",
+    "2.2X12K2W2.",
+    "3.4W6K4W3.",
+    "6.2W4K2W6.",
+    "7.6W7.",
+    "20."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

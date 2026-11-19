@@ -1,0 +1,47 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "void-icon",
+ "canvas": [
+  8,
+  12
+ ],
+ "anchor_px": [
+  4,
+  6
+ ],
+ "palette": {
+  "V": "#4a3a7a",
+  "W": "#7b5bdf",
+  "X": "#b9a6ff",
+  "Y": "#d8c8ff",
+  "Z": "#efe6ff",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "8.",
+    "3.Y4.",
+    "3.YX3.",
+    "2.YZX3.",
+    ".Y2Z2X2.",
+    ".6X.",
+    ".3W2V2.",
+    "2.2W2V2.",
+    "2.2WV3.",
+    "3.WV3.",
+    "8.",
+    "8."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

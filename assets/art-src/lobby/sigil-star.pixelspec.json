@@ -1,0 +1,50 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "sigil-star",
+ "canvas": [
+  9,
+  9
+ ],
+ "anchor_px": [
+  4,
+  4
+ ],
+ "palette": {
+  "I": "#ffd27a",
+  "J": "#fff0b0",
+  "Z": "#efe6ff",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "9.",
+    "9.",
+    "4.J4.",
+    "3.JIJ3.",
+    "2.JIZIJ2.",
+    "3.JIJ3.",
+    "4.J4.",
+    "9.",
+    "9."
+   ]
+  }
+ ],
+ "variants": {
+  "lit": {},
+  "dark": {
+   "J": "#3b3350",
+   "I": "#4a3a7a",
+   "Z": "#6d6488"
+  }
+ },
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

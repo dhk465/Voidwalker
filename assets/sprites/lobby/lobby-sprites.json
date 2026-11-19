@@ -1,0 +1,225 @@
+{
+ "schema": "voidwalker.lobby_sprites.v2",
+ "art_source": "code",
+ "disclosure": "code-drawn, no image model",
+ "made_by": "tools/art/gen_lobby.py --scale 0.5 -> codeart2d render_pixelspec.py --strict-qc -> tools/art/pack_lobby.py",
+ "pad": 3,
+ "sprites": {
+  "altar": {
+   "file": "altar.png",
+   "size": [
+    358,
+    137
+   ],
+   "anchor": [
+    179,
+    44
+   ],
+   "qa": "pass"
+  },
+  "asteroid-0": {
+   "file": "asteroid-0.png",
+   "size": [
+    28,
+    25
+   ],
+   "anchor": [
+    14,
+    13
+   ],
+   "qa": "pass"
+  },
+  "asteroid-1": {
+   "file": "asteroid-1.png",
+   "size": [
+    37,
+    31
+   ],
+   "anchor": [
+    19,
+    15
+   ],
+   "qa": "pass"
+  },
+  "asteroid-2": {
+   "file": "asteroid-2.png",
+   "size": [
+    48,
+    39
+   ],
+   "anchor": [
+    24,
+    19
+   ],
+   "qa": "pass"
+  },
+  "blob": {
+   "file": "blob.png",
+   "size": [
+    26,
+    24
+   ],
+   "anchor": [
+    13,
+    20
+   ],
+   "qa": "pass"
+  },
+  "card-back": {
+   "file": "card-back.png",
+   "size": [
+    32,
+    41
+   ],
+   "anchor": [
+    16,
+    21
+   ],
+   "qa": "pass"
+  },
+  "gate-arch": {
+   "file": "gate-arch.png",
+   "size": [
+    52,
+    128
+   ],
+   "anchor": [
+    3,
+    3
+   ],
+   "qa": "pass"
+  },
+  "lectern": {
+   "file": "lectern.png",
+   "size": [
+    38,
+    31
+   ],
+   "anchor": [
+    19,
+    27
+   ],
+   "qa": "pass"
+  },
+  "pedestal-locked": {
+   "file": "pedestal-locked.png",
+   "size": [
+    28,
+    31
+   ],
+   "anchor": [
+    14,
+    27
+   ],
+   "qa": "pass"
+  },
+  "pedestal-open": {
+   "file": "pedestal-open.png",
+   "size": [
+    28,
+    31
+   ],
+   "anchor": [
+    14,
+    27
+   ],
+   "qa": "pass"
+  },
+  "sigil-star-dark": {
+   "file": "sigil-star-dark.png",
+   "size": [
+    15,
+    15
+   ],
+   "anchor": [
+    7,
+    7
+   ],
+   "qa": "pass"
+  },
+  "sigil-star-lit": {
+   "file": "sigil-star-lit.png",
+   "size": [
+    15,
+    15
+   ],
+   "anchor": [
+    7,
+    7
+   ],
+   "qa": "pass"
+  },
+  "standing-stone-far": {
+   "file": "standing-stone-far.png",
+   "size": [
+    17,
+    23
+   ],
+   "anchor": [
+    9,
+    19
+   ],
+   "qa": "pass"
+  },
+  "standing-stone-lit": {
+   "file": "standing-stone-lit.png",
+   "size": [
+    17,
+    23
+   ],
+   "anchor": [
+    9,
+    19
+   ],
+   "qa": "pass"
+  },
+  "tome": {
+   "file": "tome.png",
+   "size": [
+    62,
+    38
+   ],
+   "anchor": [
+    31,
+    19
+   ],
+   "qa": "pass"
+  },
+  "void-ball": {
+   "file": "void-ball.png",
+   "size": [
+    15,
+    15
+   ],
+   "anchor": [
+    7,
+    7
+   ],
+   "qa": "pass"
+  },
+  "void-icon": {
+   "file": "void-icon.png",
+   "size": [
+    14,
+    18
+   ],
+   "anchor": [
+    7,
+    9
+   ],
+   "qa": "pass"
+  },
+  "puff-strip": {
+   "file": "puff-strip.png",
+   "size": [
+    28,
+    7
+   ],
+   "frames": 4,
+   "frame_size": [
+    7,
+    7
+   ]
+  }
+ }
+}

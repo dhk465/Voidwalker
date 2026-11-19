@@ -1,0 +1,10 @@
+<Project Sdk="Godot.NET.Sdk/4.8.0-beta.4">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <RootNamespace>Voidwalker</RootNamespace>
+    <Nullable>enable</Nullable>
+    <!-- The browser one-shot, the tools and the art sources are not part of the game build. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);prototypes/**;tools/**;.claude/**;production/**;docs/**;design/**;assets/art-src/**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,43 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "void-ball",
+ "canvas": [
+  9,
+  9
+ ],
+ "anchor_px": [
+  4,
+  4
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "W": "#7b5bdf",
+  "Y": "#d8c8ff",
+  "Z": "#efe6ff",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "9.",
+    "3.2ZY3.",
+    "2.2Z2WY2.",
+    ".2Z3KWY.",
+    ".ZW3KWY.",
+    ".YW3KWY.",
+    "2.Y3WY2.",
+    "3.3Y3.",
+    "9."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

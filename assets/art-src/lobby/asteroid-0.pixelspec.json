@@ -1,0 +1,54 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "asteroid-0",
+ "canvas": [
+  22,
+  19
+ ],
+ "anchor_px": [
+  11,
+  10
+ ],
+ "palette": {
+  "E": "#3b3350",
+  "a": "#1a1229",
+  "b": "#241a3a",
+  "d": "#45404d",
+  "e": "#6d6488",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "22.",
+    "22.",
+    "13.EdE6.",
+    "8.2dEdEdEb6.",
+    "7.de2dE2dEbE5.",
+    "4.dede2d6Eb5.",
+    "2.edede2d5Ed3E4.",
+    "2.de2d4EbEb2EdE2b3.",
+    "2.eEd2Eb6EdEbab3.",
+    "2.4EbE3bEb2Ebab4.",
+    "3.dEbE3b2Ee2E3b4.",
+    "3.EbE3b3Ee2E2b5.",
+    "4.d3b3E2e2EbE5.",
+    "4.b3ab4eE3b5.",
+    "8.4eba2bE5.",
+    "9.E2ba4b5.",
+    "10.Eab9.",
+    "22.",
+    "22."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

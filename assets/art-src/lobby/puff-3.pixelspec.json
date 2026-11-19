@@ -1,0 +1,33 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "puff-3",
+ "canvas": [
+  7,
+  7
+ ],
+ "anchor_px": [
+  4,
+  4
+ ],
+ "palette": {
+  "Z": "#efe6ff"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "7.",
+    "7.",
+    "7.",
+    "3.Z3.",
+    "7.",
+    "7.",
+    "7."
+   ]
+  }
+ ]
+}

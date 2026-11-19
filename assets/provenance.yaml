@@ -1,0 +1,48 @@
+# Where each file in assets/ came from, one entry per file or folder of like files (the Godot build's assets).
+- path: assets/sprites/lobby/*.png
+  origin: code
+  tool: "tools/art/gen_lobby.py --scale 0.5 (pixel shader + hand-placed detail) -> PixelSpec -> codeart2d render_pixelspec.py --strict-qc -> tools/art/pack_lobby.py (3 px margin); code-drawn, no image model"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: true
+- path: assets/sprites/lobby/lobby-sprites.json
+  origin: code
+  tool: "tools/art/pack_lobby.py: sizes and anchors of the lobby sprites"
+  date: 2026-11-19
+  ships: true
+- path: assets/art-src/lobby/*.pixelspec.json
+  origin: code
+  tool: "PixelSpec sources written by tools/art/gen_lobby.py --scale 0.5"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: false
+- path: assets/fx/rift.png
+  origin: licensed
+  tool: "pixelfx 0.3.1 arcane/portal rendered with tools/render.mjs --sheet (the game's void violets, width 4, height 21, seed 4); alpha cut to whole pixels, frames cropped"
+  source: {vendor: "Patch", product: "pixelfx 0.3.1", url: "https://github.com/patch-gg/pixelfx"}
+  licence: {id: MIT}
+  date: 2026-11-19
+  ships: true
+- path: assets/fx/rift.json
+  origin: code
+  tool: "frame size, columns, fps and pivot of rift.png"
+  date: 2026-11-19
+  ships: true
+- path: assets/fonts/spleen-6x12.otf
+  origin: licensed
+  source: {vendor: "Frederic Cambus", product: "Spleen 2.3.0", url: "https://github.com/fcambus/spleen/releases/download/2.3.0/spleen-2.3.0.tar.gz"}
+  licence: {id: BSD-2-Clause}
+  date: 2026-11-19
+  ships: true
+- path: assets/fonts/spleen-8x16.otf
+  origin: licensed
+  source: {vendor: "Frederic Cambus", product: "Spleen 2.3.0", url: "https://github.com/fcambus/spleen/releases/download/2.3.0/spleen-2.3.0.tar.gz"}
+  licence: {id: BSD-2-Clause}
+  date: 2026-11-19
+  ships: true
+- path: assets/fonts/spleen-LICENSE.txt
+  origin: licensed
+  source: {vendor: "Frederic Cambus", product: "Spleen 2.3.0", url: "https://github.com/fcambus/spleen"}
+  licence: {id: BSD-2-Clause}
+  date: 2026-11-19
+  ships: true

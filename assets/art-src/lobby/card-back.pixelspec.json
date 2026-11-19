@@ -1,0 +1,71 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "card-back",
+ "canvas": [
+  26,
+  35
+ ],
+ "anchor_px": [
+  13,
+  18
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "L": "#3a1746",
+  "V": "#4a3a7a",
+  "W": "#7b5bdf",
+  "X": "#b9a6ff",
+  "b": "#241a3a",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "26.",
+    ".Lb21L2.",
+    ".L21W2b.",
+    ".LW2bLbLbL5bLbLbL3bWK.",
+    ".LWbLbLbLbLbLbLb3LbLbLWb.",
+    ".LWLbLbLbL3bLbLbLbLbLbWK.",
+    ".LWbLbLbLbLbLb3LbLbLbLWb.",
+    ".LWLbLbL3bL3bL3bL3bWK.",
+    ".LWb3LbLbLbLbLbLbLb3LWb.",
+    ".LW2bLbLbLbLbLbLbLbLbLbWK.",
+    ".LWbLbLbLbLb2VLbLbLbLbLWb.",
+    ".LWLbLbL4b2VbL3bLbLbWK.",
+    ".LWb3LbLbLVXWVbLbLb3LWb.",
+    ".LWLbLbL2b2VXW2VbLbLbLbWK.",
+    ".LWbLbLbLbV2X2WVLbLbLbLWK.",
+    ".LWLbLbLbV3X3WV2bL3bWK.",
+    ".LWbLbLbLV3X3WVbLbLbLWb.",
+    ".LW2bLbLV4X4WV5bWK.",
+    ".LWbLbLbLV3X3WVbLbLbLWb.",
+    ".LWLbLbLbV3X3WV2bL3bWK.",
+    ".LWb3LbLbV2X2WV3LbLbLWb.",
+    ".LWLbL4b2VXW2VbLbLbLbWK.",
+    ".LWbLbLbLbLVXWVbLbLbLbLWb.",
+    ".LW8bL2VbL5bLbWK.",
+    ".LWbLbLbLbLb2VLbLbLb3LWb.",
+    ".LW8bLbLbL5bLbWK.",
+    ".bWbLbL3bLbLbLbLbL3bLWb.",
+    ".LWL7bLbLbL7bWK.",
+    ".LWbLbLbLbLbLbLbLbLbLbLWb.",
+    ".LW2bLbLbL3bLbL5bLbWK.",
+    ".bWbLbLbLbLbLbLbLbLbLbLWb.",
+    ".LWLbLbLbLbLbLbL3bLbLbWK.",
+    ".L21WKb.",
+    ".b7Kb14K2.",
+    "26."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

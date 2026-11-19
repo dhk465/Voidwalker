@@ -1,0 +1,66 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "standing-stone",
+ "canvas": [
+  11,
+  17
+ ],
+ "anchor_px": [
+  6,
+  16
+ ],
+ "palette": {
+  "a": "#1a1229",
+  "b": "#241a3a",
+  "c": "#353a44",
+  "d": "#45404d",
+  "e": "#6d6488",
+  "f": "#8a8296",
+  "g": "#8b95a3",
+  "o": "#0e0a18",
+  "v": "#5ac8b9",
+  "w": "#7fd6c8"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "11.",
+    "3.gfge4.",
+    "2.fe3fe3.",
+    "2.ded2efd2.",
+    "2.ed2efed2.",
+    "2.6ec2.",
+    "2.f3efec2.",
+    "2.3efwec2.",
+    "2.f3evdc2.",
+    "2.4eveb2.",
+    "2.f3efdc2.",
+    "2.2ed3eb2.",
+    "2.f4edc2.",
+    "2.3efedb2.",
+    "2.f3de2c2.",
+    "2.c5ba2.",
+    "11."
+   ]
+  }
+ ],
+ "variants": {
+  "lit": {},
+  "far": {
+   "e": "#45404d",
+   "f": "#6d6488",
+   "g": "#8a8296",
+   "w": "#2e5a55",
+   "v": "#16302e"
+  }
+ },
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

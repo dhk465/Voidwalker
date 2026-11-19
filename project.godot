@@ -1,16 +1,40 @@
 ; Engine configuration file.
 ; Voidwalker, moved from the browser one-shot (prototypes/voidwalker) to Godot 4.8 .NET.
-; run/main_scene is set once the first scene exists (the port's hub scene).
 
 config_version=5
 
 [application]
 
 config/name="Voidwalker"
-config/features=PackedStringArray("4.8", "GL Compatibility")
+run/main_scene="res://src/hub/Hub.tscn"
+config/features=PackedStringArray("4.8", "C#", "GL Compatibility")
 
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/canvas_textures/default_texture_filter=0
+2d/snap/snap_2d_transforms_to_pixel=true
+2d/snap/snap_2d_vertices_to_pixel=true
+environment/defaults/default_clear_color=Color(0.027, 0.016, 0.051, 1)
+
+[display]
+
+; Pixel-perfect on phones: the game is drawn at 640x360 and scaled up in whole steps only (3x fills a 1080p
+; height); "expand" gives wider screens more width instead of bars. Every pixel is the same size.
+window/size/viewport_width=640
+window/size/viewport_height=360
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/stretch/mode="viewport"
+window/stretch/aspect="expand"
+window/stretch/scale_mode="integer"
+window/handheld/orientation=4
+
+[dotnet]
+
+project/assembly_name="Voidwalker"
+
+[input_devices]
+
+pointing/emulate_mouse_from_touch=true

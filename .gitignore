@@ -88,6 +88,10 @@ export_presets.cfg
 *.pidb
 *.booproj
 *.svd
+# Godot C#: the project's own .csproj is its build definition and must be committed (the Unity rules above
+# ignore every .csproj and .sln, which Unity regenerates; Godot does not).
+!/Voidwalker.csproj
+!/Voidwalker.sln
 *.pdb
 *.mdb
 *.opendb
@@ -173,3 +177,7 @@ $RECYCLE.BIN/
 # the project root. Anchored so a reports/ folder elsewhere stays tracked.
 /reports/
 /test-results/
+
+# === Third-party licensed packs (local only) ===
+# Game Feel Prompts: paid license forbids sharing or posting the pack.
+tools/game-feel-prompts/

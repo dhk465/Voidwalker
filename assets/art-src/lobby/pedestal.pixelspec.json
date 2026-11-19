@@ -1,0 +1,75 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "pedestal",
+ "canvas": [
+  22,
+  25
+ ],
+ "anchor_px": [
+  11,
+  24
+ ],
+ "palette": {
+  "E": "#3b3350",
+  "F": "#9d92bb",
+  "b": "#241a3a",
+  "d": "#45404d",
+  "e": "#6d6488",
+  "f": "#8a8296",
+  "h": "#cfc6e6",
+  "o": "#0e0a18",
+  "v": "#5ac8b9"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "22.",
+    "2.2F5fFfFfF3fFfe2.",
+    "2.F16vE2.",
+    "2.2f9efe3fdE2.",
+    "2.4ef3efe3fefdEb2.",
+    "3.15d4.",
+    "4.2ef3e3fefdE5.",
+    "5.3fdfedefdeE5.",
+    "5.fFfd2fdfeded5.",
+    "5.3fdfed2edeE5.",
+    "5.3fdefdfedeE5.",
+    "5.3fdfedefdeE5.",
+    "5.e2fdefd2f2dE5.",
+    "6.efdfedefdE6.",
+    "6.Ffd2ed2edE6.",
+    "6.2fd2e2de2d6.",
+    "6.fed2ed2edE6.",
+    "6.efdfe2dedE6.",
+    "6.2fdefd2edE6.",
+    "5.3f4ede2d6.",
+    "4.h2Fef3ef4e5.",
+    "3.FfF11efd3.",
+    "2.hfedede5dededE3.",
+    "2.dEbEbEbEbEb3Eb2Ed2.",
+    "22."
+   ]
+  }
+ ],
+ "variants": {
+  "open": {},
+  "locked": {
+   "E": "#1a1229",
+   "d": "#241a3a",
+   "e": "#353a44",
+   "f": "#45404d",
+   "F": "#45404d",
+   "h": "#6d6488",
+   "v": "#241a3a"
+  }
+ },
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

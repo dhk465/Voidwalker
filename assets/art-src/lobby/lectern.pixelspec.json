@@ -1,0 +1,64 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "lectern",
+ "canvas": [
+  32,
+  25
+ ],
+ "anchor_px": [
+  16,
+  24
+ ],
+ "palette": {
+  "E": "#3b3350",
+  "F": "#9d92bb",
+  "b": "#241a3a",
+  "d": "#45404d",
+  "e": "#6d6488",
+  "f": "#8a8296",
+  "h": "#cfc6e6",
+  "o": "#0e0a18",
+  "v": "#5ac8b9",
+  "w": "#7fd6c8"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "32.",
+    ".hF3hF3hF3hF3hF3hF3hF3hd.",
+    ".e27Fd2.",
+    "2.e26dE2.",
+    "2.ef3FfF3fF3fF3fF6fedE2.",
+    "3.3f4ed7ed2ef4e2db3.",
+    "3.2fef10ed2efef2ede2E3.",
+    "3.edf2ededed11eded2b3.",
+    "4.4ef5efefef7edb4.",
+    "4.efd3ed4ef6edede2E4.",
+    "4.f5ef3ef3ef6edEb4.",
+    "4.de2f8evededede2db5.",
+    "5.fFef6evwv7e2E5.",
+    "5.f3efded3ev3eded2e2E5.",
+    "5.2e2f2ed2ef8e2dbE5.",
+    "6.efef2ed2ef4ed3eEb6.",
+    "6.fe3f13edE6.",
+    "6.de2fef2ed9e2E6.",
+    "7.eF4f10edE7.",
+    "6.4fef5efef2e2d2E6.",
+    "5.22d5.",
+    "4.2F2f5ef3ef2ed3efe2d4.",
+    "4.fedEdE9d3EdEd3E4.",
+    "3.fE2bE3b3E5bE5bEb2d3.",
+    "32."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

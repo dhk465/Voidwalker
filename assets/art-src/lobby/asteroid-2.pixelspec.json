@@ -1,0 +1,68 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "asteroid-2",
+ "canvas": [
+  42,
+  33
+ ],
+ "anchor_px": [
+  21,
+  16
+ ],
+ "palette": {
+  "E": "#3b3350",
+  "a": "#1a1229",
+  "b": "#241a3a",
+  "d": "#45404d",
+  "e": "#6d6488",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "42.",
+    "42.",
+    "18.3d2E19.",
+    "17.3d2E2b18.",
+    "16.3dEd2EbE17.",
+    "15.3d4Eb3E16.",
+    "13.4d9E3d13.",
+    "11.dE3d2EbEb3Eb4EdE11.",
+    "9.EdE3dEdb5Eb2EdEdbEb10.",
+    "9.2Ed6Eb5Eb5Eab10.",
+    "9.Ed7EbE2bd3Ed2E3bE9.",
+    "9.dEd2EbE4bEbEe3Ed4Ea9.",
+    "8.3dEd2E4b3E2edEdEd2EbE9.",
+    "8.EdEd2EbE2b3E3e3Ed5Ed8.",
+    "8.3dEd3Eb4E3e2EdEdEd3EdE6.",
+    "7.3dEd8E2ebEb2Ed5Ed3E5.",
+    "6.2de4dEdEdE4e2Ed3Ed3E3d3E4.",
+    "5.2E3dEdEdEdE3eb2Ed2EbEbEbE2d2E2b4.",
+    "4.dE3dEdEdEd6Eb3d4Eb2E3dE2bd3.",
+    "4.Ed14Eb2Ed2EbEb7E3b3.",
+    "4.dEdEd2Eb4E3d5Ed7Ed2E2bab3.",
+    "4.8EbEb2Ed2E3b3EbEb5Eb2ab4.",
+    "4.EbEb2Ed9E2b2EebEbEb2Eb4ab4.",
+    "5.baba2bd4E3bEb3EeEbEbE2b3ab6.",
+    "6.ba2b2Ed4E3b3E2e2EbE2b3a8.",
+    "9.ba3E4b3a3e4b4ab9.",
+    "11.2E3b4ab.bab5ab11.",
+    "12.3b4a5.6a12.",
+    "14.bab10.a14.",
+    "42.",
+    "42.",
+    "42.",
+    "42."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}
