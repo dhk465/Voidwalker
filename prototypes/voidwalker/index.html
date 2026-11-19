@@ -49,12 +49,12 @@ const events = [];
 const canvas = document.getElementById('game');
 const BW = W, BH = H; // full resolution: one buffer pixel is one logical unit
 canvas.width = BW; canvas.height = BH;
-const ctx = canvas.getContext('2d', { willReadFrequently: true });
+let ctx = canvas.getContext('2d', { willReadFrequently: true }); // let: the hub's hover highlight draws a station onto its own layer
 // ---- Hard edges: a small pixel rasteriser in front of the canvas ----
 // The canvas's own fill() and stroke() blend every edge pixel. Here each path is recorded, flattened in screen
 // space and scanned at pixel centres: a pixel is inside or outside, nothing between. The inside becomes whole-pixel
 // rectangles that the canvas then paints with the same colour, gradient, alpha and clip, so no edge is ever blended.
-(function hardEdges(c) {
+function installHardEdges(c) {
   const P = CanvasRenderingContext2D.prototype, natFill = P.fill, natClip = P.clip, natFillRect = P.fillRect;
   let subs = [], cur = null, m = null;
   const T = () => (m = c.getTransform());
@@ -182,7 +182,8 @@ const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!W2 || !H2) return; c.save(); c.setTransform(1, 0, 0, 1, 0, 0); natFillRect.call(c, X, Y, W2, H2); c.restore();
   };
   c.strokeRect = function (x, y, w, h) { c.beginPath(); c.rect(x, y, w, h); c.stroke(); };
-})(ctx);
+}
+installHardEdges(ctx);
 function fit() {
   const dpr = devicePixelRatio || 1, k = Math.max(1, Math.floor(Math.min(innerWidth * dpr / BW, innerHeight * dpr / BH))); // whole-number scaling only: every pixel the same size (a small window crops)
   canvas.style.width = (BW * k / dpr) + 'px'; canvas.style.height = (BH * k / dpr) + 'px';
@@ -2459,40 +2460,220 @@ function panel(title) {
   const hv = inBox(mouse, PX + PW - 54, PY + 12, 40, 36); text('X', PX + PW - 34, PY + 30, 20, hv ? '#ff9a9a' : '#9d92bb', 'center', 'bold');
 }
 // ---- the scene
+const STAR_RAMP = ['#1a1229', '#241a3a', '#3b3350', '#6d6488', '#9d92bb', '#cfc6e6', '#efe6ff']; // a star's light, dim to bright
 const hubStars = (() => { let z = 5; const r = () => (z = z * 16807 % 2147483647) / 2147483647; return Array.from({ length: 220 }, () => ({ x: r() * W, y: r() * H, s: 0.3 + r(), tw: r() * 6 })); })();
 const CONSTELLATION = [[230, 130], [262, 110], [300, 124], [330, 104], [352, 140], [318, 170], [282, 182], [246, 176], [226, 210], [270, 214], [314, 206], [350, 196]];
 // ---- Void flames and the Rite's rift: pixelfx effects (vendor/pixelfx.js) ----
 // Each effect paints into its own small pixel buffer; the buffer is cut to fully on or off pixels (hard edges, no
 // soft glow), then placed at a whole-pixel position, so it obeys the same pixel rules as everything else.
 const VOID_RAMP = ['#07040d', '#1a0a20', '#2a1636', '#4a3a7a', '#7b5bdf', '#b9a6ff', '#d8c8ff', '#ffffff'];
-const PILLARS = [[360, 120], [420, 70], [880, 100], [930, 140]];
-function fxSprite(mod, opts) {
-  const [w, h] = mod.meta.size, [ox, oy] = mod.meta.origin, frame = PIXELFX.createFrame(w, h), cv = document.createElement('canvas');
+function fxSprite(mod, opts, box) { // box [w, h, ox, oy]: a bigger buffer than the effect's own, for one that leans
+  const [w, h] = box ? box : mod.meta.size, [ox, oy] = box ? box.slice(2) : mod.meta.origin, frame = PIXELFX.createFrame(w, h), cv = document.createElement('canvas');
   cv.width = w; cv.height = h;
   return { fx: PIXELFX.createFx(mod, { ...opts, x: ox, y: oy }), frame, img: new ImageData(w, h), cv, c2: cv.getContext('2d'), ox, oy, lt: null, fi: null };
 }
-function drawFx(s, x, y, t) {
+function drawFx(s, x, y, t, where) { // where(effect time) -> [x, y]: for an effect that flies a path of its own
   const fi = Math.floor(t * (s.fx.meta.fps || 30));
   if (fi !== s.fi) { // effects are authored at 30 fps: re-render only when their frame changes
     const dt = s.lt === null ? 0 : Math.max(0, Math.min(0.1, t - s.lt)); s.lt = t; s.fi = fi;
     s.fx.update(dt); PIXELFX.clearFrame(s.frame); s.fx.draw(s.frame);
     const d = PIXELFX.composite(s.frame, s.img.data, null, tune.fx_light);
     for (let i = 3; i < d.length; i += 4) d[i] = d[i] >= 128 ? 255 : 0; // one pixel, one colour: no half-see-through pixels
-    s.c2.putImageData(s.img, 0, 0);
+    s.c2.putImageData(s.img, 0, 0); if (where) [s.x, s.y] = where(s.fx.t);
   }
+  if (where) { x = s.x; y = s.y; }
   ctx.drawImage(s.cv, Math.round(x - s.ox), Math.round(y - s.oy));
 }
+// The void energy's tide round the altar: where flame i is at time T (its own effect time).
+const flowAt = (i, n) => T => { const k = i / n * 6.283, a = T * 0.12 + k + Math.sin(T * 0.21 + k) * 0.35;
+  return [640 + Math.cos(a) * 470, 330 + Math.sin(a) * 190 + Math.sin(T * 0.9 + i * 2) * 26]; };
+// A pixelfx loop wraps its time at meta.duration; a flame that flies forever never wraps.
+const endless = mod => ({ ...mod, meta: { ...mod.meta, duration: 1e9 } });
 let hubFxCache = null;
 const hubFx = new Proxy({}, { get: (_, k) => (hubFxCache || (hubFxCache = {
   rift: fxSprite(PIXELFX.portal, { palette: VOID_RAMP, width: 8, height: 42, seed: 4 }),
-  braziers: PILLARS.map((_, i) => fxSprite(PIXELFX.shadowFlames, { palette: VOID_RAMP, seed: 12 + i * 7 })),
-  flows: Array.from({ length: 5 }, (_, i) => fxSprite(PIXELFX.spiritFlame, { palette: ['#07040d', ...VOID_RAMP], seed: 7 + i * 5 })),
+  flows: Array.from({ length: 5 }, (_, i) => fxSprite(endless(PIXELFX.voidTrail), { palette: VOID_RAMP, path: flowAt(i, 5), follow: true, period: 0, trail: tune.flow_trail, size: tune.flow_size, rate: 45, tongues: false, seed: 7 + i * 5 }, [360, 300, 180, 190])),
 }))[k] });
+// ---- Deep space behind the hub: a fragment shader, in pixels ----
+// A slow, domain-warped nebula (violet, with a cold teal vein and dark dust lanes), shaded only in exact palette
+// colours stepped by a 4x4 ordered (Bayer) dither: no blending, one colour per pixel, every pixel the same size.
+// It runs on the GPU (WebGL) and drifts; without WebGL the same picture is worked out once on the CPU and held still.
+const SPACE_VIOLET = ['#07040d', '#0e0a18', '#1a1229', '#2a1636', '#3a1746', '#4a3a7a'];
+const SPACE_TEAL = ['#07040d', '#16302e', '#2e5a55'];
+const SPACE_GLSL = `
+precision highp float;
+uniform vec2 res; uniform float t; uniform vec3 vio[6]; uniform vec3 tea[3];
+float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
+float fbm(vec2 p) { float v = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { v += a * n(p); p = p * 2.03 + vec2(17.1, 9.2); a *= 0.5; } return v; }
+float bayer2(vec2 a) { a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
+float bayer4(vec2 a) { return bayer2(0.5 * a) * 0.25 + bayer2(a); }
+vec3 pick6(float i) { vec3 c = vio[0]; for (int k = 0; k < 6; k++) if (float(k) == i) c = vio[k]; return c; }
+vec3 pick3(float i) { vec3 c = tea[0]; for (int k = 0; k < 3; k++) if (float(k) == i) c = tea[k]; return c; }
+void main() {
+  vec2 px = vec2(gl_FragCoord.x, res.y - gl_FragCoord.y), p = px / res.y * 2.2;
+  vec2 drift = vec2(t * 0.006, t * 0.002);
+  vec2 w = vec2(fbm(p * 0.9 + drift), fbm(p * 0.9 + vec2(5.2, 1.3) - drift));         // the warp: gas folding on itself
+  float gas = fbm(p * 1.1 + w * 1.6 + drift * 2.0);
+  float dust = smoothstep(0.52, 0.72, fbm(p * 2.4 + w * 2.2 + vec2(3.0, 8.0)));           // dark lanes cutting through it
+  float vein = smoothstep(0.62, 0.86, fbm(p * 1.6 - w * 1.3 + vec2(11.0, 2.0) + drift));  // a cold teal vein
+  float v = clamp(pow(clamp(gas * 1.25 - 0.28, 0.0, 1.0), 1.6) * (1.0 - 0.75 * dust), 0.0, 1.0);
+  float d = bayer4(px);
+  float L = v * 5.0, i = floor(L); if (fract(L) > d) i += 1.0;
+  vec3 col = pick6(min(i, 5.0));
+  float T = vein * (1.0 - dust) * 2.0, j = floor(T); if (fract(T) > d) j += 1.0;
+  if (j >= 1.0 && j >= i * 0.5) col = pick3(min(j, 2.0));
+  gl_FragColor = vec4(col, 1.0);
+}`;
+const SPACE = (() => {
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+  try {
+    const gl = cv.getContext('webgl', { antialias: false, preserveDrawingBuffer: true }); if (!gl) throw 0;
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw gl.getShaderInfoLog(s); return s; };
+    const pr = gl.createProgram();
+    gl.attachShader(pr, sh(gl.VERTEX_SHADER, 'attribute vec2 a; void main() { gl_Position = vec4(a, 0.0, 1.0); }'));
+    gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, SPACE_GLSL)); gl.linkProgram(pr); if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw gl.getProgramInfoLog(pr);
+    gl.useProgram(pr); gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const a = gl.getAttribLocation(pr, 'a'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
+    gl.uniform2f(gl.getUniformLocation(pr, 'res'), W, H);
+    gl.uniform3fv(gl.getUniformLocation(pr, 'vio'), SPACE_VIOLET.flatMap(rgb)); gl.uniform3fv(gl.getUniformLocation(pr, 'tea'), SPACE_TEAL.flatMap(rgb));
+    const ut = gl.getUniformLocation(pr, 't'); gl.viewport(0, 0, W, H);
+    let last = -1;
+    return { cv, gpu: true, draw(t) { const f = Math.floor(t * 10); if (f !== last) { last = f; gl.uniform1f(ut, f / 10); gl.drawArrays(gl.TRIANGLES, 0, 3); } } }; // 10 updates a second is plenty for a drift this slow
+  } catch (e) { // no WebGL: the same nebula, worked out once on the CPU, held still
+    let made = false;
+    return { cv, gpu: false, draw() { if (made) return; made = true; spaceOnCpu(cv, rgb); } };
+  }
+})();
+function spaceOnCpu(cv, rgb) {
+  const c2 = cv.getContext('2d'), img = c2.createImageData(W, H), d = img.data, hs = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
+  const n = (x, y) => { const ix = Math.floor(x), iy = Math.floor(y); let fx = x - ix, fy = y - iy; fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+    const a = hs(ix, iy), b = hs(ix + 1, iy), c = hs(ix, iy + 1), e = hs(ix + 1, iy + 1); return (a + (b - a) * fx) + ((c + (e - c) * fx) - (a + (b - a) * fx)) * fy; };
+  const fbm = (x, y) => { let v = 0, a = 0.5; for (let i = 0; i < 5; i++) { v += a * n(x, y); x = x * 2.03 + 17.1; y = y * 2.03 + 9.2; a *= 0.5; } return v; };
+  const sm = (e0, e1, x) => { const k = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return k * k * (3 - 2 * k); };
+  const b2 = (x, y) => { const s = x / 2 + y * y * 0.75; return s - Math.floor(s); }, bayer = (x, y) => b2(Math.floor(x / 2), Math.floor(y / 2)) * 0.25 + b2(x, y);
+  const V = SPACE_VIOLET.map(rgb), Tc = SPACE_TEAL.map(rgb);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const px = x / H * 2.2, py = y / H * 2.2, wx = fbm(px * 0.9, py * 0.9), wy = fbm(px * 0.9 + 5.2, py * 0.9 + 1.3);
+    const gas = fbm(px * 1.1 + wx * 1.6, py * 1.1 + wy * 1.6), dust = sm(0.52, 0.72, fbm(px * 2.4 + wx * 2.2 + 3, py * 2.4 + wy * 2.2 + 8));
+    const vein = sm(0.62, 0.86, fbm(px * 1.6 - wx * 1.3 + 11, py * 1.6 - wy * 1.3 + 2));
+    const v = Math.min(1, Math.pow(Math.min(1, Math.max(0, gas * 1.25 - 0.28)), 1.6) * (1 - 0.75 * dust)), dd = bayer(x, y);
+    let i = Math.floor(v * 5); if (v * 5 - i > dd) i++; let col = V[Math.min(i, 5)];
+    const T = vein * (1 - dust) * 2; let j = Math.floor(T); if (T - j > dd) j++; if (j >= 1 && j >= i * 0.5) col = Tc[Math.min(j, 2)];
+    const o = (y * W + x) * 4; d[o] = col[0] * 255; d[o + 1] = col[1] * 255; d[o + 2] = col[2] * 255; d[o + 3] = 255;
+  }
+  c2.putImageData(img, 0, 0);
+}
+// Each station's art, apart, so the hover highlight can draw the one under the pointer onto a layer of its own.
+const STATION_ART = {
+  deck(t) {
+    // the Deck: a stone lectern with the deck's cards fanned above it
+    const lo = stacks(meta.loadout).slice(0, 5), fanN = Math.max(1, lo.length);
+    ctx.fillStyle = '#4a4554'; ctx.beginPath(); ctx.moveTo(590, 400); ctx.lineTo(690, 400); ctx.lineTo(670, 440); ctx.lineTo(610, 440); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#8a8296'; ctx.lineWidth = 2; ctx.stroke();
+    lo.forEach((c, i) => { ctx.save(); ctx.translate(640 + (i - (fanN - 1) / 2) * 34, 330 + Math.abs(i - (fanN - 1) / 2) * 8 + Math.sin(t * 2 + i) * 3); ctx.rotate((i - (fanN - 1) / 2) * 0.16); drawCard(c, -26, -36, 52, 70, false, false); ctx.restore(); });
+  },
+  rite(t) {
+    // the Void Rite: a ring of stones round a crack of light
+    for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283; ctx.fillStyle = '#5a5464'; ctx.fillRect(300 + Math.cos(a) * 70 - 9, 470 + Math.sin(a) * 20 - 12, 18, 18); }
+    drawFx(hubFx.rift, 300, 478, t); // the crack the Rite's cards rise out of: a narrow void rift
+  },
+  gate(t) {
+    // the Rift Gate: a portal tinted by the chosen rift's prevailing nature
+    const rift = meta.rifts && meta.rifts[meta.riftPick], gc = rift ? BASE[rift.prevail].color : '#b9a6ff';
+    ctx.fillStyle = '#3a3542'; for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(985 + sx * 60, 520); ctx.quadraticCurveTo(985 + sx * 110, 400, 985 + sx * 50, 290); ctx.lineTo(985 + sx * 40, 300); ctx.quadraticCurveTo(985 + sx * 86, 400, 985 + sx * 40, 520); ctx.fill(); }
+    for (let i = 0; i < 6; i++) { ctx.strokeStyle = i % 2 ? gc : '#4a3a7a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(985, 410, 48 - i * 7, 96 - i * 14, 0, t * (1 + i * 0.3), t * (1 + i * 0.3) + 4.2); ctx.stroke(); }
+    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(985, 410, 10, 22, 0, 0, 6.283); ctx.fill();
+  },
+  sigils(t) {
+    // the Sigils: a constellation, lit by what has been bought
+    const owned = Object.keys(SIG).map(id => meta.upg[id] || 0);
+    ctx.strokeStyle = '#3b3350'; ctx.lineWidth = 1.5; ctx.beginPath(); CONSTELLATION.forEach(([x, y], i) => { if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.stroke();
+    CONSTELLATION.forEach(([x, y], i) => { const lit = owned[i] > 0; ctx.fillStyle = lit ? '#fff0b0' : '#4a3a7a'; ctx.fillRect(x - 3, y - 3, 6, 6); if (lit) { ctx.fillStyle = 'rgba(255,240,176,0.4)'; ctx.fillRect(x - 6, y - 1, 12, 2); ctx.fillRect(x - 1, y - 6, 2, 12); } });
+  },
+  relics(t) {
+    // the Relics: pedestals, with what is equipped glowing above them
+    for (let i = 0; i < 3; i++) { const x = 930 + i * 60, open = i < relicSlots(); ctx.fillStyle = open ? '#4a4554' : '#241a3a'; ctx.fillRect(x - 16, 196, 32, 36); ctx.fillRect(x - 20, 190, 40, 8);
+      const id = meta.equipped[i]; if (id) drawRelicIcon(id, x, 166 + Math.sin(t * 2 + i) * 4, 1.2); }
+  },
+  journal(t) {
+    // the Journal: an open tome, floating
+    ctx.save(); ctx.translate(640, 118 + Math.sin(t * 1.5) * 4); ctx.fillStyle = '#3a2a20'; ctx.fillRect(-50, -26, 100, 52); ctx.fillStyle = '#e8e6c0'; ctx.fillRect(-46, -22, 44, 44); ctx.fillRect(2, -22, 44, 44);
+    ctx.fillStyle = '#8a8296'; for (let i = 0; i < 5; i++) { ctx.fillRect(-40, -14 + i * 8, 32, 2); ctx.fillRect(8, -14 + i * 8, 32, 2); } ctx.restore();
+    if (questReady()) { ctx.fillStyle = '#ffd27a'; ctx.fillRect(694, 78 + Math.sin(t * 6) * 3, 6, 16); ctx.fillRect(694, 98 + Math.sin(t * 6) * 3, 6, 6); }
+  },
+};
+// ---- The hover highlight: a shader over the station's own pixels ----
+// The hovered station is drawn again onto a layer; a fragment shader reads that layer and lights the object itself:
+// a 1 px pale-gold outline hugging its silhouette, a dithered outer ring that breathes, and a band of light that
+// sweeps across it. Exact colours and whole pixels only. Without WebGL the same outline is worked out on the CPU.
+const HOVER_GLSL = `
+precision highp float;
+uniform sampler2D tex; uniform vec2 res; uniform float t; uniform vec3 rim, ring, sheen;
+float inside(vec2 p) { return texture2D(tex, p / res).a > 0.5 ? 1.0 : 0.0; }
+float bayer2(vec2 a) { a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
+float bayer4(vec2 a) { return bayer2(0.5 * a) * 0.25 + bayer2(a); }
+void main() {
+  vec2 p = floor(gl_FragCoord.xy) + 0.5, q = vec2(p.x, res.y - p.y);
+  float d = bayer4(q);
+  if (inside(p) > 0.5) { // on the object: a band of light sweeping across it, dithered at its edges
+    float b = fract((q.x + q.y) / 220.0 - t * 0.45), w = smoothstep(0.0, 0.05, b) * (1.0 - smoothstep(0.05, 0.11, b));
+    gl_FragColor = w > d ? vec4(sheen, 1.0) : vec4(0.0);
+    return;
+  }
+  float n1 = inside(p + vec2(1, 0)) + inside(p - vec2(1, 0)) + inside(p + vec2(0, 1)) + inside(p - vec2(0, 1));
+  if (n1 > 0.0) { gl_FragColor = vec4(rim, 1.0); return; } // the outline, one pixel out from the silhouette
+  float n2 = inside(p + vec2(2, 0)) + inside(p - vec2(2, 0)) + inside(p + vec2(0, 2)) + inside(p - vec2(0, 2))
+           + inside(p + vec2(1, 1)) + inside(p - vec2(1, 1)) + inside(p + vec2(1, -1)) + inside(p - vec2(1, -1));
+  gl_FragColor = n2 > 0.0 && d < 0.35 + 0.25 * sin(t * 4.0) ? vec4(ring, 1.0) : vec4(0.0); // a breathing dithered ring
+}`;
+const HOVER = (() => {
+  const layer = document.createElement('canvas'); layer.width = W; layer.height = H;
+  const lctx = layer.getContext('2d', { willReadFrequently: true }); installHardEdges(lctx);
+  const out = document.createElement('canvas'); out.width = W; out.height = H;
+  const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255), RIM = '#fff0b0', RING = '#ffd27a', SHEEN = '#efe6ff';
+  try {
+    const gl = out.getContext('webgl', { antialias: false, preserveDrawingBuffer: true, premultipliedAlpha: false }); if (!gl) throw 0;
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw gl.getShaderInfoLog(s); return s; };
+    const pr = gl.createProgram();
+    gl.attachShader(pr, sh(gl.VERTEX_SHADER, 'attribute vec2 a; void main() { gl_Position = vec4(a, 0.0, 1.0); }'));
+    gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, HOVER_GLSL)); gl.linkProgram(pr); if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw gl.getProgramInfoLog(pr);
+    gl.useProgram(pr); gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const a = gl.getAttribLocation(pr, 'a'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
+    const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+    for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.uniform2f(gl.getUniformLocation(pr, 'res'), W, H);
+    gl.uniform3fv(gl.getUniformLocation(pr, 'rim'), rgb(RIM)); gl.uniform3fv(gl.getUniformLocation(pr, 'ring'), rgb(RING)); gl.uniform3fv(gl.getUniformLocation(pr, 'sheen'), rgb(SHEEN));
+    const ut = gl.getUniformLocation(pr, 't'); gl.viewport(0, 0, W, H);
+    return { lctx, gpu: true, shade(t) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, layer); gl.uniform1f(ut, t); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLES, 0, 3); return out; } };
+  } catch (e) { // no WebGL: the outline alone, on the CPU
+    const o2 = out.getContext('2d'), R = rgb(RIM).map(v => v * 255);
+    return { lctx, gpu: false, shade() {
+      const src = lctx.getImageData(0, 0, W, H).data, img = o2.createImageData(W, H), d = img.data, at = (x, y) => x >= 0 && y >= 0 && x < W && y < H && src[(y * W + x) * 4 + 3] > 127;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!at(x, y) && (at(x + 1, y) || at(x - 1, y) || at(x, y + 1) || at(x, y - 1))) { const i = (y * W + x) * 4; d[i] = R[0]; d[i + 1] = R[1]; d[i + 2] = R[2]; d[i + 3] = 255; }
+      o2.putImageData(img, 0, 0); return out; } };
+  }
+})();
+function drawHoverHighlight(id, t) {
+  const main = ctx; ctx = HOVER.lctx; // draw the station once more, alone, onto the layer the shader reads
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingEnabled = false;
+  try { STATION_ART[id](t); } finally { ctx = main; }
+  ctx.drawImage(HOVER.shade(t), 0, 0);
+}
 function drawHubScene() {
   const t = hub.t;
   clear('#07040d');
-  for (const [x, y, rx, ry, c] of [[300, 260, 420, 160, 'rgba(58,23,70,0.45)'], [980, 300, 380, 200, 'rgba(36,26,58,0.6)'], [640, 640, 600, 140, 'rgba(26,18,41,0.8)']]) { ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, 6.283); ctx.fill(); }
-  for (const s2 of hubStars) { const y = (s2.y + t * 4 * s2.s) % H; ctx.fillStyle = `rgba(210,200,255,${0.2 + 0.4 * s2.s * (0.7 + 0.3 * Math.sin(t * 2 + s2.tw))})`; ctx.fillRect(Math.round(s2.x / 2) * 2, Math.round(y / 2) * 2, 2, 2); }
+  SPACE.draw(t); ctx.drawImage(SPACE.cv, 0, 0); // deep space: a nebula shader in exact palette pixels
+  // the stars hold still; each one slowly brightens and fades on its own long cycle, stepping through exact colours
+  for (const s2 of hubStars) {
+    const P = tune.star_blink_min + (s2.tw / 6) * (tune.star_blink_max - tune.star_blink_min), wave = 0.5 + 0.5 * Math.sin(t * 6.283 / P + s2.x * 0.37);
+    const lvl = Math.floor(wave * wave * (s2.s / 1.3) * STAR_RAMP.length); if (lvl < 1) continue; // dark at the bottom of its cycle
+    ctx.fillStyle = STAR_RAMP[Math.min(STAR_RAMP.length - 1, lvl)]; const sz = s2.s > 1.1 && lvl >= 4 ? 2 : 1;
+    ctx.fillRect(Math.round(s2.x), Math.round(s2.y), sz, sz); }
   // drifting rocks far behind
   for (let i = 0; i < 5; i++) { ctx.save(); ctx.translate((i * 290 + t * 6) % (W + 200) - 100, 80 + (i * 137) % 560); ctx.rotate(t * 0.05 + i); ctx.fillStyle = '#1a1229'; ctx.beginPath(); for (let k = 0; k < 8; k++) { const a = k / 8 * 6.283, rr = 20 + i * 6 + Math.sin(k * 2.3 + i) * 6; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.fill(); ctx.restore(); }
   // the floating altar
@@ -2500,42 +2681,20 @@ function drawHubScene() {
   ctx.fillStyle = '#45404d'; ctx.beginPath(); ctx.ellipse(640, 515, 335, 72, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = '#8a8296'; ctx.lineWidth = 3; ctx.stroke();
   ctx.strokeStyle = `rgba(90,200,185,${0.45 + 0.25 * Math.sin(t * 1.6)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(640, 515, 270, 52, 0, 0, 6.283); ctx.stroke();
   for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283 + t * 0.1; ctx.fillStyle = `rgba(90,200,185,${0.5 + 0.3 * Math.sin(t * 2 + i)})`; ctx.fillRect(640 + Math.cos(a) * 300 - 3, 515 + Math.sin(a) * 62 - 3, 6, 6); }
-  for (const [x, h] of PILLARS) { ctx.fillStyle = '#4a4554'; ctx.fillRect(x - 14, 505 - h, 28, h); ctx.fillStyle = '#34303c'; for (let k = 0; k < 3; k++) ctx.fillRect(x - 10 + k * 8, 505 - h + 6, 3, h - 12); ctx.fillStyle = '#5a5464'; ctx.fillRect(x - 18, 505 - h - 6, 36, 8); }
-  PILLARS.forEach(([x, h], i) => drawFx(hubFx.braziers[i], x, 505 - h, t)); // void fire burning on the pillars
-  // the Deck: a stone lectern with the deck's cards fanned above it
-  const lo = stacks(meta.loadout).slice(0, 5), fanN = Math.max(1, lo.length);
-  ctx.fillStyle = '#4a4554'; ctx.beginPath(); ctx.moveTo(590, 400); ctx.lineTo(690, 400); ctx.lineTo(670, 440); ctx.lineTo(610, 440); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#8a8296'; ctx.lineWidth = 2; ctx.stroke();
-  lo.forEach((c, i) => { ctx.save(); ctx.translate(640 + (i - (fanN - 1) / 2) * 34, 330 + Math.abs(i - (fanN - 1) / 2) * 8 + Math.sin(t * 2 + i) * 3); ctx.rotate((i - (fanN - 1) / 2) * 0.16); drawCard(c, -26, -36, 52, 70, false, false); ctx.restore(); });
+  STATION_ART.deck(t);
   // the blob, in the shape the deck gives it
   const n = dominantNature(loadoutCards()), col = n ? BASE[n].color : '#b9a6ff';
   drawForm(n ? BASE[n].form : 'blob', 640, 478 + Math.sin(t * 2) * 4, col, t, 1.8);
-  // the Void Rite: a ring of stones round a crack of light
-  for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283; ctx.fillStyle = '#5a5464'; ctx.fillRect(300 + Math.cos(a) * 70 - 9, 470 + Math.sin(a) * 20 - 12, 18, 18); }
-  drawFx(hubFx.rift, 300, 478, t); // the crack the Rite's cards rise out of: a narrow void rift
-  // the Rift Gate: a portal tinted by the chosen rift's prevailing nature
-  const rift = meta.rifts && meta.rifts[meta.riftPick], gc = rift ? BASE[rift.prevail].color : '#b9a6ff';
-  ctx.fillStyle = '#3a3542'; for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(985 + sx * 60, 520); ctx.quadraticCurveTo(985 + sx * 110, 400, 985 + sx * 50, 290); ctx.lineTo(985 + sx * 40, 300); ctx.quadraticCurveTo(985 + sx * 86, 400, 985 + sx * 40, 520); ctx.fill(); }
-  for (let i = 0; i < 6; i++) { ctx.strokeStyle = i % 2 ? gc : '#4a3a7a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(985, 410, 48 - i * 7, 96 - i * 14, 0, t * (1 + i * 0.3), t * (1 + i * 0.3) + 4.2); ctx.stroke(); }
-  ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(985, 410, 10, 22, 0, 0, 6.283); ctx.fill();
-  // the Sigils: a constellation, lit by what has been bought
-  const owned = Object.keys(SIG).map(id => meta.upg[id] || 0);
-  ctx.strokeStyle = '#3b3350'; ctx.lineWidth = 1.5; ctx.beginPath(); CONSTELLATION.forEach(([x, y], i) => { if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.stroke();
-  CONSTELLATION.forEach(([x, y], i) => { const lit = owned[i] > 0; ctx.fillStyle = lit ? '#fff0b0' : '#4a3a7a'; ctx.fillRect(x - 3, y - 3, 6, 6); if (lit) { ctx.fillStyle = 'rgba(255,240,176,0.4)'; ctx.fillRect(x - 6, y - 1, 12, 2); ctx.fillRect(x - 1, y - 6, 2, 12); } });
-  // the Relics: pedestals, with what is equipped glowing above them
-  for (let i = 0; i < 3; i++) { const x = 930 + i * 60, open = i < relicSlots(); ctx.fillStyle = open ? '#4a4554' : '#241a3a'; ctx.fillRect(x - 16, 196, 32, 36); ctx.fillRect(x - 20, 190, 40, 8);
-    const id = meta.equipped[i]; if (id) drawRelicIcon(id, x, 166 + Math.sin(t * 2 + i) * 4, 1.2); }
-  // the Journal: an open tome, floating
-  ctx.save(); ctx.translate(640, 118 + Math.sin(t * 1.5) * 4); ctx.fillStyle = '#3a2a20'; ctx.fillRect(-50, -26, 100, 52); ctx.fillStyle = '#e8e6c0'; ctx.fillRect(-46, -22, 44, 44); ctx.fillRect(2, -22, 44, 44);
-  ctx.fillStyle = '#8a8296'; for (let i = 0; i < 5; i++) { ctx.fillRect(-40, -14 + i * 8, 32, 2); ctx.fillRect(8, -14 + i * 8, 32, 2); } ctx.restore();
-  if (questReady()) { ctx.fillStyle = '#ffd27a'; ctx.fillRect(694, 78 + Math.sin(t * 6) * 3, 6, 16); ctx.fillRect(694, 98 + Math.sin(t * 6) * 3, 6, 6); }
+  STATION_ART.rite(t);
+  STATION_ART.gate(t);
+  STATION_ART.sigils(t);
+  STATION_ART.relics(t);
+  STATION_ART.journal(t);
   // void energy flowing: spirit flames drifting round the altar on a slow tide
-  hubFx.flows.forEach((f, i) => { const a = t * 0.12 + i / hubFx.flows.length * 6.283;
-    drawFx(f, 640 + Math.cos(a) * 470, 330 + Math.sin(a) * 190 + Math.sin(t * 0.9 + i * 2) * 14, t); });
-  // station names
-  for (const st of STATIONS) { const hv = !hub.open && Math.hypot(mouse.x - st.x, mouse.y - st.y) < st.r;
-    const ly = st.id === 'journal' ? st.y + 50 : st.id === 'sigils' || st.id === 'relics' ? st.y + 82 : st.id === 'deck' ? 392 : st.y + 118;
-    if (hv) { ctx.strokeStyle = 'rgba(255,240,176,0.35)'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.arc(st.x, st.y, st.r, 0, 6.283); ctx.stroke(); ctx.setLineDash([]); }
-    text(`${STATIONS.indexOf(st) + 1} ${st.name}`, st.x, ly, 14, hv ? '#fff0b0' : '#9d92bb', 'center', 'bold'); }
+  hubFx.flows.forEach((f, i) => drawFx(f, 0, 0, t, flowAt(i, hubFx.flows.length))); // each sheds its tail where it really flew
+  // the stations carry no names: the one under the pointer lights up, outlined and swept by light (a shader)
+  const hov = !hub.open && STATIONS.find(st => Math.hypot(mouse.x - st.x, mouse.y - st.y) < st.r);
+  if (hov) drawHoverHighlight(hov.id, t);
   // the bank, and how much is known
   ctx.save(); ctx.translate(40, 34); ctx.fillStyle = '#d8c8ff'; ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(8, 0); ctx.lineTo(0, 12); ctx.lineTo(-8, 0); ctx.fill(); ctx.restore();
   text(`${meta.bank}`, 58, 35, 26, '#d8c8ff', 'left', 'bold');

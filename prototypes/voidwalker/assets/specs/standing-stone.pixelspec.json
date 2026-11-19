@@ -1,0 +1,83 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "standing-stone",
+ "canvas": [
+  22,
+  34
+ ],
+ "anchor_px": [
+  11,
+  32
+ ],
+ "palette": {
+  "a": "#1a1229",
+  "b": "#241a3a",
+  "c": "#353a44",
+  "d": "#45404d",
+  "e": "#6d6488",
+  "f": "#8a8296",
+  "g": "#8b95a3",
+  "o": "#0e0a18",
+  "v": "#5ac8b9",
+  "w": "#7fd6c8"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "22.",
+    "22.",
+    "7.2gfgfge8.",
+    "6.fg3fg3e7.",
+    "5.e4fg2f3e6.",
+    "4.ef5efefed6.",
+    "4.2ef3e3f4e5.",
+    "4.d6e3f2e2d4.",
+    "4.f5e2fg2fedc4.",
+    "4.ef5e4fe2c4.",
+    "4.fef2edwe3fedc4.",
+    "4.4edveve2fe2c4.",
+    "4.f2edvewev2fedc4.",
+    "4.2e3dvevef2ecd4.",
+    "4.f2ed2ev4ed2c4.",
+    "4.ef2edevede2d2c4.",
+    "4.2fed5eded2c4.",
+    "4.2fe2d3ede2dbc4.",
+    "4.3fd5ededcb4.",
+    "3.g2f2eded4ed2c4.",
+    "3.fgf6ef3e2de3.",
+    "3.fefd9e2dc3.",
+    "3.2f5ef6ecd3.",
+    "3.f7ef4ed2c3.",
+    "3.ef3efefefef2ecd3.",
+    "3.3ed4efef2ed2c3.",
+    "3.ef4ed2ef4ecd3.",
+    "3.3ededed3eded2c3.",
+    "3.ef2ed4ef4e2c3.",
+    "3.fedc3dc2de2d2cb3.",
+    "3.fd3bcb7cbc3.",
+    "3.daba4bcbcbc2bc3.",
+    "22.",
+    "22."
+   ]
+  }
+ ],
+ "variants": {
+  "lit": {},
+  "far": {
+   "e": "#45404d",
+   "f": "#6d6488",
+   "g": "#8a8296",
+   "w": "#2e5a55",
+   "v": "#16302e"
+  }
+ },
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

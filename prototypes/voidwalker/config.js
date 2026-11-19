@@ -5,6 +5,10 @@
 // through tune.<name> (index.html); the tweak panel, an add-on, writes them back here.
 window.CONFIG = {
   seed: 1, // every gameplay random call reads rng(), seeded from this (or ?seed= in the address)
+  flow_trail: { value: 2, min: 0.3, max: 4, step: 0.1 },        // s a hub void flame's shed tail lasts: its length
+  flow_size: { value: 1.25, min: 0.5, max: 2, step: 0.05 },     // size of a hub void flame's head and tongues
+  star_blink_min: { value: 6, min: 1, max: 30, step: 0.5 },     // s: the quickest a hub star brightens and fades
+  star_blink_max: { value: 18, min: 2, max: 60, step: 0.5 },    // s: the slowest
   fx_light: { value: 0.6, min: 0, max: 2, step: 0.1 },        // glow strength of the hub's pixelfx flames and rift (cut to whole pixels)
   volume: { value: 0.5, min: 0, max: 1, step: 0.05 },
 

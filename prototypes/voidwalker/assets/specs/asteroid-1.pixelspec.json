@@ -1,0 +1,85 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "asteroid-1",
+ "canvas": [
+  62,
+  50
+ ],
+ "anchor_px": [
+  31,
+  25
+ ],
+ "palette": {
+  "E": "#3b3350",
+  "a": "#1a1229",
+  "b": "#241a3a",
+  "d": "#45404d",
+  "e": "#6d6488",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "62.",
+    "62.",
+    "62.",
+    "62.",
+    "33.2dE3d23.",
+    "32.EdEdEdEd22.",
+    "31.6dEdEd21.",
+    "29.3dE3d5E21.",
+    "28.2de6d3EdE20.",
+    "22.E3dE2de6d2Eb4E19.",
+    "20.2de5dede6d4Eb2E18.",
+    "18.E13dEd6E3bEb17.",
+    "18.2dede5de4dEdEd9E16.",
+    "17.dE5dEdE3dEdEd8EbEbE2b14.",
+    "17.de6dEdE3dEd10Eb3Eb2E12.",
+    "16.E5d7EdEd4EbEbEbEb3EbEb2E11.",
+    "15.E2dede3EdEdE3dEd11Ed6E11.",
+    "14.E6dEb6EdEd2EbEbEb6EdE2bEb11.",
+    "12.2E7d5EdEdEdEd2EbEb9E3b2E10.",
+    "10.5EdEd6Eb2EdEdEd2E5bEb5E5bE10.",
+    "8.dEdEdEdE3d7EdE3dEd2EbEbEb7EbEbE11.",
+    "7.2EdEdEdEdEd11Ed4EbEbEbEbEb3EbEbEb11.",
+    "6.dE3dEd3EdEd9EdEd10EbEb5EbE11.",
+    "5.dEdEd4Eb7EbEbEb2EdEd4EbEbE3bEbEbEb2E11.",
+    "5.4dEd4Eb2EdEd2E5b3dEd6EbEbEb7E11.",
+    "4.EdEd2EbEbEb7E7b2Ed4EbEbEbEb3EbEbEb11.",
+    "4.dEd4EbEb2EdEd3E6b3E6b10EbEbE11.",
+    "4.b3E3bEb4EdEdE6b4Ee4b8EbEbE3bE10.",
+    "5.4Eb6E3dEd5b5Ee3b4Eed6EbEb2E10.",
+    "5.E3bEb3Eb2Ed3E4b6Ee2b4E2e6EbEbEb2E9.",
+    "6.EbEbEbEb2EdEd2E3b7Eeb5E2e2Ed6Eb3E9.",
+    "7.EbE2ba8E2b7E2e6E2e8Eb5E8.",
+    "8.EbEbEb2Ed12E2e7EeEdEdEdEdEd3EdE8.",
+    "9.E3b9Eb5E3e6E2e2Ed8EbEbE8.",
+    "11.b9EbEb5e4E5edEdEdEdEd2EbEbEb8.",
+    "12.bEbEbEbE11bE5e6Ed4E6b8.",
+    "12.EbEbEbEbE6ba4b4EdEdEdEd4EbE3bEb8.",
+    "13.EbEbE2babababababa11EbEbE3bE3bE8.",
+    "14.3EbE2ba7ba2b7EbE5bEbEb3E9.",
+    "15.E4ba4bEbE3bEbEbEbE2baba4bEbEb11.",
+    "16.EbE3b2Ed4.3bEb3E7b5E13.",
+    "18.3b9.5bE2ba4bEb17.",
+    "31.b4E6b20.",
+    "33.3E5b21.",
+    "34.5E23.",
+    "62.",
+    "62.",
+    "62.",
+    "62.",
+    "62."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

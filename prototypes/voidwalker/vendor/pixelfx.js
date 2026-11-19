@@ -1,6 +1,6 @@
 // PROTOTYPE - NOT FOR PRODUCTION
-// pixelfx 0.3.1 (https://github.com/patch-gg/pixelfx) by Patch, MIT licence: see pixelfx-LICENSE.txt. The core plus arcane/portal,
-// shadow/shadow-flames and fire/spirit-flame, bundled unchanged into one classic script by esbuild (window.PIXELFX).
+// pixelfx 0.3.1 (https://github.com/patch-gg/pixelfx) by Patch, MIT licence: see pixelfx-LICENSE.txt. The core plus arcane/portal unchanged,
+// and fire/void-trail (written for Voidwalker in pixelfx's style, from its fire helpers), bundled by esbuild (window.PIXELFX).
 var PIXELFX = (() => {
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -28,8 +28,7 @@ var PIXELFX = (() => {
     createFrame: () => createFrame,
     createFx: () => createFx,
     portal: () => portal_exports,
-    shadowFlames: () => shadow_flames_exports,
-    spiritFlame: () => spirit_flame_exports
+    voidTrail: () => void_trail_exports
   });
 
   // src/core/math.js
@@ -114,12 +113,6 @@ var PIXELFX = (() => {
     const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f);
     return lerp(rand(i, seed), rand(i + 1, seed), u) * 2 - 1;
   }
-  function noise2(x, y, seed = 0) {
-    const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
-    const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy);
-    const a = rand(ix, iy, seed), b = rand(ix + 1, iy, seed), c = rand(ix, iy + 1, seed), d = rand(ix + 1, iy + 1, seed);
-    return lerp(lerp(a, b, ux), lerp(c, d, ux), uy) * 2 - 1;
-  }
   function tileNoise(x, y, px = 0, py = 0, seed = 0) {
     const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
     const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy);
@@ -142,10 +135,6 @@ var PIXELFX = (() => {
     return rgb(v >> 16 & 255, v >> 8 & 255, v & 255);
   }
   var toHex = (c) => "#" + [red(c), green(c), blue(c)].map((v) => v.toString(16).padStart(2, "0")).join("");
-  function mix(a, b, t) {
-    t = clamp(t);
-    return rgb(red(a) + (red(b) - red(a)) * t, green(a) + (green(b) - green(a)) * t, blue(a) + (blue(b) - blue(a)) * t);
-  }
   var scale = (c, k) => rgb(Math.min(255, red(c) * k), Math.min(255, green(c) * k), Math.min(255, blue(c) * k));
   var ramp = (list) => list.map(hex);
   function fit(r, n) {
@@ -884,21 +873,21 @@ var PIXELFX = (() => {
   }
   var FADE = 0.3;
   var isRamp = (v) => Array.isArray(v) && v.length > 0 && v.every((c) => typeof c === "number" || /^#[0-9a-f]{3,8}$/i.test(c));
-  function resolveOptions(meta4, o = {}) {
-    const opts = { ...meta4.options ?? {}, ...o };
-    for (const [k, def] of Object.entries(meta4.options ?? {}))
+  function resolveOptions(meta3, o = {}) {
+    const opts = { ...meta3.options ?? {}, ...o };
+    for (const [k, def] of Object.entries(meta3.options ?? {}))
       if (isRamp(def) && isRamp(o[k]) && o[k].length !== def.length) opts[k] = fit(o[k], def.length).map(toHex);
-    if (meta4.actor && !opts.actor) opts.actor = stockActor(meta4.actor === 2 ? 2 : 1);
+    if (meta3.actor && !opts.actor) opts.actor = stockActor(meta3.actor === 2 ? 2 : 1);
     return opts;
   }
   function createFx(mod, o = {}) {
-    const meta4 = mod.meta ?? {};
-    const opts = resolveOptions(meta4, o);
+    const meta3 = mod.meta ?? {};
+    const opts = resolveOptions(meta3, o);
     const impl = mod.create ? mod.create(opts) : mod;
-    const D4 = meta4.duration ?? 1;
+    const D2 = meta3.duration ?? 1;
     let t = 0, stopAt = Infinity;
     return {
-      meta: meta4,
+      meta: meta3,
       options: opts,
       get t() {
         return t;
@@ -914,7 +903,7 @@ var PIXELFX = (() => {
         p.place(opts.x ?? 0, opts.y ?? 0, !!opts.flip, opts.angle ?? 0);
         p.fade = stopAt === Infinity ? 1 : clamp(1 - (t - stopAt) / FADE);
         p.lightK = opts.light ?? 1;
-        const tt = meta4.loop ? t % D4 : Math.min(t, D4);
+        const tt = meta3.loop ? t % D2 : Math.min(t, D2);
         if (layer !== "front" && impl.drawBack) {
           p.layer = "back";
           impl.drawBack(p, tt, opts);
@@ -929,7 +918,7 @@ var PIXELFX = (() => {
         if (stopAt === Infinity) stopAt = t;
       },
       done() {
-        return t - stopAt >= FADE || !meta4.loop && t >= D4;
+        return t - stopAt >= FADE || !meta3.loop && t >= D2;
       }
     };
   }
@@ -1045,10 +1034,10 @@ var PIXELFX = (() => {
       to = mul(to, reach / d);
       d = reach;
     }
-    const u = unit(to), along2 = (L1 * L1 - L2 * L2 + d * d) / (2 * d), h = Math.sqrt(Math.max(0, L1 * L1 - along2 * along2));
+    const u = unit(to), along = (L1 * L1 - L2 * L2 + d * d) / (2 * d), h = Math.sqrt(Math.max(0, L1 * L1 - along * along));
     let v = sub(pole, mul(u, dot(pole, u)));
     v = len(v) < 1e-4 ? unit(cross(u, [0, 0, 1])) : unit(v);
-    return { joint: add(a, add(mul(u, along2), mul(v, h))), end: add(a, to), u, v };
+    return { joint: add(a, add(mul(u, along), mul(v, h))), end: add(a, to), u, v };
   }
   function frame(t, R) {
     return { t, R };
@@ -1475,8 +1464,8 @@ var PIXELFX = (() => {
     const { C, ph, S, rim, at } = s, t = ph * D;
     cycle(t, D, 60, S * 7 + 1, (g) => g.range(0.3, 0.5), (age, life, r) => {
       const a0 = r.range(0, TAU), d0 = r.range(1.8, 3), spin = r.range(0.8, 1.8) * (r.chance(0.8) ? 1 : 0.35), size = r.range(0.8, 1.5), hue = r.next();
-      const pos = (q2) => at(a0 + spin * q2 * q2, d0 * (1 - Math.pow(q2, 1.4)));
-      const q = age / life, [x, y] = pos(q), [x2, y2] = pos(Math.min(1, q + 0.015)), vx = (x2 - x) / (0.015 * life), vy = (y2 - y) / (0.015 * life);
+      const pos2 = (q2) => at(a0 + spin * q2 * q2, d0 * (1 - Math.pow(q2, 1.4)));
+      const q = age / life, [x, y] = pos2(q), [x2, y2] = pos2(Math.min(1, q + 0.015)), vx = (x2 - x) / (0.015 * life), vy = (y2 - y) / (0.015 * life);
       const rho = d0 * (1 - Math.pow(q, 1.4)), R0 = rim(a0 + spin * q * q), fade = Math.min(1, q * 5);
       if (rho > R0 + 0.06) mote(p, x, y, vx, vy, hue < 0.25 ? WHITE : hue < 0.55 ? C[6] : hue < 0.8 ? C[5] : C[4], hue < 0.8 ? size : size * 1.4, fade, hue < 0.8 ? 0.4 : 0.15);
       else if (rho > 0.3) p.dot(x, y, rho > 0.65 ? C[6] : C[5], rho);
@@ -1484,12 +1473,12 @@ var PIXELFX = (() => {
     cycle(t, D, 12, S * 7 + 2, (g) => g.range(0.36, 0.5), (age, life, r) => {
       const a0 = r.range(0, TAU), d0 = r.range(2.3, 3), spin = r.range(0.2, 0.5);
       const qc = Math.sqrt(1 - 1.05 / d0), q = age / life;
-      const pos = (q2) => at(a0 + spin * q2 * q2, d0 * (1 - q2 * q2));
+      const pos2 = (q2) => at(a0 + spin * q2 * q2, d0 * (1 - q2 * q2));
       if (q < qc) {
-        const [x, y] = pos(q), [x2, y2] = pos(q + 0.015);
+        const [x, y] = pos2(q), [x2, y2] = pos2(q + 0.015);
         streak(p, x, y, (x2 - x) / (0.015 * life), (y2 - y) / (0.015 * life), C[6], Math.min(1, q * 5));
       } else {
-        const k = 1 - (q - qc) / (1 - qc), [x, y] = pos(qc);
+        const k = 1 - (q - qc) / (1 - qc), [x, y] = pos2(qc);
         if (k > 0.55) p.px(x, y, WHITE);
         p.glow(x, y, 7, C[6], 0.6 * k * k);
       }
@@ -1533,107 +1522,11 @@ var PIXELFX = (() => {
     for (let i = -3; i <= 3; i++) p.glow(i * 7, -1, 16, C[5], 0.12 * pulse);
   }
 
-  // src/fx/shadow/shadow-flames.js
-  var shadow_flames_exports = {};
-  __export(shadow_flames_exports, {
+  // src/fx/fire/void-trail.js
+  var void_trail_exports = {};
+  __export(void_trail_exports, {
     draw: () => draw2,
-    drawBack: () => drawBack2,
     meta: () => meta2
-  });
-
-  // src/fx/shadow/_lib.js
-  var VOID = ["#06040b", "#150c26", "#2a1150", "#461a84", "#6f2cc0", "#9d5cec", "#cfa6ff", "#f6eaff"];
-
-  // src/fx/shadow/shadow-flames.js
-  var meta2 = {
-    name: "Shadow flames",
-    desc: "Inside-out fire on the floor: a black heart wrapped in violet flame with pale skin and tips, shedding embers and dark smoke.",
-    tags: ["shadow", "fire", "flame", "ground", "dark", "magic", "loop"],
-    size: [104, 112],
-    origin: [52, 102],
-    duration: 2.4,
-    loop: true,
-    fps: 30,
-    bg: "ground",
-    options: { palette: VOID, seed: 12 }
-  };
-  var D2 = 2.4;
-  var GX = 22;
-  var GY = 60;
-  var TONGUES = [[-11, 20, 4.2, 1], [11, 22, 4.4, 2], [-6, 31, 5.4, 3], [6, 29, 5.2, 4], [0, 40, 6.6, 5]];
-  var LAYERS = [[1, 1, 0], [0.8, 0.88, 1], [0.54, 0.68, 2], [0.32, 0.48, 3]];
-  var lnoise = (t, v, seed, speed = 5) => noise2(Math.cos(TAU * t / D2) * speed + v, Math.sin(TAU * t / D2) * speed, seed);
-  function drawBack2(p, t, o) {
-    const C = fit(o.palette, 8), S = o.seed;
-    p.ellipse(0, 0.5, 22, 3.2, (d) => d < 0.6 ? C[0] : C[1], (d) => d < 0.85 ? 1 : (1 - d) * 6);
-    p.glow(0, -2, 46, C[4], 0.3);
-    cycle(t, D2, 14, S + 1, (r) => r.range(1.2, 1.9), (age, L, r) => {
-      const u = age / L, x = r.range(-6, 6) + Math.sin(u * 4 + r.range(0, 6)) * 5 * u, y = -30 - u * r.range(36, 52), rad = 3 + u * 6;
-      const a = Math.min(1, u * 6) * (1 - u) * 0.7;
-      p.disc(x, y, rad, mix(mix(C[3], C[2], 0.5), C[1], u), a);
-      p.disc(x - rad * 0.2, y - rad * 0.3, rad * 0.5, C[3], a * 0.4);
-      p.disc(x, y + rad * 0.45, rad * 0.55, C[5], a * 0.45 * (1 - u));
-    });
-  }
-  function draw2(p, t, o) {
-    const C = fit(o.palette, 8), S = o.seed, TONE = [C[6], C[4], C[2], C[0]];
-    const grid = new Int8Array(GX * 2 * GY).fill(-1), set = (x, y, v) => {
-      const i = Math.round(x) + GX, j = Math.round(y) + GY;
-      if (i >= 0 && j >= 0 && i < GX * 2 && j < GY) grid[j * GX * 2 + i] = v;
-    };
-    const order = TONGUES.map((_, i) => i).sort((a, b) => Math.abs(TONGUES[b][0]) - Math.abs(TONGUES[a][0]));
-    for (const i of order) {
-      const [dx, H0, w, n] = TONGUES[i], h = H0 * (0.78 + 0.22 * lnoise(t, n * 3, n, 4)), sway = lnoise(t, n * 7, n + 9, 3) * 3;
-      for (const [lw, lh, tone2] of LAYERS) {
-        const Hl = h * lh;
-        for (let r = 0; r <= Hl; r++) {
-          const u = r / Math.max(1, Hl);
-          const half = w * lw * Math.pow(1 - u, 0.85) * Math.min(1, (r + 1.5) / 3.5) + lnoise(t, r * 0.45 + n, n + 20, 6) * 1.1 + lnoise(t, r * 1.3 + n * 5, n + 50, 9) * 0.6;
-          const cx = dx + sway * u * u * lh + lnoise(t, r * 0.2 + n * 2, n + 30, 5) * u * 1.4;
-          if (half < 0.3) continue;
-          for (let x = Math.round(cx - half); x <= Math.round(cx + half); x++) {
-            if (tone2 === 0 && u > 0.45 && lnoise(t, x * 0.9 + r * 0.7 + n, n + 60, 8) > 0.35) continue;
-            set(x, -r, tone2);
-          }
-        }
-      }
-    }
-    for (let j = 0; j < GY; j++)
-      for (let i = 0; i < GX * 2; i++) {
-        const v = grid[j * GX * 2 + i];
-        if (v < 0) continue;
-        const x = i - GX, y = j - GY;
-        let c = TONE[v];
-        if (v === 0 && y < -24 && (grid[(j - 1) * GX * 2 + i] ?? -1) < 0) c = y < -32 ? WHITE : C[7];
-        p.px(x + 0.5, y + 0.5, c);
-      }
-    cycle(t, D2, 34, S, (r) => r.range(0.25, 0.5), (age, L, r) => {
-      const u = age / L, k = r.int(0, 4), [dx, H0] = TONGUES[k], x = dx + r.range(-4, 4) + u * r.range(-5, 5), y = -H0 * r.range(0.45, 0.85) - u * r.range(10, 20);
-      const rad = r.range(1, 2.2) * (1 - u) + 0.3;
-      p.circle(x, y, rad + 0.6, u < 0.5 ? C[6] : C[4]);
-      if (rad > 1) p.circle(x, y + 0.4, rad * 0.5, u < 0.3 ? C[2] : C[4]);
-    });
-    cycle(t, D2, 30, S + 2, (r) => r.range(1, 1.8), (age, L, r) => {
-      const u = age / L, x = r.range(-12, 12) + Math.sin(u * 6 + r.range(0, 6)) * 5 * u, y = -10 - u * r.range(40, 70);
-      if (u > 0.7 && Math.sin(age * 40 + x) < 0) return;
-      p.px(x, y, u < 0.3 ? WHITE : u < 0.6 ? C[7] : C[6]);
-      p.glow(x, y, 3, C[6], 0.35 * (1 - u));
-    });
-    const fl = 0.85 + 0.15 * lnoise(t, 0, 77, 6);
-    p.glow(0, -16, 52, C[4], 0.5 * fl);
-    p.glow(0, -12, 26, C[6], 0.34 * fl);
-    for (let j = 0; j < GY; j++)
-      for (let i = 0; i < GX * 2; i++) if (grid[j * GX * 2 + i] === 3) {
-        const sx = p.cellX(i - GX + 0.5, j - GY + 0.5) - p.ox, sy = p.cellY(i - GX + 0.5, j - GY + 0.5) - p.oy;
-        if (sx >= 0 && sy >= 0 && sx < p.w && sy < p.h) p.L[sy * p.w + sx] = 0;
-      }
-  }
-
-  // src/fx/fire/spirit-flame.js
-  var spirit_flame_exports = {};
-  __export(spirit_flame_exports, {
-    draw: () => draw3,
-    meta: () => meta3
   });
 
   // src/fx/fire/_lib.js
@@ -1642,20 +1535,37 @@ var PIXELFX = (() => {
     const a = rand(wrap(i, period), seed), b = rand(wrap(i + 1, period), seed);
     return (a + (b - a) * u) * 2 - 1;
   }
-  function noiseFor(D4) {
-    if (!D4) return (tt, rate, seed = 0, off = 0) => noise(tt * rate + off, seed);
+  function noiseFor(D2) {
+    if (!D2) return (tt, rate, seed = 0, off = 0) => noise(tt * rate + off, seed);
     return (tt, rate, seed = 0, off = 0) => {
-      const P2 = Math.max(1, Math.round(rate * D4));
-      return pnoise(tt / D4 * P2 + off, P2, seed);
+      const P2 = Math.max(1, Math.round(rate * D2));
+      return pnoise(tt / D2 * P2 + off, P2, seed);
     };
   }
-  function looped(t, D4, count, seed, make, draw4) {
-    for (let i = 0; i < count; i++) {
-      const r = rng(seed, i), born = r.next() * D4, q = make(r, i);
-      for (let age = wrap(t - born, D4); age < q.life; age += D4) draw4(q, age, i);
+  var LAYERS = [[1, 1, 6], [0.76, 0.86, 4], [0.54, 0.68, 2], [0.3, 0.42, 0]];
+  function flameTongue(p, x, y, h, w, sx, N, n, H, layers = LAYERS, jit = 0.5, wob = 1.1) {
+    if (h < 1) return;
+    for (const [lw, lh, ri] of layers) {
+      const L = h * lh, c = H[ri];
+      for (let r = 0; r <= L; r++) {
+        const u = r / Math.max(1, L);
+        const half = w * lw * Math.pow(1 - u, 0.85) * Math.min(1, (r + 1.5) / 3.5) + N(9, n, r * 0.45) * jit;
+        if (half < 0.3) continue;
+        const cx = x + sx * u * u * lh + N(4, n + 7, r * 0.2) * u * wob, Y = Math.round(y - r);
+        for (let px = Math.round(cx - half), x1 = Math.round(cx + half); px <= x1; px++) p.px(px, Y, c);
+      }
     }
   }
-  var hotFirst = (F) => [...F].reverse();
+  function solid(p, x, y, r, c) {
+    if (r < 0.6) return p.px(x, y, c);
+    const cx = p.toX(x, y), cy = p.toY(x, y), r2 = r * r;
+    for (let sy = Math.floor(cy - r); sy <= Math.ceil(cy + r); sy++) {
+      const dy = sy + 0.5 - cy, s2 = r2 - dy * dy;
+      if (s2 < 0) continue;
+      const s = Math.sqrt(s2);
+      for (let sx = Math.ceil(cx - s - 0.5); sx <= Math.floor(cx + s - 0.5); sx++) p.put(sx, sy, c, 1);
+    }
+  }
   function soft(p, x, y, r, c, a) {
     if (a <= 4e-3) return;
     if (r < 0.5) return p.blend(x, y, c, a);
@@ -1667,85 +1577,114 @@ var PIXELFX = (() => {
       for (let sx = Math.ceil(cx - s - 0.5); sx <= Math.floor(cx + s - 0.5); sx++) p.blendPx(sx, sy, c, a);
     }
   }
-  function along(x, v, a, k, t) {
-    if (k <= 0) return [x + v * t + 0.5 * a * t * t, v + a * t];
-    const e = Math.exp(-k * t), vt = a / k;
-    return [x + vt * t + (v - vt) * (1 - e) / k, vt + (v - vt) * e];
+  function firePuff(p, x, y, k, size, frac, H, glowK = 0.18, tx = 0, ty = -1) {
+    const age = 1 - k, n = H.length, heat = Math.min(0.999, Math.pow(age, 0.62) + frac * 0.1);
+    const idx = Math.min(n - 2, Math.floor(heat * (n - 1)));
+    const r = size * (0.55 + 0.45 * Math.min(1, age * 7)) * (1 - age * 0.55), c = H[idx];
+    if (idx >= n - 2) return soft(p, x, y, r, c, Math.min(1, k * 3) * 0.85);
+    solid(p, x, y, r, H[Math.min(n - 1, idx + 2)]);
+    if (r > 1.6 && ty > -0.99) solid(p, x + tx * r * 1.5, y + ty * r * 1.5, r * 0.3, H[Math.min(n - 1, idx + 1)]);
+    solid(p, x - r * 0.16, y - r * 0.22, r * 0.78, c);
+    if (r > 1.6) solid(p, x + tx * r * 0.9, y + ty * r * 0.9, r * 0.42, c);
+    if (idx <= 3 && r > 1.8) solid(p, x - r * 0.28, y - r * 0.34, r * 0.36, H[Math.max(0, idx - 1)]);
+    if (idx < 6) p.glow(x, y, r * 2.4 + 2, c, glowK * k);
   }
-  function drift(x, y, vx, vy, t, ax, ay, kx, ky) {
-    const X = along(x, vx, ax, kx, t), Y = along(y, vy, ay, ky, t);
-    return [X[0], Y[0], X[1], Y[1]];
+  function ember(p, x, y, k, size, cols, ph) {
+    if (k < 0.25 && Math.sin(ph) < 0) return;
+    const c = k > 0.6 ? cols[0] : k > 0.3 ? cols[1] : cols[2];
+    if (size >= 2) {
+      const rim = k > 0.45 ? cols[2] : cols[3];
+      p.px(x - 1, y, rim), p.px(x + 1, y, rim), p.px(x, y - 1, rim), p.px(x, y + 1, rim);
+      p.px(x, y, c);
+      p.glow(x, y, 8, c, 0.4 * k);
+      return;
+    }
+    p.px(x, y, c);
+    if (size > 1.4) p.px(x, y + 1, cols[3]);
+    p.glow(x, y, 3 + size, c, 0.35 * k);
   }
   var SMOKE1 = hex("#5b5566");
 
-  // src/fx/fire/spirit-flame.js
-  var meta3 = {
-    name: "Spirit flame",
-    desc: "A cold blue-teal ghost fire floating in the air: a bright rim round a hollow dark heart, a wave climbing its wispy tail, curls breaking off, cold sparks rising.",
-    tags: ["fire", "spirit", "ghost", "magic", "cold", "ambient", "loop"],
-    size: [80, 124],
-    origin: [40, 94],
-    duration: 3,
+  // src/fx/fire/void-trail.js
+  var meta2 = {
+    name: "Void trail",
+    desc: "A void flame flies its own path: a dark heart, tongues dragged back by its speed, and a tail of flame shed where it has been that cools and rises as embers break off.",
+    tags: ["fire", "void", "spirit", "flame", "trail", "flying", "magic", "loop"],
+    size: [200, 136],
+    origin: [100, 92],
+    duration: 4,
     loop: true,
     fps: 30,
     bg: "dark",
     options: {
-      palette: ["#040a16", "#08203a", "#0b3a52", "#0f5e6e", "#16908e", "#2cc4b4", "#7ef0dc", "#c8fff2", "#ffffff"],
-      seed: 7
+      palette: ["#07040d", "#1a0a20", "#2a1636", "#4a3a7a", "#7b5bdf", "#b9a6ff", "#d8c8ff", "#ffffff"],
+      path: null,
+      // (t) => [x, y]; null: a figure eight round the origin, one lap per `period`
+      follow: false,
+      // true: draw relative to the head (the caller places the effect at the head)
+      period: 4,
+      // s per lap of a looping path (keeps the shed puffs seamless); 0 for a path that never repeats
+      trail: 1.1,
+      // s a shed puff lives: the tail's length in time
+      rate: 60,
+      // puffs shed per second
+      size: 1,
+      // scales the head and its tongues
+      tongues: true,
+      // false: the ball and its trail only, no flame tongues on its crown
+      seed: 3
     }
   };
-  var D3 = meta3.duration;
-  var NL = noiseFor(D3);
-  var GHOST = [[1, 1, 1], [0.8, 0.92, 3], [0.6, 0.78, 6], [0.3, 0.42, 2], [0.14, 0.22, 0]];
-  function ghostTongue(p, x, y, h, w, centre, N, n, H, layers, jit = 0.5) {
-    for (const [lw, lh, ri] of layers) {
-      const L = h * lh, c = H[ri];
-      for (let r = 0; r <= L; r++) {
-        const u = r / Math.max(1, L), v = r / h;
-        const half = w * lw * Math.pow(1 - u, 0.75) * Math.min(1, (r + 1.5) / 4) + N(6, n, r * 0.4) * jit * u;
-        if (half < 0.3) continue;
-        const cx = x + centre(v, r), Y = Math.round(y - r);
-        for (let px = Math.round(cx - half), x1 = Math.round(cx + half); px <= x1; px++) p.px(px, Y, c);
+  var lap = (t, o) => {
+    const a = t / o.period * TAU;
+    return [64 * Math.sin(a), -12 - 14 * Math.sin(2 * a)];
+  };
+  var pos = (t, o) => o.path ? o.path(t) : lap(t, o);
+  var vel = (t, o) => {
+    const a = pos(t - 0.02, o), b = pos(t + 0.02, o);
+    return [(b[0] - a[0]) / 0.04, (b[1] - a[1]) / 0.04];
+  };
+  function draw2(p, t, o) {
+    const C = fit(o.palette, 8), N0 = noiseFor(o.path ? 0 : o.duration || meta2.duration);
+    const [hx, hy] = pos(t, o), [vx, vy] = vel(t, o), [bx, by] = o.follow ? [hx, hy] : [0, 0];
+    const X = hx - bx, Y = hy - by, s = o.size;
+    const heat = [C[7], C[6], C[6], C[5], C[5], C[4], C[4], C[3], C[2]];
+    const emberCols = [C[7], C[6], C[4], C[2]];
+    const step = 1 / o.rate, kNow = Math.floor(t / step), n = o.period && !o.path ? Math.round(o.period * o.rate) : 0;
+    for (let k = kNow - Math.ceil(o.trail * 2.2 / step); k <= kNow; k++) {
+      const born = k * step, age = t - born;
+      if (age < 0) continue;
+      const r = rng(o.seed * 131 + 7, n ? (k % n + n) % n : k), L = o.trail * r.range(0.55, 1);
+      const ember_ = r.chance(0.12), life = ember_ ? L * 2 : L;
+      if (age >= life) continue;
+      const [hx0, hy0] = pos(born, o), [ivx, ivy] = vel(born, o);
+      const tip = r.chance(0.35) ? r.range(0.45, 1) : 0, px0 = hx0 + tip * clamp(-ivx * 0.11, -15, 15) * s, py0 = hy0 - tip * 22 * s;
+      const sx = ivx * 0.12 + r.range(-10, 10), sy = ivy * 0.12 - r.range(4, 14), drag = ember_ ? 1.4 : 2.6, lift = ember_ ? 34 : 58;
+      const e = Math.exp(-drag * age), x = px0 + r.range(-2.5, 2.5) * s + sx * (1 - e) / drag - bx;
+      const y = py0 + r.range(-2, 2) * s + sy * (1 - e) / drag - lift * (age - (1 - e) / drag) / drag - by;
+      const k1 = 1 - age / life;
+      if (ember_) {
+        ember(p, x + Math.sin(age * 3 + r.next() * 9) * 2, y, k1, r.chance(0.3) ? 2 : 1, emberCols, age * 23 + k);
+        continue;
       }
+      const tl = Math.hypot(-ivx * 0.01, -1) || 1;
+      firePuff(p, x, y, k1, (3.2 + r.range(0, 2)) * s * (0.45 + 0.55 * k1), r.next(), heat, 0.12, -ivx * 0.01 / tl, -1 / tl);
     }
-  }
-  function draw3(p, t, o) {
-    const F = fit(o.palette, 9), H = hotFirst(F), S = o.seed, ph = t / D3;
-    const N = (rate, seed = 0, off = 0) => NL(t, rate, seed, off);
-    const COLD = mix(H[3], WHITE, 0.15), bob = Math.sin(ph * TAU) * 1.5;
-    const lean = N(0.67, S + 2) * 3;
-    const wave = (v, r, k = 0) => (Math.sin(r * 0.24 - ph * TAU * 2 + k) * 2.2 + Math.sin(r * 0.11 - ph * TAU + k * 0.5) * 3.2) * v * v + lean * v * v;
-    const H0 = 44 * (0.92 + 0.08 * N(1.3, S + 3)), y0 = bob;
-    const br = 0.9 + 0.1 * N(2, S + 4);
-    p.glow(0, y0 - 16, 60, COLD, 0.36 * br);
-    p.glow(wave(0.5, 20) * 0.5, y0 - 20, 26, H[2], 0.2 * br);
-    looped(t, D3, 40, S + 300, (r) => ({ x: r.range(-4, 4), y: -H0 * r.range(0.55, 0.95), vx: r.range(-7, 7), vy: -r.range(10, 22), life: r.range(1, 1.9), s: r.range(1.4, 2.8), a: r.range(0, TAU), w: r.range(2, 3.5) }), (q, age) => {
-      const tb = t - age, [x, y] = drift(q.x + wave(0.9, 26, 0) * 0.5, q.y + y0, q.vx, q.vy, age, 0, -6, 1.2, 0.6), k = 1 - age / q.life;
-      const cx = x + Math.sin(age * q.w + q.a) * 3 * (age + 0.2), a = Math.min(1, age * 5) * k;
-      soft(p, cx, y, q.s * (0.8 + age * 0.8), H[4], 0.35 * a);
-      soft(p, cx - 0.4, y - 0.6, q.s * 0.5 * (0.8 + age * 0.5), H[2], 0.4 * a * k);
-      p.glow(cx, y, 6, H[3], 0.15 * a);
+    const N = (rate, sd, off = 0) => N0(t, rate, sd, off);
+    const H = [C[1], C[2], C[3], C[4], C[5], C[6], C[6]];
+    const LAY = [[1, 1, 6], [0.8, 0.9, 5], [0.6, 0.74, 3], [0.36, 0.5, 1]];
+    const sweep = clamp(-vx * 0.11, -15, 15) * s, stretch = clamp(1 - vy * 4e-3, 0.65, 1.45);
+    if (o.tongues) for (const [dx, h, w, sd] of [[-5, 13, 3.6, 3], [5, 14, 3.6, 5], [-2.5, 19, 4.4, 7], [2.5, 20, 4.4, 9], [0, 27, 5.6, 11]])
+      flameTongue(p, X + dx * s, Y - 3 * s, h * stretch * s * (0.72 + 0.28 * (N(3 + sd % 4, sd) * 0.5 + 0.5) + 0.12 * N(11, sd + 40)), w * s, sweep * (h / 20), N, sd, H, LAY, 0.6, 1.6);
+    const R = 6.5 * s;
+    p.shade(X - R - 2, Y - R - 2, X + R + 2, Y + R + 2, (x, y) => {
+      const dx = x - X, dy = y - Y, ang = Math.atan2(dy, dx), rr = R + 0.8 * N(14, 21, ang * 1.7 + 4);
+      const d = Math.hypot(dx, dy) / rr;
+      if (d > 1) return 0;
+      return d < 0.45 ? C[1] : d < 0.66 ? C[3] : d < 0.86 ? C[5] : C[7];
     });
-    const wl = Math.max(0, 0.25 + 0.55 * N(1.7, S + 6)), wr = Math.max(0, 0.25 + 0.55 * N(1.7, S + 7));
-    if (wl > 0.12) ghostTongue(p, -4, y0 - 4, H0 * wl, 2.4, (v, r) => wave(v, r, 2.1) - 6 * v * v + 3 * Math.sin(v * 5 - ph * TAU * 2) * v, N, S * 11 + 1, H, GHOST);
-    if (wr > 0.12) ghostTongue(p, 4.2, y0 - 4, H0 * wr, 2.4, (v, r) => wave(v, r, -1.8) + 6 * v * v - 3 * Math.sin(v * 5 - ph * TAU * 2 + 1) * v, N, S * 11 + 2, H, GHOST);
-    ghostTongue(p, 0, y0, H0, 8.6, (v, r) => wave(v, r), N, S * 11, H, GHOST, 0.6);
-    for (const k of [0, 1]) {
-      for (let r = 4; r < H0 * 0.72; r++) {
-        const v = r / H0, x = wave(v, r) + Math.sin(r * 0.35 - ph * TAU * 3 + k * Math.PI) * 2.2 * (1 - v), on = Math.sin(r * 0.2 - ph * TAU * 4 + k * 2) > 0.2;
-        if (on) p.px(x, y0 - r, k ? H[2] : H[1]);
-      }
-    }
-    for (const v of [0.2, 0.45, 0.7]) p.glow(wave(v, H0 * v), y0 - H0 * v, 12, H[2], 0.16 * br);
-    p.glow(0, y0 - 4, 9, H[1], 0.22 + 0.06 * N(3, S + 5));
-    looped(t, D3, 34, S + 400, (r) => ({ x: r.range(-7, 7), y: -r.range(4, 28), vx: r.range(-12, 12), vy: -r.range(14, 34), life: r.range(0.9, 1.8), a: r.range(0, TAU) }), (q, age) => {
-      const [x, y] = drift(q.x, q.y + y0, q.vx, q.vy, age, 0, -10, 1.2, 1.2), k = 1 - age / q.life, tw = 0.5 + 0.5 * Math.sin(age * 14 + q.a);
-      const sx = x + Math.sin(age * 3 + q.a) * 3;
-      if (k * (0.4 + 0.6 * tw) < 0.2) return;
-      p.px(sx, y, tw > 0.7 && k > 0.5 ? H[0] : k > 0.5 ? H[1] : H[3]);
-      if (tw > 0.85 && k > 0.6) p.px(sx - 1, y, H[3]), p.px(sx + 1, y, H[3]), p.px(sx, y - 1, H[3]), p.px(sx, y + 1, H[3]);
-      p.glow(sx, y, 4, H[2], 0.3 * k);
-    });
+    p.glow(X - vx * 0.06, Y - 6 - vy * 0.04, 34 * s, C[4], 0.32);
+    p.glow(X, Y, 10 * s, C[6], 0.28);
   }
   return __toCommonJS(voidwalker_entry_exports);
 })();

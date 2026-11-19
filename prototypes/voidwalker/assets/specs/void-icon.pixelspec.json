@@ -1,0 +1,58 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "void-icon",
+ "canvas": [
+  15,
+  23
+ ],
+ "anchor_px": [
+  7,
+  11
+ ],
+ "palette": {
+  "V": "#4a3a7a",
+  "W": "#7b5bdf",
+  "X": "#b9a6ff",
+  "Y": "#d8c8ff",
+  "Z": "#efe6ff",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "15.",
+    "7.Y7.",
+    "7.Y7.",
+    "6.2YX6.",
+    "6.2YX6.",
+    "5.3Y2X5.",
+    "4.4Y3X4.",
+    "4.2YZY3X4.",
+    "3.2Y2ZY4X3.",
+    "3.Y3ZY4X3.",
+    "2.Y4ZY5X2.",
+    ".13X.",
+    "2.6W5V2.",
+    "3.5W4V3.",
+    "3.5W4V3.",
+    "4.4W3V4.",
+    "4.4W3V4.",
+    "5.3W2V5.",
+    "6.2WV6.",
+    "6.2WV6.",
+    "7.W7.",
+    "7.W7.",
+    "15."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

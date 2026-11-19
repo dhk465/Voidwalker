@@ -1,0 +1,101 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "asteroid-2",
+ "canvas": [
+  84,
+  66
+ ],
+ "anchor_px": [
+  42,
+  33
+ ],
+ "palette": {
+  "E": "#3b3350",
+  "a": "#1a1229",
+  "b": "#241a3a",
+  "d": "#45404d",
+  "e": "#6d6488",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "84.",
+    "84.",
+    "84.",
+    "84.",
+    "38.dEdEdE40.",
+    "37.dEdEd4E38.",
+    "36.3dEd4EbE37.",
+    "35.dEdEd4EbEbE36.",
+    "34.5dEd6EbE35.",
+    "33.dE3dEd2EbEbEb3E34.",
+    "32.3dE3d11Ed33.",
+    "31.3dEdEd2Eb3EbEbEb3E32.",
+    "30.2de2dEd15E3d29.",
+    "27.dEdE3d10EbEbEbEb3dE3dE25.",
+    "24.dE9d3EdEdEd6EbdEdE3dE3dE22.",
+    "22.3EdE7dbEb11Eb4EdEd3Ed2Eb21.",
+    "20.dEdE4dede2d2Eb4EdEd4Eb4EdEdEd7E20.",
+    "19.2EdEdEdE5d2EbEb4Ed4EbEbEb9EbEb2E19.",
+    "19.EdEdEdE3dEdEd2EbEb2EdEd4EbEb9EbEbEbE19.",
+    "18.EdEdEd10EbEb11E3b5EbE7b19.",
+    "18.2EdEdEd3Ed3Ed7Ed3Ed7EdEd4EbEbEb2E18.",
+    "18.3Ed12Eb15Eb7EbEbEbEbE18.",
+    "18.2EdEd13EdEd3E2b19EbEb18.",
+    "18.3EdEd4EbEbEb7E4b18EbEbE18.",
+    "18.dE3dE2d3Eb5E8b2E2e5E3dEdEdEd2Eb3E17.",
+    "17.2E3dEdEd2EbEb3E6b5E2e6EdEdEd6EbEb17.",
+    "17.EdE3dEdEd2Eb4E5b3Ee2E2e5EdEdEdEd3Ed2EbdE16.",
+    "17.2EdEdEd3Ed2EbEbE4b4EeE2e2Eb4EdEdEd2Eb3Eb2EdE15.",
+    "16.7dEdEdEd3EdE3b5E4e6EdEdE3dEdEdEdEdEdE14.",
+    "16.6dEd6Eb2Ed2b5E3e2Eb6EdEdEdEdEdEdEdEdE3d12.",
+    "15.dede2dEdEdEd5EdEd5E3e11EdEdEdEdEdEdEdE5d11.",
+    "14.E2de2dEdEd13E5ebEbEbEb6Ed9EdEdEdEdEd10.",
+    "13.E2d3e2dEdEdEdEd7E4eEb12EdEd7EdE3dEdEdEd9.",
+    "12.EdE2de2dEdEdEdEd6EbEbEbEbEb9Eb5EbEbEb2EdEdEd6E8.",
+    "11.EdE11dEdEdEd6EbEb6EdEdEd8EbEb2E3dEdEd2Eb2Ed7.",
+    "10.b2EdEdEdEdEdEdEdEd6EbE3bEb6Ed4EbEbEbEbEb4EdEd4EbEb2E7.",
+    "10.2E15dEdEdEd4Eb6EdEdE3d2EbEb3Eb4E3dEdEd2EbEbdE6.",
+    "9.d3EdEdEdEdEdEdEdEdEd6EbEb3Eb2Ed3Ed2EbEbEbEbEb4EdEdEd4EbEbE6.",
+    "8.dE3dEdEdEdEdEdEdEdEdEdEd8Eb4EdEdEd2Eb3Eb4Ed3Ed6Eb4Ed5.",
+    "8.EdEd12Eb11EbEbEbEb4EdEd2EbEbEbEbEb11EbEbE3b5.",
+    "8.dEdEd7Ed11Ed3Ed9EdEdEd8Eb13E5bE5.",
+    "8.EdEd2Eb7EbEbEb15Eb2EdEdEd4EbEbEb11EbE2ba2bE6.",
+    "8.dEdEd12Eb8EdEdEd7EdEdEd2EbEb10Ed2EbE2ba4b6.",
+    "8.6EbEb3Eb3Eb7Eb7EbE4b6EbEbEb3EbEb5E2bababa2b7.",
+    "8.3EbEb6EdEdEd17E4b2Ed6EbEbEb4Ed2E4ba4bE7.",
+    "9.E5bEbEb2EdEdEd6EbEbEbEbE5b2E2eEb3EbEbEbEbEb3E2baba4bE8.",
+    "9.bE3bE3b4E3d8EbEbEb3E3b3E2eb3EbEb5EbEbE4ba4b10.",
+    "10.2ba3ba2bEb2Ed4EbEbE7bE3b4E2eEbEbE3b3E4bababa4b11.",
+    "12.E7b2EdEdEd6EbEbEbEbEb4E2e7Eb5E9bE13.",
+    "13.E5bEb9EbEbE6baba4e2bEbEbEbEbE2babababa2b15.",
+    "16.Eb11Eb3EbE4babab3e2bEbEbEbEb3E2ba4bE17.",
+    "18.2EbEbE3bEbEbEbE2babab3abababa6bE2bababa2bE18.",
+    "20.7EbEbEbE2bababa7ba4bE4baba4b20.",
+    "22.2EbE8bababa3b3.ba5bababababa2b21.",
+    "24.EbE6ba3ba2b7.4bababababa2b22.",
+    "25.EbEabababa4b10.3b3ababa2b23.",
+    "26.EbE2ba2bEbE14.7bE25.",
+    "28.2ba4b20.b28.",
+    "84.",
+    "84.",
+    "84.",
+    "84.",
+    "84.",
+    "84.",
+    "84.",
+    "84."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

@@ -1,0 +1,89 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "lectern",
+ "canvas": [
+  64,
+  50
+ ],
+ "anchor_px": [
+  32,
+  48
+ ],
+ "palette": {
+  "E": "#3b3350",
+  "F": "#9d92bb",
+  "b": "#241a3a",
+  "d": "#45404d",
+  "e": "#6d6488",
+  "f": "#8a8296",
+  "h": "#cfc6e6",
+  "o": "#0e0a18",
+  "v": "#5ac8b9",
+  "w": "#7fd6c8"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "64.",
+    "64.",
+    "2.59he2.",
+    "2.f3hFhFhFhFhFhFhFhFhFhFhFhFhFhFhFhFhFhFhFhFhFhFhFhFhFhFh2Fd3.",
+    "3.Fh54F2e3.",
+    "3.hfFf3Ff3Ff3Ff3Ff3Ff3Ff3Ff3Ff3Ff3Ff3Ff3Ff3Ff2d3.",
+    "3.2fef3ef3ef3ef3ef3ef3ef3ef3ef3ef3ef3ef3ef4ed4.",
+    "4.e55d4.",
+    "5.e2fFfFfFfFfFfFfFfFfFfFfFfF5fFfFfFfFfF11feEd5.",
+    "5.f2e2fe3fefefefefefefefefef7efefe3fefef3ef2eE2d5.",
+    "5.efefe3fef7efefef3ef2ededed2efefefefef6e3Ee5.",
+    "6.4fefef2ededed7ed3ededed4efef8eded2Ed6.",
+    "6.F4fefef2ed6ef10ed4e5f3ef5ed2Ed6.",
+    "6.2fefefef2eded3ed11eded4efef10e3Ed6.",
+    "6.fefefef17ef9efefef8e2dEd7.",
+    "7.f8ed3ed8efef7ef8ed3e2d3E7.",
+    "7.5ef3ef7efefe3fef3efefef6ed5ed2Ed7.",
+    "7.ed18efefef14ededede2dbEd7.",
+    "8.f17e3fef3vfefef8ed5e3E8.",
+    "8.3ef4ed10ef2ev3evf10ededededEbd8.",
+    "8.2efef7ef3efefefv2ewefvf15ed2Ed8.",
+    "9.fefef8ed7ev3ev3ed3ededededede3E9.",
+    "9.e3fef3ef12e3v3ed7ed3ede2dEd9.",
+    "9.fefef10ed3ed7ededededededede2d2Ed9.",
+    "9.e5fefefef22edededede3Ee9.",
+    "10.2fef16ed3ededed3edede3ded2Ed10.",
+    "10.F2fefefef11ef14edede2d2Ed10.",
+    "10.3ef3ef4eded9eded7ede3de2Ebd10.",
+    "11.4fe3fef2ed4efefef14eded2Ed11.",
+    "11.3f3ef4ededed2efef2ed3ededededede2d3E11.",
+    "11.2fefe3f4eded2efefef8edededede3Ed11.",
+    "11.2efefefef2eded4efef2ededededededededEbE12.",
+    "12.9f7e3f18e3E12.",
+    "12.2fefefefef7ef8ed9edEbd12.",
+    "12.2e7fefefefefef3ef11efed3E12.",
+    "13.fe3fefefef3ef4ed7ed7e3E13.",
+    "13.2fe11fef7ef5efefef2dEd13.",
+    "13.2e3fe3fefef11ef9ed2Ed13.",
+    "14.7fefefef3ef3efefef8e2dE14.",
+    "13.5fef3efefefef5efef2eded3e2dE2d13.",
+    "10.Ff40dfe10.",
+    "9.2fFfF3f4ef3efefef3efefef4ed6e3f2ed9.",
+    "9.f3FfF2fefefef3e3fefefe3fef9e2fFfe2d9.",
+    "8.3fFef9ef3ef7ef4ed3ed4ef2e3de8.",
+    "8.FfF2eded3ed4ef14ededededededede3d8.",
+    "7.3f2dEd3Ed3E7dEdEdEdEdEd3Ed9EdEdEed7.",
+    "7.2e13E5d27E3d7.",
+    "6.2d3EdEdEd3EdE2de4d7Ed7Ed7EdE4de6.",
+    "64.",
+    "64."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

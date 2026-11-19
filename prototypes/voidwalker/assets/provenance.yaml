@@ -25,7 +25,7 @@
   ships: true
 - path: vendor/pixelfx.js
   origin: licensed
-  tool: "esbuild 0.25.10 bundle (IIFE, window.PIXELFX) of pixelfx 0.3.1's core and the effects arcane/portal, shadow/shadow-flames and fire/spirit-flame, unchanged"
+  tool: "esbuild 0.25.10 bundle (IIFE, window.PIXELFX) of pixelfx 0.3.1's core and arcane/portal unchanged, and fire/void-trail (vendor/pixelfx-src/void-trail.js)"
   source: {vendor: "Patch", product: "pixelfx 0.3.1", url: "https://github.com/patch-gg/pixelfx"}
   licence: {id: MIT}
   date: 2026-11-19
@@ -37,3 +37,170 @@
   licence: {id: MIT}
   date: 2026-11-19
   ships: true
+- path: vendor/pixelfx-src/void-trail.js
+  origin: ai
+  tool: "a pixelfx effect written for Voidwalker in the library's style, from its fire helpers (flame tongue, puff and ember recipes adapted there from Sprite Fusion's fire, MIT); checked with tools/check.mjs"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: false
+- path: assets/lobby/altar.png
+  origin: code
+  tool: "assets/specs/gen_lobby.py (pixel shader + hand-placed detail) -> PixelSpec -> codeart2d render_pixelspec.py --strict-qc; code-drawn, no image model"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: true
+- path: assets/lobby/asteroid-0.png
+  origin: code
+  tool: "assets/specs/gen_lobby.py (pixel shader + hand-placed detail) -> PixelSpec -> codeart2d render_pixelspec.py --strict-qc; code-drawn, no image model"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: true
+- path: assets/lobby/asteroid-1.png
+  origin: code
+  tool: "assets/specs/gen_lobby.py (pixel shader + hand-placed detail) -> PixelSpec -> codeart2d render_pixelspec.py --strict-qc; code-drawn, no image model"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: true
+- path: assets/lobby/asteroid-2.png
+  origin: code
+  tool: "assets/specs/gen_lobby.py (pixel shader + hand-placed detail) -> PixelSpec -> codeart2d render_pixelspec.py --strict-qc; code-drawn, no image model"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: true
+- path: assets/lobby/gate-arch.png
+  origin: code
+  tool: "assets/specs/gen_lobby.py (pixel shader + hand-placed detail) -> PixelSpec -> codeart2d render_pixelspec.py --strict-qc; code-drawn, no image model"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: true
+- path: assets/lobby/lectern.png
+  origin: code
+  tool: "assets/specs/gen_lobby.py (pixel shader + hand-placed detail) -> PixelSpec -> codeart2d render_pixelspec.py --strict-qc; code-drawn, no image model"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: true
+- path: assets/lobby/pedestal-locked.png
+  origin: code
+  tool: "assets/specs/gen_lobby.py (pixel shader + hand-placed detail) -> PixelSpec -> codeart2d render_pixelspec.py --strict-qc; code-drawn, no image model"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: true
+- path: assets/lobby/pedestal-open.png
+  origin: code
+  tool: "assets/specs/gen_lobby.py (pixel shader + hand-placed detail) -> PixelSpec -> codeart2d render_pixelspec.py --strict-qc; code-drawn, no image model"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: true
+- path: assets/lobby/sigil-star-dark.png
+  origin: code
+  tool: "assets/specs/gen_lobby.py (pixel shader + hand-placed detail) -> PixelSpec -> codeart2d render_pixelspec.py --strict-qc; code-drawn, no image model"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: true
+- path: assets/lobby/sigil-star-lit.png
+  origin: code
+  tool: "assets/specs/gen_lobby.py (pixel shader + hand-placed detail) -> PixelSpec -> codeart2d render_pixelspec.py --strict-qc; code-drawn, no image model"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: true
+- path: assets/lobby/standing-stone-far.png
+  origin: code
+  tool: "assets/specs/gen_lobby.py (pixel shader + hand-placed detail) -> PixelSpec -> codeart2d render_pixelspec.py --strict-qc; code-drawn, no image model"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: true
+- path: assets/lobby/standing-stone-lit.png
+  origin: code
+  tool: "assets/specs/gen_lobby.py (pixel shader + hand-placed detail) -> PixelSpec -> codeart2d render_pixelspec.py --strict-qc; code-drawn, no image model"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: true
+- path: assets/lobby/tome.png
+  origin: code
+  tool: "assets/specs/gen_lobby.py (pixel shader + hand-placed detail) -> PixelSpec -> codeart2d render_pixelspec.py --strict-qc; code-drawn, no image model"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: true
+- path: assets/lobby/void-icon.png
+  origin: code
+  tool: "assets/specs/gen_lobby.py (pixel shader + hand-placed detail) -> PixelSpec -> codeart2d render_pixelspec.py --strict-qc; code-drawn, no image model"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: true
+- path: assets/lobby/lobby-sprites.json
+  origin: code
+  tool: "manifest of the lobby sprites: size, anchor, QA status"
+  date: 2026-11-19
+  ships: true
+- path: assets/specs/altar.pixelspec.json
+  origin: code
+  tool: "PixelSpec source written by gen_lobby.py"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: false
+- path: assets/specs/asteroid-0.pixelspec.json
+  origin: code
+  tool: "PixelSpec source written by gen_lobby.py"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: false
+- path: assets/specs/asteroid-1.pixelspec.json
+  origin: code
+  tool: "PixelSpec source written by gen_lobby.py"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: false
+- path: assets/specs/asteroid-2.pixelspec.json
+  origin: code
+  tool: "PixelSpec source written by gen_lobby.py"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: false
+- path: assets/specs/gate-arch.pixelspec.json
+  origin: code
+  tool: "PixelSpec source written by gen_lobby.py"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: false
+- path: assets/specs/gen_lobby.py
+  origin: code
+  tool: "the generator for the lobby PixelSpecs"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: false
+- path: assets/specs/lectern.pixelspec.json
+  origin: code
+  tool: "PixelSpec source written by gen_lobby.py"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: false
+- path: assets/specs/pedestal.pixelspec.json
+  origin: code
+  tool: "PixelSpec source written by gen_lobby.py"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: false
+- path: assets/specs/sigil-star.pixelspec.json
+  origin: code
+  tool: "PixelSpec source written by gen_lobby.py"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: false
+- path: assets/specs/standing-stone.pixelspec.json
+  origin: code
+  tool: "PixelSpec source written by gen_lobby.py"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: false
+- path: assets/specs/tome.pixelspec.json
+  origin: code
+  tool: "PixelSpec source written by gen_lobby.py"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: false
+- path: assets/specs/void-icon.pixelspec.json
+  origin: code
+  tool: "PixelSpec source written by gen_lobby.py"
+  model: "claude-opus-5-5"
+  date: 2026-11-19
+  ships: false

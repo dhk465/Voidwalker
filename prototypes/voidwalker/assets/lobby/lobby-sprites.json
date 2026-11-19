@@ -1,0 +1,176 @@
+{
+ "schema": "voidwalker.lobby_sprites.v1",
+ "art_source": "code",
+ "disclosure": "code-drawn, no image model",
+ "made_by": "assets/specs/gen_lobby.py -> codeart2d render_pixelspec.py --strict-qc",
+ "sprites": {
+  "altar": {
+   "file": "altar.png",
+   "size": [
+    704,
+    262
+   ],
+   "anchor": [
+    352,
+    82
+   ],
+   "qa": "pass"
+  },
+  "asteroid-0": {
+   "file": "asteroid-0.png",
+   "size": [
+    44,
+    38
+   ],
+   "anchor": [
+    22,
+    19
+   ],
+   "qa": "pass"
+  },
+  "asteroid-1": {
+   "file": "asteroid-1.png",
+   "size": [
+    62,
+    50
+   ],
+   "anchor": [
+    31,
+    25
+   ],
+   "qa": "pass"
+  },
+  "asteroid-2": {
+   "file": "asteroid-2.png",
+   "size": [
+    84,
+    66
+   ],
+   "anchor": [
+    42,
+    33
+   ],
+   "qa": "pass"
+  },
+  "gate-arch": {
+   "file": "gate-arch.png",
+   "size": [
+    92,
+    244
+   ],
+   "anchor": [
+    0,
+    0
+   ],
+   "qa": "pass"
+  },
+  "lectern": {
+   "file": "lectern.png",
+   "size": [
+    64,
+    50
+   ],
+   "anchor": [
+    32,
+    48
+   ],
+   "qa": "pass"
+  },
+  "pedestal-locked": {
+   "file": "pedestal-locked.png",
+   "size": [
+    44,
+    50
+   ],
+   "anchor": [
+    22,
+    48
+   ],
+   "qa": "pass"
+  },
+  "pedestal-open": {
+   "file": "pedestal-open.png",
+   "size": [
+    44,
+    50
+   ],
+   "anchor": [
+    22,
+    48
+   ],
+   "qa": "pass"
+  },
+  "sigil-star-dark": {
+   "file": "sigil-star-dark.png",
+   "size": [
+    11,
+    11
+   ],
+   "anchor": [
+    5,
+    5
+   ],
+   "qa": "pass"
+  },
+  "sigil-star-lit": {
+   "file": "sigil-star-lit.png",
+   "size": [
+    11,
+    11
+   ],
+   "anchor": [
+    5,
+    5
+   ],
+   "qa": "pass"
+  },
+  "standing-stone-far": {
+   "file": "standing-stone-far.png",
+   "size": [
+    22,
+    34
+   ],
+   "anchor": [
+    11,
+    32
+   ],
+   "qa": "pass"
+  },
+  "standing-stone-lit": {
+   "file": "standing-stone-lit.png",
+   "size": [
+    22,
+    34
+   ],
+   "anchor": [
+    11,
+    32
+   ],
+   "qa": "pass"
+  },
+  "tome": {
+   "file": "tome.png",
+   "size": [
+    112,
+    64
+   ],
+   "anchor": [
+    56,
+    32
+   ],
+   "qa": "pass"
+  },
+  "void-icon": {
+   "file": "void-icon.png",
+   "size": [
+    15,
+    23
+   ],
+   "anchor": [
+    7,
+    11
+   ],
+   "qa": "pass"
+  }
+ }
+}

@@ -1,0 +1,100 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "pedestal",
+ "canvas": [
+  44,
+  50
+ ],
+ "anchor_px": [
+  22,
+  48
+ ],
+ "palette": {
+  "E": "#3b3350",
+  "F": "#9d92bb",
+  "b": "#241a3a",
+  "d": "#45404d",
+  "e": "#6d6488",
+  "f": "#8a8296",
+  "h": "#cfc6e6",
+  "o": "#0e0a18",
+  "v": "#5ac8b9"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "44.",
+    "44.",
+    "4.3FfF5fFfFfFfFf5FfFfFfFf5Fe4.",
+    "4.fF33vd4.",
+    "4.FfF8fe8fFfFfFfFf3FfFfdE4.",
+    "4.4f17efe3fe6fe2E4.",
+    "4.FfFefef3ef3ef3efefe11fedE4.",
+    "4.4f4ed10ef3efefefefef2eEd4.",
+    "4.Fefefefefefef3efefefe3fefe3f2e2Ed4.",
+    "4.2e3ded2ef7efefefef3ef2eEd3Ed4.",
+    "5.3de2defef7e7fef2e3E2d6.",
+    "8.27d9.",
+    "9.3fFefef3e7fefef2dE10.",
+    "10.4f7efefef6eEd10.",
+    "10.F2fefedefefedefefedef2dE10.",
+    "10.4fefdfef2ed5ed3e2E10.",
+    "10.6fd2fefed5edef2dE10.",
+    "10.6fdfefefd5edfedEd10.",
+    "10.fe4fd4fed5edef3E10.",
+    "11.5fd3f2eded3ede2dE11.",
+    "11.fF3fd2fefed3efed2eEd11.",
+    "11.FfF2fdfefefdfefefdf2dE11.",
+    "11.2F3fde4fd4fed2eEd11.",
+    "11.F4fdfefefdfefefde2dE11.",
+    "11.fF2fed2fefede3fed2eEd11.",
+    "11.3fefdf3efdfefefdf2dE11.",
+    "11.fF2fedefefedefefed2e2d11.",
+    "11.F2fefd5ed2ef2edfedE11.",
+    "11.fF2fed5edefefedfe2d11.",
+    "11.F2f2edededed4efdfedE11.",
+    "11.fF2fe2d4ed3efedfe2d11.",
+    "11.f4edededed4efdfd2E11.",
+    "11.3efed5edefefededEd11.",
+    "12.ef2ed5ed5ede2E12.",
+    "12.fefede3fed5ede2d12.",
+    "12.efefdfef2eded3edeEd12.",
+    "12.3fed2fefe2d4ede2d12.",
+    "12.2f2edf4eded2efdeEd12.",
+    "12.3fedef3ed3efede2d12.",
+    "11.3f13ef2e2d12.",
+    "10.2FhFf9efefef3ef11.",
+    "7.Ff4Ff4ed10ef3ef2e8.",
+    "6.3FfF2f13efefefe3fefe6.",
+    "5.3F2fef8ed6efefefefef2d6.",
+    "5.fF2fefefefefefefefefefefefefef4e5.",
+    "5.Ffede3dedededede3dededededededeE5.",
+    "4.FfeEdEd3EdEdEdEd7EdEdEdEdEdEd5.",
+    "4.2eEdEd5Ed3Ed4EbEb2EdEd3EdEd2e4.",
+    "44.",
+    "44."
+   ]
+  }
+ ],
+ "variants": {
+  "open": {},
+  "locked": {
+   "E": "#1a1229",
+   "d": "#241a3a",
+   "e": "#353a44",
+   "f": "#45404d",
+   "F": "#45404d",
+   "h": "#6d6488",
+   "v": "#241a3a"
+  }
+ },
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}
