@@ -1,6 +1,6 @@
 # Godot — Deprecated APIs
 
-Last verified: 2026-10-17 (4.7 rows); 2026-02-12 (rest)
+Last verified: 2026-11-19 (4.8 beta section); 2026-10-17 (4.7 rows); 2026-02-12 (rest)
 
 The 4.7 migration guide lists no formal deprecations; the 4.7 rows below are
 renames and removals from it
@@ -52,3 +52,11 @@ with the "Use Instead" column.
 | GodotPhysics3D for new projects | Jolt Physics 3D | Default since 4.6; better stability |
 | `event.device == 0` to detect mouse or keyboard | `event is InputEventMouse` / `InputEventKey`, or `InputEvent.DEVICE_ID_MOUSE` / `DEVICE_ID_KEYBOARD` | Since 4.7 mouse and keyboard no longer report device `0`, which some joypads use |
 | Installing addons from the editor's AssetLib tab | The editor's Asset Store workspace (4.7+) | 4.7 replaced the Asset Library with the Asset Store |
+
+## 4.7 → 4.8 (beta 4)
+
+| Deprecated | Use instead | Source |
+|------------|-------------|--------|
+| `EditorInterface.get_editor_main_screen()` — no longer returns a real main-screen container | no 1:1 replacement; reviewers suggest `EditorInterface.get_dock_by_name()` and `EditorDock` properties (still an open question) | https://github.com/godotengine/godot-docs/pull/12421 |
+
+Other 4.8 deprecations: NOT SOURCEABLE — the upgrade page is a draft (https://github.com/godotengine/godot-docs/pull/12421).

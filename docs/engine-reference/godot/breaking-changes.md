@@ -1,8 +1,31 @@
 # Godot — Breaking Changes
 
-Last verified: 2026-10-17 (4.6 → 4.7 and the section dates); 2026-02-12 (older sections)
+Last verified: 2026-11-19 (4.7 → 4.8 beta); 2026-10-17 (4.6 → 4.7 and the section dates); 2026-02-12 (older sections)
 
 Changes between Godot versions, focused on post-LLM-cutoff changes (4.4+).
+
+## 4.7 → 4.8 (beta 4, Nov 2026 — POST-CUTOFF, HIGH RISK, PROVISIONAL)
+
+The official upgrade page is still a draft (https://github.com/godotengine/godot-docs/pull/12421); this list comes from the beta articles and that draft, and may grow before 4.8 stable.
+
+| Area | Change | Source |
+|------|--------|--------|
+| C#/.NET | **.NET 10.0 or newer is required** (was .NET 8); Visual Studio 2022 users move to 2026 | https://godotengine.org/article/dev-snapshot-godot-4-8-beta-4/, https://github.com/godotengine/godot-docs/pull/12421 |
+| GDScript | A script can no longer inherit its own inner classes (GH-121171); inherit by path instead | https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/, https://github.com/godotengine/godot-docs/pull/12421 |
+| 3D | Undocumented script-only `enter_world` callbacks removed (GH-111504) | https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/ |
+| Core | `ScriptServer` fallbacks removed from `ClassDB` (GH-123379); use `ProjectSettings.get_global_class_list` | https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/, https://github.com/godotengine/godot-docs/pull/12421 |
+| Core | Using the local debugger in a release export now fails (GH-122213) | https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/ |
+| Export | Export options without `PROPERTY_USAGE_STORAGE` are no longer serialized (GH-120721) | https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/ |
+| Platforms | Android `OS.alert()` is now blocking (GH-120800) | https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/ |
+| Input | Joypads are ignored while the window is unfocused — default for **new** projects only (GH-120399) | https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/ |
+| GUI | Duplicated button press on touch input fixed (GH-120864); default dialog titles reworked (GH-105550) | https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/ |
+| Animation | `LookAtModifier3D.is_interpolating()` no longer inverted (GH-121391); bone follower classes default to FTI off (GH-119509) | https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/ |
+| Rendering | Sky shader `SCREEN_UV` fixed in the Compatibility renderer (GH-121676); ASTC 6x6 / high-quality compression profiles (GH-115003) | https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/ |
+| Rendering | `CompositorEffect`: depth is no longer always resolved after the transparent pass; set `access_resolved_depth` to read it (GH-124378) | https://github.com/godotengine/godot-docs/pull/12421 |
+| Network | mbedTLS 4.1.0 with PSA Crypto (GH-120725) | https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/ |
+| GDExtension | Classes can no longer shadow superclass members unless `GDVIRTUAL` (godot#122751) — wording still in review | https://github.com/godotengine/godot-docs/pull/12421 |
+
+- 2D rendering, `canvas_item` shaders, C# APIs beyond the .NET minimum, iOS: **NOT SOURCEABLE — no 4.8 changes stated at https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/, https://godotengine.org/article/dev-snapshot-godot-4-8-beta-4/ or https://github.com/godotengine/godot-docs/pull/12421**.
 
 ## 4.6 → 4.7 (Jun 2026 — POST-CUTOFF, HIGH RISK)
 

@@ -64,6 +64,8 @@ After play: "Highlights the objects using shader instead of circles when you hov
 
 After play: "Make stars fixed in the space instead of moving downward. Instead, mke them just blinks over long duration."
 
+After the move to Godot was decided: "If shader and other work is easier to implement using godot latest, its time to migrate." Platform: "Mobile-first design (auto aim in adventure, touch for movements and interactions + mobile friendly ui) for android now and ios later, PC possible." Performance: "Aim for 60fps (as recommended) but 120 possible".
+
 After play: "Our game is roguelite. But we still want a HUB where the cards are prepared in deck. Just like the town in BALL x PIT. Just that there is no building but just card deck preps and gacha. The card upgrades and merge between stages is not that. There should be also some progression/upgrades/differences between adventure sessions. Make it less like some flash game or a simple browser game."
 
 After play (answers): merging and upgrading between stages, run only; progression: permanent upgrades, unlocks, adventure choices, "Journal and Quests and Loots (artifacts and logs from lost civilizations)"; feel: hub presentation, combat feel, sound and music, art: "We use pixel with type/variant-limited and specific colors to specific things for better visibilities of different things. Make enemy and player effects and projectiles distinctive. Just to add, what end game stuff should you suggest?"
@@ -156,7 +158,8 @@ Stage 1 wave 2 (about 1:30) brings feeders spitting slow globs, grazers that div
 - The story and its endings: add it as a feature
 - Chapter II, the Silent Foundry: a civilization destroyed by its own AI; 34 machine kinds with protocols and Adaptive learning (plan: design/chapter-2-the-silent-foundry.md): add it as a feature
 - More stages and characters: grow it
-- Godot 4 .NET (C#) as the engine, later: /setup-engine godot when the browser build is settled
+- Godot 4 .NET (C#) as the engine: set up 2026-11-19 (Godot 4.8 beta 4, .NET 10, Compatibility renderer); the browser build stays playable while the port goes system by system, starting with the hub
+- Mobile-first: Android now, iOS later, PC possible; auto-aim in the adventure, touch to move and to do everything else, mobile-friendly UI (to be designed with the port)
 
 ## Build order
 1. The slice: one run of 3 stages in the rift, Ybasogs and falling matter, deck-as-ammo bolts, picks after waves, the Rift Altar between stages, the Mother at the end; lose when energy hits 0.

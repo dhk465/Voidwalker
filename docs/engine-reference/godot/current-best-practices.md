@@ -1,6 +1,6 @@
 # Godot — Current Best Practices
 
-Last verified: 2026-10-17 (4.7 sections); 2026-02-12 (rest) | Engine: Godot 4.7
+Last verified: 2026-11-19 (4.8 beta section); 2026-10-17 (4.7 sections); 2026-02-12 (rest) | Engine: Godot 4.8 beta 4
 
 Practices that are **new or changed** since the model's training data (~4.3).
 This supplements (not replaces) the agent's built-in knowledge.
@@ -239,3 +239,12 @@ Sources:
 - **SDL3 gamepad driver**: Better cross-platform gamepad support
 - **Android**: Edge-to-edge display, camera feed access, 16KB page support (Android 15+)
 - **Linux**: Wayland subwindow support for multi-window capability
+
+## 4.8 (beta 4)
+
+- **C#/.NET:** build with the .NET 10 SDK or newer (https://godotengine.org/article/dev-snapshot-godot-4-8-beta-4/).
+- **Android:** the editor downloads, sets up and manages the Android and Java SDKs itself, from the export presets and the Project menu (GH-121849); a Windows fix for its SDK Manager setup landed in beta 4 (GH-125319). `OS.get_processor_name()` now works on Android (GH-120896) (https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/, https://godotengine.org/article/dev-snapshot-godot-4-8-beta-4/).
+- **Compatibility renderer:** decals are supported (GH-118070) (https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/).
+- **Touch:** `TextEdit`/`CodeEdit` take tap, inertial drag scrolling and double-tap word selection (GH-119706); `TabBar` and `PopupMenu` support touch (https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/).
+- **Editor:** `CanvasItem`s can be moved, resized, rotated, scaled and pivoted at runtime from the editor, with undo/redo (GH-122510); a built-in fullscreen shortcut, `Alt+Enter`, remappable in the Input Map (GH-39708, https://github.com/godotengine/godot-docs/pull/12421).
+- 2D and `canvas_item` shader practices for 4.8: NOT SOURCEABLE — not covered at https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/ or https://godotengine.org/article/dev-snapshot-godot-4-8-beta-4/; follow the 4.7 notes above.
