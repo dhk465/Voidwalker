@@ -109,6 +109,16 @@ bash tools/build/android_export.sh
 
 The APK is written to `build/android/Voidwalker-debug.apk`. To install it on a connected test device with USB debugging enabled, run `adb install -r build/android/Voidwalker-debug.apk`. The device test report records all six touch flows, including removal of the sixteenth pool stack and a confirmed reset that survived a cold restart. [Android smoke-test results and screenshots](production/qa/evidence/hub-port/android-stations/README.md)
 
+## The Voidwalker Codex
+
+The Codex is the game's reference as one web page: every nature, fusion, form, Ybasog and tuning value, the Rift Altar, the migration to Godot, and the history. Each section shows whether it comes from the Godot port or still from the browser build. Build it, serve it on a local server and open it with Node and Python:
+
+```bash
+bash tools/codex/serve.sh
+```
+
+The page is written to `build/codex/voidwalker-codex.html`. Its text comes from the [game reference](design/voidwalker-reference.md).
+
 ## Credits
 
 Voidwalker uses **Claude Code Game Studios** by Donchitos as its development template. The original MIT license is included in this repository. [Claude Code Game Studios](https://github.com/Donchitos/Claude-Code-Game-Studios) · [License](LICENSE)

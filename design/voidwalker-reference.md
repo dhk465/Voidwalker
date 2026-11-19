@@ -1,6 +1,6 @@
 # Voidwalker: Game Reference
 
-*Updated 2026-11-19 from `prototypes/voidwalker/config.js` (game data and tuning), the Godot port (`src/`) and the project history. Numbers in sections 3 to 16 are the browser build's `config.js` values; the port's own values are in section 18.*
+*Updated 2026-11-19 from `prototypes/voidwalker/config.js` (game data and tuning), the Godot port (`src/`) and the project history. Each section names its source: **Godot port** once that system has been migrated, **browser build** until then. Section 18 tracks the migration. Numbers marked browser come from `config.js`; the port reads the same game data from `src/data/game_data.json`.*
 
 **Builds:** the browser game `prototypes/voidwalker/index.html` (the whole game) and the Godot 4.8 .NET port (the Rift Altar hub so far; see section 18 and the README) · **Brief:** `design/game-brief.md` · **Checkpoints:** tag `one-shot/voidwalker`, commit `96f41a9` (iteration 9, the last browser iteration), commit `20b1e1b` (the port's lobby islands)
 
@@ -22,7 +22,7 @@
 - 15. The save
 - 16. Every tuning value
 - 17. Development history and changelog
-- 18. The Godot port
+- 18. Migration to Godot
 - 19. Known gaps and next steps
 
 ## 1. The game in one page
@@ -92,16 +92,60 @@ Between stages: 2 rites to **merge** two of this adventure's cards (a new fusion
 
 ## 4. The Rift Altar
 
-The hub: a floating altar in the void with six stations around it. No buildings, only preparation.
+*Source: Godot port (migrated 2026-11-19). The browser build's Altar has the same rules; its differences are listed at the end of this section.*
+
+The hub: the altar and the six stations each float on their own island in deep space. No buildings, only preparation.
+
+- **The altar** holds the blob in the pool's dominant form, with the deck's card backs above it on a lectern.
+- **The Void Rite** is a crack in space-time with void seeping out. **Void balls** leave the crack, drift on smooth curves through one to three stops, each at its own pace and on its own depth lane (some pass behind the islands), and are drawn into the Rift Gate. A Rite draw releases a burst of them. Tap a ball and it darts away or bursts.
+- **The Rift Gate** holds a rift painted in the chosen rift's nature, turning counter-clockwise as it drains.
+- **Sigils** is a constellation over a cracked observatory disc, **Relics** a ruined colonnade whose pedestals carry the equipped relics, and the **Journal** a tome open on a reading stand.
+- **The look:** a 640×360 game area scaled by whole numbers (4× on a wide phone, 2× in a 1280×720 window), the Spleen pixel font, code-drawn sprites, blinking stars and far asteroids drifting by.
 
 | Station | What you do |
 |---|---|
-| **Pool** | Choose the cards this adventure can find (6 to 12, more with Breadth); click a row to remove one. See the form the pool gives and its trait. |
+| **Pool** | Choose the cards this adventure can find (6 to 12, more with Breadth); tap a row to remove one. See the form the pool gives and its trait. |
 | **Void Rite** | The gacha, drawing only from discovered natures, with a reveal ceremony. One rite 30, ten rites 270. Focus on one nature for +10 per draw: 50% of draws land on it. Rare (level II) 20%; mythic (an already-fused card, written into the Codex) 7%; a mythic is certain within 10 draws. New kinds are marked NEW. |
 | **Rift Gate** | Choose one of two rifts (three after a win), each with an omen, a prevailing nature and a boon; choose the depth; with the Chosen sigil, choose the first card. Enter. |
 | **Sigils** | Permanent upgrades bought with void energy, and the unlocks list. |
 | **Relics** | 16 relics found in adventures (ruins, mini-bosses, bosses); equip them in slots (1, a second unlocked by finding 3, a third with Shrine). |
-| **Journal** | Quests, the 16 logs found in wrecks and ruins, the 84-cell Codex, the Bestiary and the natures with their achievements. "Forget all" wipes the save. |
+| **Journal** | Quests, the 16 logs found in wrecks and ruins, the 84-cell Codex, the Bestiary and the natures with their achievements. RESET TO DEMO (tap twice) returns the collection to the demo. |
+
+### Controls
+
+| Where | Input | Does |
+|---|---|---|
+| Hub, touch | Tap a station, then tap it again | Light it, then open its screen |
+| Hub, desktop | Hover, then click | Light a station, open its screen |
+| Hub | Tap or click a void ball | It darts away, or bursts (40%) |
+| A screen | Back button or Escape | Close it |
+| Journal, Natures tab | RESET TO DEMO, twice | Reset the collection to the demo |
+
+### Hub tuning (`src/data/hub_config.tres`)
+
+| Value | Now | What it does |
+|---|---|---|
+| `FlowAmbient` | 4 | Void balls the crack keeps in the air on its own |
+| `FlowMax` | 9 | The most balls at once, Rite draws included |
+| `FlowGapMin`, `FlowGapMax` | 1.2, 3.2 s | Time between the crack's own balls |
+| `FlowBurstGap` | 0.35 s | Time between balls released by a Rite draw |
+| `FlowBoundsMin`, `FlowBoundsMax` | (70, 80), (570, 320) | The area balls wander in, in hub pixels |
+| `FlowStopsMin`, `FlowStopsMax` | 1, 3 | Waypoints a ball's curve passes near before it turns to the rift |
+| `FlowSpeedMin`, `FlowSpeedMax` | 15, 50 px/s | The slowest and fastest pace; each ball has its own |
+| `FlowMinHop`, `FlowMaxHop` | 80, 200 px | Distance from one stop to the next |
+| `FlowSway` | 0.25 | How far a ball's speed swells and ebbs round its pace |
+| `FlowSpiralRadius`, `FlowSpiralTurns` | 26 px, 1.5 | The spiral into the rift |
+| `FlowDartDistance`, `FlowDartTime` | 40 px, 0.45 s | A tapped ball's dart |
+| `FlowTapRadius` | 10 px | How close a tap must land to touch a ball |
+| `FlowPopChance` | 0.4 | Chance a tapped ball bursts instead of darting |
+| `TrailLifetime`, `TrailAmount`, `TrailLift` | 2 s, 60, 14 px/s | Each ball's trail: how long a puff lives, puffs at once, how fast they rise |
+| `StarDensity` | 0.07 | Share of the sky's 7×7 cells that hold a star |
+| `StarBlinkMin`, `StarBlinkMax` | 6, 18 s | A star's blink cycle |
+| `AsteroidDrift` | 3 px/s | How fast the far asteroids drift |
+
+### In the browser build
+
+The browser Altar keeps the same stations and rules, drawn at 1280×720: void flames with trails flow round one floating altar, hovering lights a station, keys 1 to 6 open them, Enter at the Gate enters the rift, and the Journal's "Forget all" wipes the save.
 
 ### Sigils
 
@@ -577,7 +621,11 @@ Matter body-checks the blob and takes burn, chill and venom; it ignores sleep, c
 
 ## 15. The save
 
-Kept in the browser (`localStorage`, key `voidwalker.save.v1`): innate nature, discovered natures, collection, pool, fusions found, achievement counters, banked void energy, adventures and wins, depth, rite pity, sigils, relics and slots, logs, quests, the rifts offered and the chosen first card. Test addresses: `?demo=1` (a sample collection, never saved), `?nosave=1`, `?scene=altar&tab=gate`, `?scene=figures` (every Ybasog), `?stage=2&wave=1&autofire=1`, `?rest=1`, `?seed=N`.
+*Source: Godot port (migrated 2026-11-19); the browser build keeps its own save.*
+
+**Godot port:** `user://save.json` (on Windows `%APPDATA%\Godot\app_userdata\Voidwalker\save.json`), written whole through a temporary file. It holds the same collection as the browser save. A first launch starts the demo collection. A save that cannot be read is left untouched, the HUD shows SAVE PROTECTED, and that session's changes are not kept. RESET TO DEMO on the Journal's Natures tab (tap twice) writes the demo collection. Developer launch options are in the README.
+
+**Browser build:** kept in the browser (`localStorage`, key `voidwalker.save.v1`): innate nature, discovered natures, collection, pool, fusions found, achievement counters, banked void energy, adventures and wins, depth, rite pity, sigils, relics and slots, logs, quests, the rifts offered and the chosen first card. Test addresses: `?demo=1` (a sample collection, never saved), `?nosave=1`, `?scene=altar&tab=gate`, `?scene=figures` (every Ybasog), `?stage=2&wave=1&autofire=1`, `?rest=1`, `?seed=N`.
 
 ## 16. Every tuning value
 
@@ -900,51 +948,22 @@ Your words: *"Cards/innate natures are discovered in adventures as achievement r
 | `tools/art/` | The code-drawn lobby art and the pixelfx bakes |
 | `production/qa/evidence/` | The port's check screenshots and device results |
 
-## 18. The Godot port
+## 18. Migration to Godot
 
-The port runs the **Rift Altar hub** in Godot 4.8 beta 4 .NET (C#), on desktop and Android. The adventure (the rift, combat, Ybasogs, the Rift Rest) is not ported yet and is played in the browser build. How to build, run, test-play and export: `README.md`.
+The game moves from the browser build to Godot 4.8 beta 4 .NET (C#), mobile-first, one system at a time. When a system is migrated, its section here switches its source to the Godot port; until then the browser build is the source. How to build, run, test-play and export the port: `README.md`.
 
-**What is in it**
-
-- The six stations with their screens: Pool, Void Rite, Rift Gate, Sigils, Relics, Journal. The rules match the browser build.
-- **The lobby:** each station floats on its own island in deep space, with stars that blink on their own cycles and far asteroids drifting by. The altar holds the blob in the pool's dominant form, and equipped relics float over the pedestals.
-- **The Void Rite** is a crack in space-time with void seeping out. **The Rift Gate** holds a rift painted in the chosen rift's nature, turning counter-clockwise as it drains.
-- **Void balls** leave the crack and drift on smooth curves to the rift, and a Rite draw releases a burst. Some pass behind the islands and some in front.
-- **The look:** a 640×360 game area scaled by whole numbers (4× on a wide phone, 2× on a 1280×720 window), the Spleen pixel font, code-drawn sprites.
-
-**Controls**
-
-| Where | Input | Does |
+| System | Source now | Migrated |
 |---|---|---|
-| Hub, touch | Tap a station, then tap it again | Light it, then open its screen |
-| Hub, desktop | Hover, then click | Light a station, open its screen |
-| Hub | Tap or click a void ball | It darts away, or bursts (40%) |
-| A screen | Back button or Escape | Close it |
-| Journal, Natures tab | RESET TO DEMO, twice | Reset the collection to the demo |
-
-**The save:** `user://save.json` (on Windows `%APPDATA%\Godot\app_userdata\Voidwalker\save.json`). A first launch starts the demo collection. A save that cannot be read is left untouched, and the HUD shows SAVE PROTECTED. The port's save is separate from the browser's.
-
-**Tuning values** (`src/data/hub_config.tres`)
-
-| Value | Now | What it does |
-|---|---|---|
-| `FlowAmbient` | 4 | Void balls the crack keeps in the air on its own |
-| `FlowMax` | 9 | The most balls at once, Rite draws included |
-| `FlowGapMin`, `FlowGapMax` | 1.2, 3.2 s | Time between the crack's own balls |
-| `FlowBurstGap` | 0.35 s | Time between balls released by a Rite draw |
-| `FlowBoundsMin`, `FlowBoundsMax` | (70, 80), (570, 320) | The area balls wander in, in hub pixels |
-| `FlowStopsMin`, `FlowStopsMax` | 1, 3 | Waypoints a ball's curve passes near before it turns to the rift |
-| `FlowSpeedMin`, `FlowSpeedMax` | 15, 50 px/s | The slowest and fastest pace; each ball has its own |
-| `FlowMinHop`, `FlowMaxHop` | 80, 200 px | Distance from one stop to the next |
-| `FlowSway` | 0.25 | How far a ball's speed swells and ebbs round its pace |
-| `FlowSpiralRadius`, `FlowSpiralTurns` | 26 px, 1.5 | The spiral into the rift |
-| `FlowDartDistance`, `FlowDartTime` | 40 px, 0.45 s | A tapped ball's dart |
-| `FlowTapRadius` | 10 px | How close a tap must land to touch a ball |
-| `FlowPopChance` | 0.4 | Chance a tapped ball bursts instead of darting |
-| `TrailLifetime`, `TrailAmount`, `TrailLift` | 2 s, 60, 14 px/s | Each ball's trail: how long a puff lives, puffs at once, how fast they rise |
-| `StarDensity` | 0.07 | Share of the sky's 7×7 cells that hold a star |
-| `StarBlinkMin`, `StarBlinkMax` | 6, 18 s | A star's blink cycle |
-| `AsteroidDrift` | 3 px/s | How fast the far asteroids drift |
+| Game data (natures, recipes, sigils, relics, logs, quests, rifts) | Godot port (`src/data/game_data.json`, shared) | 2026-11-19 |
+| The Rift Altar hub and its six stations (section 4) | Godot port | 2026-11-19 |
+| The save (section 15) | Godot port (its own save) | 2026-11-19 |
+| The blob's 15 forms, as hub and Pool sprites (section 7) | Godot port (sprites); traits still apply only in the browser adventure | 2026-11-19 |
+| The adventure: the rift, bolts and the deck (section 3) | Browser build | not yet |
+| Ybasogs and falling matter (sections 12, 13) | Browser build | not yet |
+| Stages, waves, tides and omens in play (sections 11, 14) | Browser build | not yet |
+| The Rift Rest (section 3) | Browser build | not yet |
+| Discoveries counted in play (section 10) | Browser build (the port shows progress) | not yet |
+| Sound and score | Browser build | not yet |
 
 ## 19. Known gaps and next steps
 

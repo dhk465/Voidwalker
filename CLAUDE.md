@@ -80,3 +80,22 @@ elsewhere in the repo, so they are restated here rather than lost:
 - **Helpers in `.claude/scripts/` emit observations, never verdicts.** A script
   that scores or judges will eventually contradict a mode or override it cannot
   see. (Cited by `artifact-check.sh` and `adr-dep-graph.sh`.)
+
+## Voidwalker Codex (standing rule from the user, 2026-11-19)
+
+The Voidwalker Codex is the game's reference page, built by `tools/codex/genpage.js`
+from `design/voidwalker-reference.md` and the browser game's data. Run it with
+`bash tools/codex/serve.sh`.
+
+- **Keep it current.** Any change to the game must update the reference doc
+  in the same piece of work. Then rebuild the page and check that it loads
+  without errors.
+- **Migrate it with the port.** After each system moves from the browser
+  build to Godot:
+  1. Rewrite that system's reference section from the Godot sources, and
+     mark it `*Source: Godot port (migrated <date>)*`.
+  2. Update the tracker in section 18.
+  3. Make the page's data sections read from the Godot data once the port
+     owns them.
+  Browser-only content is replaced bit by bit, never all at once. A section
+  without a Godot source stays marked as the browser build.
