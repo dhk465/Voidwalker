@@ -48,7 +48,7 @@ After play (answers): merging and upgrading between stages, run only; progressio
 
 **Genre:** survivors-like × roguelike deckbuilder (vertical rift shooter)
 
-**Controls:** WASD to move inside the bottom band, mouse to aim, hold the left button to fire, Q auto-fire, Space to pause; the Altar is played with the mouse, 1-5 for its tabs, Enter to begin. *(provisional)*
+**Controls:** WASD to move anywhere in the rift, mouse to aim in any direction, hold the left button to fire, Q auto-fire, Space to pause; the Altar is played with the mouse, 1-5 for its tabs, Enter to begin. *(provisional)*
 
 **Question:** Is building and fusing a nature deck fun when every card is a bolt you watch ricochet? *(inferred (strong))*
 
@@ -65,7 +65,7 @@ After play (answers): merging and upgrading between stages, run only; progressio
 The blob floats alone in the dark. A firefly drifts by whispering "take it" beside a crack of light; touching it absorbs a random first nature of the four, and the blob takes its shape. A small asteroid and three pods drift down; held fire sends bolts ricocheting off the rift walls and the asteroid, which cracks and spills void-energy motes that fly to you. Around 0:40 grazers arrive behind a slab of debris you must break or bank shots around. Wave 1 ends on a pick: three nature cards, take one or skip. The next volley alternates colours: the deck, visibly at work. *(guessed)*
 
 ## Challenge
-Stage 1 wave 2 (about 1:30) brings feeders spitting slow globs, grazers that dive once they reach the middle, and a big asteroid that splits when hit. Anything reaching the bottom drains energy (your HP): enemies a lot, matter a little; falling matter also blocks shots and body-checks the blob. Stage 2 adds ruins, tough slow walls that shield the enemies behind them. Stage 3 ends on the Mother, who spawns pods and fires spreading volleys. Death ends the run; a new run starts fresh. *(provisional)*
+Stage 1 wave 2 (about 1:30) brings feeders spitting slow globs, grazers that dive once they reach the middle, and a big asteroid that splits when hit. Nothing is lost when a thing passes the bottom (it only spoils a sealed wave); energy (your HP) goes to hits, and falling matter blocks shots and body-checks the blob. From stage 1 on, hunters roam the whole rift after you. Stage 2 adds ruins, tough slow walls that shield the enemies behind them. Stage 3 ends on the Mother, who spawns pods and fires spreading volleys. Death ends the run; a new run starts fresh. *(provisional)*
 
 ## Core loop
 - At the Rift Altar, before an adventure: build the deck from your collection, read the omen, pick a depth; the deck's main nature sets your form and its trait.
@@ -75,7 +75,7 @@ Stage 1 wave 2 (about 1:30) brings feeders spitting slow globs, grazers that div
 
 ## Goal & fail state
 - Win: clear 3 stages and defeat the Mother. *(provisional)*
-- Fail: energy reaches 0 from hits or from things reaching the bottom; the run ends. *(provisional)*
+- Fail: energy reaches 0 from hits; the run ends. *(provisional)*
 
 ## Features
 - [x] One full adventure: 3 stages of waves, ending on the Mother, in a wide rift that fills the screen
@@ -93,6 +93,7 @@ Stage 1 wave 2 (about 1:30) brings feeders spitting slow globs, grazers that div
 - [x] Omens and depth: each adventure is read in advance; a win opens a deeper rift with more life and more void energy
 - [x] The collection is saved in the browser between sessions
 - [x] 34 Ybasog kinds in 8 families of variants (pods, grazers, feeders, eyes, devourers, deacons, mites, wall crawlers), plus 4 mini-bosses (Brood Warden, Hive Knight, Gazer Prime, Gorging Behemoth) and 3 bosses (The Choir or The Hollow Eye at the end of stage 2, The Mother at the end of stage 3); Lovecraftian flesh, eyes and tendrils, each kind its own outline
+- [x] Iteration 6: the blob roams the whole rift and aims anywhere, bolts bounce off the floor too, and nothing drains you by slipping past. 23 new kinds: Oracle (seeking globs), Void Leech (latches and drains), Cantor (rings), Biter Gnat, Skitterer (floor runner); four new families that hunt you: reachers from the rift walls (Grasping Limb, Suckermouth, Thrasher, Stalk Eye), the deep (Shambler, Croaker, Harpooner, Brine Priest and its slowing brine), jellies (Polyp, Siphon Jelly, Lantern Jelly that bends your bolts, Man-o-War), gaunts (Faceless Gaunt, Harrier, Shrieker that throws you back, Carrion Wing); mini-bosses Tide Matron and Gaunt Lord; and a third stage 2 boss, The Drowned King (tidal walls, limbs from the walls, the drowned at his call). Hunters tire and leave after a while (hunt_time)
 - [x] Natured Ybasogs: some carry an innate nature (an aura and its sigil); bolts holding the opposite nature deal more, the same nature less; each adventure has a prevailing nature shown at the Altar
 - [x] Nature tides per wave: void tides (few natured), mixed, and nature surges (many, mostly the prevailing nature)
 - [x] Procedural waves: debuts of kinds not yet met (a name card the first time ever), then beats (trickles, lines, V formations, columns, flanks, swarms, rockfalls, wreck fields, ruin walls, elite pairs, lulls)
@@ -126,6 +127,7 @@ Stage 1 wave 2 (about 1:30) brings feeders spitting slow globs, grazers that div
 - 3-nature combinations (364 with all 14) and 4-nature combinations (1,001), an opposite pair anywhere in the set still making void: grow it
 - An open-world void to glide through: grow it
 - The story and its endings: add it as a feature
+- Chapter II, the Silent Foundry: a civilization destroyed by its own AI; 34 machine kinds with protocols and Adaptive learning (plan: design/chapter-2-the-silent-foundry.md): add it as a feature
 - More stages and characters: grow it
 - Godot 4 .NET (C#) as the engine, later: /setup-engine godot when the browser build is settled
 

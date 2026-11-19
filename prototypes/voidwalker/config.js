@@ -34,14 +34,11 @@ window.CONFIG = {
 
   // ---- The blob ----
   player_speed: { value: 470, min: 150, max: 600, step: 10 },   // px/s
-  band_top: { value: 520, min: 400, max: 640, step: 10 },       // px: top of the band the blob may move in
   max_energy: { value: 20, min: 5, max: 60, step: 1 },          // energy is HP
   iframes: { value: 0.8, min: 0, max: 3, step: 0.1 },           // s of safety after a hit
   hit_damage: { value: 2, min: 0, max: 10, step: 1 },           // energy lost when a Ybasog touches you
   glob_damage: { value: 1, min: 0, max: 10, step: 1 },          // energy lost to a feeder glob
   bump_damage: { value: 1, min: 0, max: 10, step: 1 },          // energy lost when falling matter body-checks you
-  leak_enemy: { value: 3, min: 0, max: 10, step: 1 },           // energy lost when a Ybasog reaches the bottom
-  leak_matter: { value: 1, min: 0, max: 10, step: 1 },          // energy lost when matter reaches the bottom
   magnet_radius: { value: 120, min: 20, max: 400, step: 10 },   // px: void-energy motes fly to you inside this
   mote_speed: { value: 560, min: 100, max: 1200, step: 20 },    // px/s
 
@@ -120,6 +117,15 @@ window.CONFIG = {
   mother_volley: { value: 7, min: 1, max: 20, step: 1 },
   telegraph_time: { value: 1, min: 0.2, max: 3, step: 0.1 },    // s of warning before a beam or a lash lands
   beam_damage: { value: 2, min: 0, max: 10, step: 1 },          // energy lost to a gaze beam or a lash
+  pulse_speed: { value: 210, min: 60, max: 600, step: 10 },     // px/s a hymn or croak ring spreads
+  pulse_damage: { value: 1, min: 0, max: 5, step: 1 },          // energy lost to a ring
+  brine_slow: { value: 0.5, min: 0, max: 0.9, step: 0.05 },     // share of your speed a brine pool takes
+  brine_time: { value: 5, min: 1, max: 12, step: 0.5 },         // s a brine pool lasts
+  hunt_time: { value: 24, min: 8, max: 60, step: 1 },           // s a hunter chases you before it drifts off
+  reach_time: { value: 13, min: 4, max: 30, step: 1 },          // s a reacher clings to the rift wall before it withdraws
+  leech_drain: { value: 1.3, min: 0.3, max: 5, step: 0.1 },     // s between the energy a latched leech drains
+  pull_speed: { value: 95, min: 0, max: 300, step: 5 },         // px/s a suckermouth drags you toward it
+  shriek_push: { value: 520, min: 0, max: 1500, step: 20 },     // px/s a shriek throws you back
 
   // ---- Natured Ybasogs: some carry an innate nature ----
   nature_chance: { value: 0.2, min: 0, max: 1, step: 0.05 },    // share of stage 1 Ybasogs that carry a nature
@@ -162,11 +168,11 @@ window.NATURES = {
     patience:   { name: 'Patience',   kind: 'virtue', element: 'ice',      color: '#8fe3ff', opposite: 'wrath',      form: 'humanoid', formName: 'Wanderer',
                   trait: { iframes: 0.5, quick_shuffle: 1 }, traitText: 'longer safety after hits, instant reshuffle' },
     kindness:   { name: 'Kindness',   kind: 'virtue', element: 'growth',   color: '#3fd08f', opposite: 'envy',       form: 'stag',     formName: 'Stag',
-                  trait: { regen: 0.06, leak_guard: 1 }, traitText: 'slowly regrows energy, leaks hurt 1 less' },
+                  trait: { regen: 0.1 }, traitText: 'regrows energy steadily' },
     chastity:   { name: 'Chastity',   kind: 'virtue', element: 'purity',   color: '#ffffff', opposite: 'lust',       form: 'swan',     formName: 'Swan',
                   trait: { glob_dodge: 0.4 }, traitText: '40% of globs pass through you' },
     temperance: { name: 'Temperance', kind: 'virtue', element: 'wind',     color: '#9ad7ff', opposite: 'gluttony',   form: 'manta',    formName: 'Manta',
-                  trait: { speed: 1.3, band: 60 }, traitText: '30% faster, a taller band to roam' },
+                  trait: { speed: 1.3, iframes: 0.2 }, traitText: '30% faster, longer safety after hits' },
     diligence:  { name: 'Diligence',  kind: 'virtue', element: 'lightning', color: '#7d8bff', opposite: 'sloth',     form: 'bee',      formName: 'Bee',
                   trait: { fire_rate: 1.3, damage: 0.85 }, traitText: '+30% fire rate, -15% bolt damage' },
   },
@@ -288,7 +294,7 @@ window.NATURES = {
     wrath:      { stat: 'multikill',   n: 30,   text: 'Slay 3 Ybasogs within half a second, 30 times' },
     patience:   { stat: 'cleanwave',   n: 8,    text: 'Clear 8 waves without being hurt' },
     greed:      { stat: 'motes',       n: 2500, text: 'Gather 2,500 void energy' },
-    charity:    { stat: 'sealedwave',  n: 15,   text: 'Clear 15 waves with nothing slipping past' },
+    charity:    { stat: 'sealedwave',  n: 15,   text: 'Clear 15 waves with nothing escaping' },
     pride:      { stat: 'kills',       n: 1500, text: 'Slay 1,500 Ybasogs' },
     humility:   { stat: 'asteroids',   n: 150,  text: 'Break 150 asteroids' },
     envy:       { stat: 'ricochets',   n: 200,  text: 'Slay 200 Ybasogs with bolts that ricocheted twice' },
@@ -361,6 +367,31 @@ window.YBASOGS = {
   choir:    { fam: 'boss', name: 'The Choir',      role: 'boss', hp: 260, sp: 30, r: 56, drop: 40, from: 2, nature: 'pride', says: 'Three hooded heads behind orbiting wards; sings rings of globs and calls deacons.' },
   hollow:   { fam: 'boss', name: 'The Hollow Eye', role: 'boss', hp: 240, sp: 30, r: 60, drop: 40, from: 2, nature: 'envy', says: 'A vast eye that blinks across the rift and burns your column.' },
   mother:   { fam: 'boss', name: 'The Mother',     role: 'boss', hp: 320, sp: 40, r: 66, drop: 30, from: 3, nature: 'gluttony', says: 'The hive itself: pods, grazers, spreads of globs, hurled matter.' },
+  // ---- iteration 6: every family has four variants, and four new families hunt you across the rift ----
+  oracle:   { fam: 'eye', name: 'Oracle',            role: 'minion', hp: 7,  sp: 26, r: 17, drop: 5, from: 2, w: 0.7, says: 'Many eyes, one will: its globs seek you.' },
+  leech:    { fam: 'devourer', name: 'Void Leech',   role: 'minion', hp: 5,  sp: 70, r: 12, drop: 4, from: 2, w: 0.7, says: 'Latches on and drains you until shot off.' },
+  cantor:   { fam: 'deacon', name: 'Cantor',         role: 'minion', hp: 9,  sp: 22, r: 18, drop: 8, from: 2, w: 0.5, says: 'Sings a ring that spreads across the rift.' },
+  gnat:     { fam: 'mite', name: 'Biter Gnat',       role: 'minion', hp: 1,  sp: 120, r: 7, drop: 1, from: 1, w: 0.7, group: 6, says: 'Circles you, then bites.' },
+  skitter:  { fam: 'crawler', name: 'Skitterer',     role: 'minion', hp: 7,  sp: 90, r: 15, drop: 5, from: 1, w: 0.6, says: 'Runs along the rift floor, spitting up at you.' },
+  grasper:  { fam: 'reacher', name: 'Grasping Limb', role: 'minion', hp: 6,  sp: 0, r: 16, drop: 4, from: 1, w: 0.7, says: 'Reaches from a wall at your height, then lunges.' },
+  sucker:   { fam: 'reacher', name: 'Suckermouth',   role: 'minion', hp: 8,  sp: 0, r: 18, drop: 5, from: 2, w: 0.5, says: 'Clings to a wall and drags you toward its mouth.' },
+  thrasher: { fam: 'reacher', name: 'Thrasher',      role: 'minion', hp: 10, sp: 0, r: 20, drop: 6, from: 2, w: 0.5, says: 'Hangs from the top and sweeps down at you.' },
+  stalkeye: { fam: 'reacher', name: 'Stalk Eye',     role: 'minion', hp: 5,  sp: 0, r: 14, drop: 4, from: 1, w: 0.6, says: 'Peers from a wall on a stalk and fires at you.' },
+  shambler: { fam: 'deep', name: 'Shambler',         role: 'minion', hp: 9,  sp: 42, r: 16, drop: 5, from: 1, w: 1,   says: 'A drowned thing that walks straight at you.' },
+  croaker:  { fam: 'deep', name: 'Croaker',          role: 'minion', hp: 8,  sp: 50, r: 17, drop: 5, from: 2, w: 0.7, says: 'Keeps its distance and croaks out rings.' },
+  harpooner:{ fam: 'deep', name: 'Harpooner',        role: 'minion', hp: 7,  sp: 60, r: 16, drop: 6, from: 2, w: 0.6, says: 'Aims a line at you, then throws.' },
+  brine:    { fam: 'deep', name: 'Brine Priest',     role: 'minion', hp: 10, sp: 30, r: 17, drop: 7, from: 3, w: 0.5, says: 'Marks where you stand; the brine there slows you.' },
+  polyp:    { fam: 'jelly', name: 'Polyp',           role: 'minion', hp: 6,  sp: 34, r: 16, drop: 4, from: 1, w: 0.8, says: 'Drifts after you and stings on touch, unharmed.' },
+  siphon:   { fam: 'jelly', name: 'Siphon Jelly',    role: 'minion', hp: 7,  sp: 30, r: 18, drop: 6, from: 2, w: 0.5, says: 'Drains your void energy while you are near.' },
+  lantern:  { fam: 'jelly', name: 'Lantern Jelly',   role: 'minion', hp: 9,  sp: 24, r: 18, drop: 6, from: 2, w: 0.5, says: 'Its light bends your bolts toward it.' },
+  manowar:  { fam: 'jelly', name: 'Man-o-War',       role: 'minion', hp: 8,  sp: 28, r: 18, drop: 6, from: 3, w: 0.5, says: 'Trails stinging tendrils far below it.' },
+  gaunt:    { fam: 'gaunt', name: 'Faceless Gaunt',  role: 'minion', hp: 6,  sp: 250, r: 16, drop: 5, from: 1, w: 0.8, says: 'Swoops at you in long arcs.' },
+  harrier:  { fam: 'gaunt', name: 'Harrier',         role: 'minion', hp: 4,  sp: 520, r: 14, drop: 4, from: 2, w: 0.6, says: 'Marks your row, then strafes across it.' },
+  shrieker: { fam: 'gaunt', name: 'Shrieker',        role: 'minion', hp: 7,  sp: 60, r: 16, drop: 5, from: 2, w: 0.5, says: 'Screams a ring that throws you back.' },
+  carrion:  { fam: 'gaunt', name: 'Carrion Wing',    role: 'minion', hp: 6,  sp: 120, r: 17, drop: 5, from: 2, w: 0.6, says: 'Flies above you and drops bile bombs.' },
+  matron:   { fam: 'mini', name: 'Tide Matron',      role: 'mini', hp: 95,  sp: 30, r: 38, drop: 25, from: 2, w: 1, says: 'Calls the drowned and sings rings of brine.' },
+  gauntlord:{ fam: 'mini', name: 'Gaunt Lord',       role: 'mini', hp: 85,  sp: 220, r: 34, drop: 25, from: 2, w: 1, says: 'A great faceless swooper that calls harriers.' },
+  drowned:  { fam: 'boss', name: 'The Drowned King', role: 'boss', hp: 250, sp: 30, r: 62, drop: 40, from: 2, nature: 'sloth', says: 'Dreaming in the deep: tidal walls, limbs from the rift walls, the drowned at his call.' },
 };
 
 // ---- Falling matter: rocks, wrecks and ruins. shape: rock (jagged), rect or circle; only: never in a wave's pool ----
@@ -399,6 +430,7 @@ window.PALETTE = [
   '#c8e04a', '#8a1030', '#ff4466', '#ff8a8a', '#c94a4a',
   '#6e6156', '#2c2520', '#a89a8a', '#353a44', '#8b95a3', '#45404d', '#8a8296', '#5ac8b9', '#1f3a72', '#5a4a36',
   '#ffd27a', '#e0a040', '#fff0b0', '#d8f4ff',
+  '#16302e', '#2e5a55', '#7fd6c8',   // iteration 6: the deep and its jellies
 ];
 
 // ---- Sigils: permanent upgrades bought with banked void energy at the hub ----
