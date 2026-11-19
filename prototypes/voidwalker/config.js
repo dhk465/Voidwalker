@@ -49,6 +49,16 @@ window.CONFIG = {
   bolt_damage: { value: 1, min: 0.2, max: 5, step: 0.1 },       // per bolt, before level and fusion
   fused_bonus: { value: 0.3, min: 0, max: 2, step: 0.05 },      // extra damage share for a fused card
   level_bonus: { value: 0.5, min: 0, max: 2, step: 0.05 },      // extra damage share per card level above 1
+  // ---- Cards found in the adventure: the deck starts as one void card; the loadout is the pool they come from ----
+  card_drop: { value: 1, min: 0, max: 5, step: 0.1 },           // multiplies every card drop chance below
+  card_plain: { value: 0.005, min: 0, max: 0.2, step: 0.005 },  // chance a plain Ybasog drops a card
+  card_natured: { value: 0.04, min: 0, max: 0.5, step: 0.01 },  // chance a natured Ybasog drops a card
+  card_mini: { value: 0.6, min: 0, max: 1, step: 0.05 },        // chance a mini-boss drops a card
+  card_boss: { value: 1, min: 0, max: 1, step: 0.05 },          // chance a boss drops a card
+  card_wreck: { value: 0.1, min: 0, max: 1, step: 0.01 },       // chance a broken wreck holds a card
+  card_ruin: { value: 0.15, min: 0, max: 1, step: 0.01 },       // chance a broken ruin piece holds a card
+  trial_chance: { value: 0.02, min: 0, max: 0.5, step: 0.01 },  // chance a found card is a trial: not in your pool, kept for this adventure only
+  pick_temper: { value: 0.3, min: 0, max: 1, step: 0.05 },      // chance a wave-clear pick offers "temper a card +1" in place of a card
   reshuffle_time: { value: 0.35, min: 0, max: 2, step: 0.05 },  // s with no fire while the discard is shuffled back
 
   // ---- Nature effects ----
@@ -439,14 +449,16 @@ window.SIGILS = {
   reach:     { name: 'Reach',     says: '+50 px void energy pull',     costs: [50, 120, 250],  give: { magnet: 50 } },
   swiftness: { name: 'Swiftness', says: '+8% speed',                   costs: [80, 180],       give: { speed: 0.08 } },
   ricochet:  { name: 'Ricochet',  says: '+1 ricochet',                 costs: [200, 450],      give: { bounces: 1 } },
-  resonance: { name: 'Resonance', says: '+0.1 to opposite-nature damage', costs: [120, 260, 420], give: { opposite_bonus: 0.1 } },
-  warding:   { name: 'Warding',   says: 'begin each adventure with a ward', costs: [120, 280], give: { ward_start: 1 } },
+  resonance: { name: 'Resonance', says: '+0.1 damage to opposites', costs: [120, 260, 420], give: { opposite_bonus: 0.1 } },
+  warding:   { name: 'Warding',   says: 'begin with a ward', costs: [120, 280], give: { ward_start: 1 } },
   recovery:  { name: 'Recovery',  says: '+3 energy between stages',    costs: [90, 220],       give: { stage_heal: 3 } },
   rites:     { name: 'Rites',     says: '+1 rite at each Rift Rest',   costs: [250, 500],      give: { rest_actions: 1 } },
-  breadth:   { name: 'Breadth',   says: '+2 cards in a deck',          costs: [100, 250],      give: { deck_max: 2 } },
+  breadth:   { name: 'Breadth',   says: '+2 cards in the pool',          costs: [100, 250],      give: { deck_max: 2 } },
   favor:     { name: 'Favor',     says: '+2% mythic chance at the Rite', costs: [150, 300, 500], give: { mythic: 0.02 } },
   keeping:   { name: 'Keeping',   says: 'keep +10% void after a fall', costs: [70, 160, 320],  give: { loss_keep: 0.1 } },
   shrine:    { name: 'Shrine',    says: '+1 relic slot',               costs: [400],           give: { relic_slots: 1 } },
+  inborn:    { name: 'Inborn',    says: "begin with your form's nature card", costs: [150], give: { inborn: 1 } },
+  chosen:    { name: 'Chosen',    says: 'begin with a card chosen at the Gate', costs: [300], give: { chosen: 1 }, need: 'chosen' },
 };
 
 // ---- Relics: artifacts of lost civilizations, found in ruins, wrecks and on fallen bosses; equip at the hub ----
@@ -511,6 +523,7 @@ window.UNLOCKS = {
   omens:   { name: 'Darker omens', stat: 'runs', n: 4 },
   slot2:   { name: 'A second relic slot',                 stat: 'relics', n: 3 },
   depth:   { name: 'Deeper rifts',   stat: 'wins',   n: 1 },
+  chosen:  { name: 'The Chosen sigil', stat: 'wins',   n: 1 },
 };
 
 // ---- Rifts: the adventure is chosen at the Gate. Each rift has an omen, a prevailing nature and a boon ----

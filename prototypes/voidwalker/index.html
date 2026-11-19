@@ -45,11 +45,11 @@ const events = [];
 
 // ---- Screen: a half-resolution pixel buffer, snapped to the palette, shown in whole pixels ------------
 const canvas = document.getElementById('game');
-const BW = W / 2, BH = H / 2; // one buffer pixel is two logical units
+const BW = W, BH = H; // full resolution: one buffer pixel is one logical unit
 canvas.width = BW; canvas.height = BH;
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
 function fit() {
-  const dpr = devicePixelRatio || 1, k = Math.max(1, Math.floor(Math.min(innerWidth * dpr / BW, innerHeight * dpr / BH)));
+  const dpr = devicePixelRatio || 1, fitK = Math.min(innerWidth * dpr / BW, innerHeight * dpr / BH), k = fitK >= 1 ? Math.floor(fitK) : fitK; // whole pixels when it fits, shrunk when the window is small
   canvas.style.width = (BW * k / dpr) + 'px'; canvas.style.height = (BH * k / dpr) + 'px';
   canvas.style.marginTop = Math.max(0, Math.floor((innerHeight - BH * k / dpr) / 2)) + 'px';
 }
@@ -304,10 +304,62 @@ function reset() { // a new adventure from the loadout (or, the first time, the 
     timewarp: 0, frenzy: 0, magnetT: 0, leechAcc: 0, recentKills: [],
     shake: 0, found: [], banked: 0, won: false,
   };
-  for (const c of deck) state.deck.push({ id: state.nextId++, natures: c.natures, level: c.level });
+  state.pool = deck.map(c => ({ natures: c.natures, level: c.level })); // what this adventure can find
+  if (!intro) startingHand(form, bo);
   if (!intro && state.omen !== OMENS.calm) floatText(omen.name.toUpperCase(), RCX, 280, '#ffd27a', 26, 2.2);
 }
 const cardById = id => state.deck.find(c => c.id === id);
+// ---- Cards in the adventure: one void card to begin, the rest found (kills, matter, wave picks, the Rest) ----
+function startingHand(form, bo) {
+  state.deck.push({ id: state.nextId++, natures: [], level: 1 });
+  if (bo.inborn && form) state.deck.push({ id: state.nextId++, natures: [form], level: 1 }); // the Inborn sigil
+  if (bo.chosen && meta.chosen) { const i = state.pool.findIndex(c => stackKey(c.natures, c.level) === meta.chosen); if (i >= 0) { const c = state.pool.splice(i, 1)[0]; state.deck.push({ id: state.nextId++, natures: c.natures, level: c.level }); } }
+}
+function poolTake() { return state.pool.length ? state.pool.splice(Math.floor(rng() * state.pool.length), 1)[0] : null; }
+function trialCard() { // a card not in your pool, to try for one adventure; never added to the collection
+  const have = new Set([...state.pool, ...state.deck].map(c => keyOf(c.natures)));
+  for (let k = 0; k < 8; k++) { const ns = rng() < 0.55 ? FUSION_KEYS[Math.floor(rng() * FUSION_KEYS.length)].split('+') : [NIDS[Math.floor(rng() * NIDS.length)]]; if (!have.has(keyOf(ns))) return { natures: ns, level: 1, trial: true }; }
+  return null;
+}
+function foundCard() { if (rng() < tune.trial_chance) { const t = trialCard(); if (t) return t; } return poolTake(); }
+function returnCard(c) { if (c && !c.trial) state.pool.push(c); }
+function gainCard(c, x, y) {
+  const card = { id: state.nextId++, natures: c.natures, level: c.level, trial: !!c.trial };
+  state.deck.push(card); state.draw.splice(Math.floor(rng() * (state.draw.length + 1)), 0, card.id);
+  floatText((card.trial ? 'TRIAL: ' : '') + cardName(card).toUpperCase(), x, y, cardColor(card), 18, 1.8); SFX.rite(card.trial ? 'mythic' : 'rare');
+  events.push({ type: 'card', key: keyOf(card.natures), trial: card.trial });
+}
+function openPick() { // after waves 1 and 2: take one of three, or temper, or skip
+  const opts = [];
+  for (let i = 0; i < 3 && state.pool.length; i++) { const tc = rng() < tune.trial_chance ? trialCard() : null; opts.push({ card: tc || poolTake() }); }
+  const temperable = state.deck.filter(c => c.level < tune.max_level);
+  if (temperable.length && (opts.length < 3 || rng() < tune.pick_temper)) { if (opts.length >= 3) returnCard(opts.pop().card); opts.push({ temper: temperable[Math.floor(rng() * temperable.length)].id }); }
+  if (!opts.length) return false;
+  state.pick = { opts, t: 0 }; scene = 'pick'; SFX.relic(); return true;
+}
+function choosePick(i) {
+  const P = state.pick; P.opts.forEach((o, j) => { if (j !== i && o.card) returnCard(o.card); });
+  const o = P.opts[i];
+  if (o && o.card) gainCard(o.card, RCX, 300);
+  else if (o) { const c = cardById(o.temper); if (c) { c.level++; floatText(cardName(c).toUpperCase(), RCX, 300, cardColor(c), 20, 1.8); SFX.rite('rare'); } }
+  state.pick = null; scene = 'play'; state.waveN++; startWave();
+}
+const pickBox = (i, n) => ({ x: RCX - (n * 190 - 30) / 2 + i * 190, y: 200, w: 160, h: 210 });
+function updatePick(dt) {
+  const P = state.pick, c = mouse.click; P.t += dt;
+  P.opts.forEach((o, i) => { const b = pickBox(i, P.opts.length); if (inBox(c, b.x, b.y, b.w, b.h) || pressed('Digit' + (i + 1))) choosePick(i); });
+  if (state.pick && (inBox(c, RCX - 110, 470, 220, 46) || pressed('Escape'))) choosePick(-1);
+}
+function drawPick() {
+  const P = state.pick;
+  drawPlay(); ctx.fillStyle = 'rgba(4,2,10,0.8)'; ctx.fillRect(0, 0, W, H);
+  text('TAKE ONE', RCX, 150, 26, '#efe6ff', 'center', 'bold');
+  P.opts.forEach((o, i) => { const b = pickBox(i, P.opts.length), hv = inBox(mouse, b.x, b.y, b.w, b.h);
+    if (o.card) drawCard(o.card, b.x, b.y, b.w, b.h, hv, false, o.card.trial ? { s: 'TRIAL', bg: '#ffd27a', c: '#1a1229', w: 70 } : null);
+    else { const c = cardById(o.temper); drawCard({ natures: c.natures, level: c.level + 1 }, b.x, b.y, b.w, b.h, hv, false, { s: '+1', bg: '#9ad7ff', c: '#1a1229' }); }
+    text(`${i + 1}`, b.x + b.w / 2, b.y + b.h + 20, 14, '#9d92bb', 'center', 'bold'); });
+  abutton(RCX - 110, 470, 220, 46, 'SKIP', '', '#9d92bb', true);
+}
 function rebuildPiles() { state.draw = shuffle(state.deck.map(c => c.id)); state.discard = []; }
 
 // ---- Discoveries: achievements kept between adventures ------------------------------------------
@@ -527,10 +579,14 @@ function rollLoot(t) {
   const lp = ({ cargo: 0.3, hull: 0.25, core: 0.12, ruin: 0.15, idol: 0.2, glyph: 0.2, monolith: 0.35, pillar: 0.08, shrine: 0.1 })[t.k] || 0;
   const drop = (kind, id) => { const a = rng() * 6.28; state.loot.push({ kind, id, x: t.x, y: t.y, vx: Math.cos(a) * 90, vy: Math.sin(a) * 90 - 40, t: 0 }); };
   if (rp && rng() < rp * mul) { const left = RELIC_IDS.filter(r => !meta.relics[r] && !state.loot.some(l => l.id === r)); if (left.length) drop('relic', left[Math.floor(rng() * left.length)]); }
+  const cp = isEnemy(t) ? (t.role === 'boss' ? tune.card_boss : t.role === 'mini' ? tune.card_mini : t.nature ? tune.card_natured : tune.card_plain) : (t.fam === 'wreck' ? tune.card_wreck : t.fam === 'ruin' ? tune.card_ruin : 0);
+  if (cp && state.deck.length && rng() < cp * tune.card_drop) { const c = foundCard(); if (c) { const a = rng() * 6.28; state.loot.push({ kind: 'card', card: c, x: t.x, y: t.y, vx: Math.cos(a) * 90, vy: Math.sin(a) * 90 - 40, t: 0 }); } }
   if (lp && rng() < lp * mul) { const src = t.fam === 'wreck' ? 'wreck' : 'ruin', left = LOG_IDS.filter(l => LOG[l].src === src && !meta.logs[l] && !state.loot.some(x => x.id === l)); if (left.length) drop('log', left[Math.floor(rng() * left.length)]); }
 }
 function collectLoot(l) {
-  l.dead = true; state.foundLoot.push(l);
+  l.dead = true;
+  if (l.kind === 'card') { gainCard(l.card, state.player.x, state.player.y - 60); return; }
+  state.foundLoot.push(l);
   if (l.kind === 'relic') { meta.relics[l.id] = 1; floatText(REL[l.id].name.toUpperCase(), state.player.x, state.player.y - 60, '#ffd27a', 18, 2); SFX.relic(); }
   else { meta.logs[l.id] = 1; floatText('LOG', state.player.x, state.player.y - 60, '#5ac8b9', 18, 1.6); SFX.relic(); }
   saveMeta();
@@ -833,7 +889,7 @@ function updatePlay(dt) {
   if (state.phase === 'clear' && (state.clearT -= dt) <= 0 && ((!state.motes.length && !state.loot.length) || state.clearT < -2)) {
     state.motes.length = 0; for (const l of state.loot) if (!l.dead) collectLoot(l); state.loot = [];
     if (state.stage === 3 && state.waveN === 3) { endRun(true); return; }
-    if (state.waveN < 3) { state.waveN++; startWave(); } else { if (!state.stageHurt) track('cleanstage'); openRest(); }
+    if (state.waveN < 3) { if (!openPick()) { state.waveN++; startWave(); } } else { if (!state.stageHurt) track('cleanstage'); openRest(); }
     return;
   }
   if (state.card && (state.card.t -= dt) <= 0) state.card = null;
@@ -1293,7 +1349,7 @@ function shootGlob(x, y, a, mul = 1, ex = {}) { const s = tune.glob_speed * spSc
 function choirOrbs(e) { const n = e.hp < e.maxhp / 2 ? 4 : 3; return Array.from({ length: n }, (_, i) => ({ x: e.x + Math.cos(e.orbA + i / n * 6.283) * 92, y: e.y + Math.sin(e.orbA + i / n * 6.283) * 60, r: 16 })); }
 function openRest() {
   const keys = shuffle(Object.keys(PATHS));
-  state.rest = { actions: tune.rest_actions + (state.bo.rest_actions || 0), sel: [], paths: keys.slice(0, 2), pick: null, msg: '', msgC: '#cfc6e6', t: 0 };
+  state.rest = { actions: tune.rest_actions + (state.bo.rest_actions || 0), sel: [], paths: keys.slice(0, 2), pick: null, msg: '', msgC: '#cfc6e6', t: 0, offer: foundCard() };
   scene = 'rest'; SFX.relic(); events.push({ type: 'rest', stage: state.stage });
 }
 function restSay(m, c = '#cfc6e6') { state.rest.msg = m; state.rest.msgC = c; }
@@ -1303,7 +1359,7 @@ function restMerge() {
   const r = fuseResult(a, b);
   if (r.kind === 'unstable') return restSay('UNSTABLE', '#ffd27a');
   if (r.kind === 'maxed') return restSay('ALREADY AT ITS PEAK', '#ffd27a');
-  if (state.deck.length - (r.kind === 'void' ? 2 : 1) < 3) return restSay('THE DECK IS TOO THIN', '#ff9a9a');
+  if (state.deck.length - (r.kind === 'void' ? 2 : 1) < 1) return restSay('THE DECK IS TOO THIN', '#ff9a9a');
   state.deck = state.deck.filter(c => c !== b);
   if (r.kind === 'void') { state.deck = state.deck.filter(c => c !== a); state.voidE += tune.void_refund; restSay('ANNULLED', '#b9a6ff'); SFX.boom(); }
   else {
@@ -1322,10 +1378,11 @@ function restTemper() {
 }
 function leaveRest() {
   const R = state.rest; if (R.pick === null) return restSay('CHOOSE A PATH', '#ffd27a');
+  if (R.offer) returnCard(R.offer);
   state.path = R.paths[R.pick]; state.stage++; state.waveN = 1; state.stageHurt = false; state.rest = null;
   scene = 'play'; startWave(); floatText(PATHS[state.path].name.toUpperCase(), RCX, 370, '#ffd27a', 18, 2);
 }
-const REST = { cw: 92, ch: 108 };
+const REST = { cw: 92, ch: 108 }, REST_OFFER = { x: RCX + 330, y: 300 };
 function restCardBox(i, n) { const cols = Math.min(7, n), row = Math.floor(i / 7), col = i % 7, rowN = Math.min(7, n - row * 7); return { x: RCX - (rowN * (REST.cw + 12) - 12) / 2 + col * (REST.cw + 12), y: 104 + row * (REST.ch + 16), w: REST.cw, h: REST.ch }; }
 function updateRest(dt) {
   const R = state.rest, c = mouse.click; R.t += dt;
@@ -1333,6 +1390,7 @@ function updateRest(dt) {
   if (inBox(c, RCX - 290, 360, 180, 46) && R.actions > 0) restMerge();
   if (inBox(c, RCX - 90, 360, 180, 46) && R.actions > 0) restTemper();
   if (inBox(c, RCX + 110, 360, 180, 46)) R.sel = [];
+  if (R.offer && inBox(c, REST_OFFER.x, REST_OFFER.y, REST.cw, REST.ch)) { gainCard(R.offer, RCX, 320); R.offer = null; }
   R.paths.forEach((k, i) => { if (inBox(c, RCX - 380 + i * 400, 452, 360, 110)) { R.pick = i; SFX.ui(); } });
   if (inBox(c, RCX - 140, 600, 280, 56) || pressed('Enter')) leaveRest();
 }
@@ -1341,7 +1399,7 @@ function drawRest() {
   drawPlay(); ctx.fillStyle = 'rgba(4,2,10,0.86)'; ctx.fillRect(0, 0, W, H);
   text('RIFT REST', RCX, 44, 30, '#efe6ff', 'center', 'bold');
   for (let i = 0; i < R.actions; i++) { ctx.save(); ctx.translate(RCX - (R.actions - 1) * 14 + i * 28, 78); ctx.rotate(t * 2); sigil('pride', 0, 0, 8, '#ffd27a'); ctx.restore(); }
-  state.deck.forEach((card, i) => { const b = restCardBox(i, state.deck.length); drawCard(card, b.x, b.y, b.w, b.h, inBox(mouse, b.x, b.y, b.w, b.h), R.sel.includes(card.id)); });
+  state.deck.forEach((card, i) => { const b = restCardBox(i, state.deck.length); drawCard(card, b.x, b.y, b.w, b.h, inBox(mouse, b.x, b.y, b.w, b.h), R.sel.includes(card.id), card.trial ? { s: 'TRIAL', bg: '#ffd27a', c: '#1a1229', w: 70 } : null); });
   let prev = '';
   if (R.sel.length === 2) { const r = fuseResult(cardById(R.sel[0]), cardById(R.sel[1])); prev = r.kind === 'void' ? 'ANNUL' : r.kind === 'unstable' ? 'UNSTABLE' : r.kind === 'maxed' ? 'AT ITS PEAK' : isFusionKey(keyOf(r.union)) && !meta.fusions.includes(keyOf(r.union)) ? '?' : (RECIPES[keyOf(r.union)].name + roman(r.level || 1)).toUpperCase(); }
   abutton(RCX - 290, 360, 180, 46, 'MERGE', '', '#ffd27a', R.sel.length === 2 && R.actions > 0);
@@ -1352,6 +1410,7 @@ function drawRest() {
     roundRect(x, 452, 360, 110, 10); ctx.fillStyle = on ? '#241a3a' : '#0e0a18'; ctx.fill(); ctx.strokeStyle = on ? '#ffd27a' : '#3b3350'; ctx.lineWidth = on ? 3 : 1.5; ctx.stroke();
     text(pd.name, x + 180, 486, 20, on ? '#ffd27a' : '#efe6ff', 'center', 'bold'); wrapText(pd.says, x + 180, 522, 330, 13, '#cfc6e6'); });
   abutton(RCX - 140, 600, 280, 56, 'ONWARD', '', '#c8ffe8', R.pick !== null);
+  if (R.offer) { const o = REST_OFFER; text('FOUND', o.x + REST.cw / 2, o.y - 34, 13, '#ffd27a', 'center', 'bold'); drawCard(R.offer, o.x, o.y, REST.cw, REST.ch, inBox(mouse, o.x, o.y, REST.cw, REST.ch), false, R.offer.trial ? { s: 'TRIAL', bg: '#ffd27a', c: '#1a1229', w: 70 } : null); }
 }
 function absorbFirst() { // the very first adventure: the firefly's light becomes the innate nature
   const n = NIDS[Math.floor(rng() * NIDS.length)];
@@ -1360,8 +1419,8 @@ function absorbFirst() { // the very first adventure: the firefly's light become
   meta.seen[stackKey([], 1)] = true; meta.seen[stackKey([n], 1)] = true;
   meta.loadout = { [stackKey([], 1)]: 4, [stackKey([n], 1)]: 2 };
   saveMeta();
-  for (let i = 0; i < 4; i++) state.deck.push({ id: state.nextId++, natures: [], level: 1 });
-  for (let i = 0; i < 2; i++) state.deck.push({ id: state.nextId++, natures: [n], level: 1 });
+  state.pool = loadoutCards().map(c => ({ natures: c.natures, level: c.level }));
+  state.deck.push({ id: state.nextId++, natures: [], level: 1 });
   state.form = n; state.tr = formTraits(n); state.statusMul = state.tr.status; state.maxEnergy = tune.max_energy + state.tr.max_energy; state.energy = state.maxEnergy;
   sparks(RCX, 575, BASE[n].color, 30, 300); tone(330, 0.6, 'sine', 0.2, 2.5);
   floatText(BASE[n].name.toUpperCase(), RCX, 440, BASE[n].color, 40, 3);
@@ -1549,7 +1608,8 @@ function drawGlob(g) { // every enemy projectile wears a crimson spiked rim
 }
 function drawLoot(l, t) {
   ctx.save(); ctx.translate(l.x, l.y + Math.sin(t * 4 + l.x) * 2);
-  if (l.kind === 'relic') { ctx.rotate(t * 1.5); ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(9, 0); ctx.lineTo(0, 12); ctx.lineTo(-9, 0); ctx.closePath(); ctx.fillStyle = '#e0a040'; ctx.fill(); glowStroke('#ffd27a', 14, 2); ctx.fillStyle = '#fff0b0'; ctx.fillRect(-2, -2, 4, 4); }
+  if (l.kind === 'card') { ctx.rotate(Math.sin(t * 3 + l.x) * 0.25); roundRect(-10, -13, 20, 26, 3); ctx.fillStyle = '#0e0a18'; ctx.fill(); glowStroke(l.card.trial ? '#ffd27a' : cardColor(l.card), 12, 2); cardSigil(l.card, 0, 0, 6); }
+  else if (l.kind === 'relic') { ctx.rotate(t * 1.5); ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(9, 0); ctx.lineTo(0, 12); ctx.lineTo(-9, 0); ctx.closePath(); ctx.fillStyle = '#e0a040'; ctx.fill(); glowStroke('#ffd27a', 14, 2); ctx.fillStyle = '#fff0b0'; ctx.fillRect(-2, -2, 4, 4); }
   else { ctx.fillStyle = '#1f3a3a'; ctx.fillRect(-9, -11, 18, 22); ctx.strokeStyle = '#5ac8b9'; ctx.lineWidth = 2; ctx.strokeRect(-9, -11, 18, 22); ctx.beginPath(); for (let i = 0; i < 4; i++) { ctx.moveTo(-5, -6 + i * 4); ctx.lineTo(5, -6 + i * 4); } ctx.lineWidth = 1; ctx.stroke(); }
   ctx.restore();
 }
@@ -2119,7 +2179,7 @@ function drawCard(c, x, y, w, h, hover, selected, badge) {
   cardSigil(c, x + w / 2, yy + h * 0.36, Math.min(w, h) * 0.2);
   if (w >= 70) { const nm = rec ? rec.name : 'Unstable', sz = w > 140 ? 22 : 13, fit = Math.max(3, Math.floor((w - 6) / (6 * fontUnit(sz)))); text(nm.length > fit ? nm.slice(0, fit) : nm, x + w / 2, yy + h * 0.7, sz, col, 'center', 'bold'); }
   for (let i = 0; i < c.level; i++) { ctx.fillStyle = col; ctx.beginPath(); const px = x + w / 2 + (i - (c.level - 1) / 2) * 12; ctx.moveTo(px, yy + h - 14); ctx.lineTo(px + 4, yy + h - 10); ctx.lineTo(px, yy + h - 6); ctx.lineTo(px - 4, yy + h - 10); ctx.fill(); }
-  if (badge) { roundRect(x + w - 34, yy - 8, 40, 20, 6); ctx.fillStyle = badge.bg || '#2a1f45'; ctx.fill(); text(badge.s, x + w - 14, yy + 2, 14, badge.c || '#fff', 'center', 'bold'); }
+  if (badge) { const bw = badge.w || 40; roundRect(x + w + 6 - bw, yy - 8, bw, 20, 6); ctx.fillStyle = badge.bg || '#2a1f45'; ctx.fill(); text(badge.s, x + w + 6 - bw / 2, yy + 2, 14, badge.c || '#fff', 'center'); }
   ctx.restore();
 }
 
@@ -2156,6 +2216,7 @@ function drawHUD() {
     ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.fillStyle = 'rgba(10,7,18,0.8)'; ctx.fill(); ctx.strokeStyle = cardColor(c); ctx.lineWidth = i ? 1 : 2; ctx.stroke();
     cardSigil(c, x, y, r * 0.62); });
   if (state.reshuffleT > 0 || (!next.length && state.deck.length)) { ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(L + 14, H - 26, 19, state.t * 8, state.t * 8 + 4); ctx.stroke(); }
+  { const x = L + 214; roundRect(x, H - 38, 15, 22, 3); ctx.strokeStyle = '#9d92bb'; ctx.lineWidth = 1.5; ctx.stroke(); text(`${state.deck.length}`, x + 24, H - 26, 14, '#cfc6e6', 'left', 'bold'); }
   // bottom right: the form, and the fire mode
   const n = state.form, col = n ? BASE[n].color : '#b9a6ff';
   drawForm(n ? BASE[n].form : 'blob', Rt - 20, H - 32, col, state.t, 0.8);
@@ -2328,11 +2389,11 @@ const ST = {
   deck: {
     update(c) {
       collection(c, st => { const inDeck = meta.loadout[st.sk] || 0;
-        if (inDeck >= st.n) hubSay('ALL IN THE DECK', '#ffd27a'); else if (deckCount() >= deckMax()) hubSay('THE DECK IS FULL', '#ffd27a'); else { meta.loadout[st.sk] = inDeck + 1; SFX.ui(); saveMeta(); hubSay(''); } });
+        if (inDeck >= st.n) hubSay('ALL IN THE POOL', '#ffd27a'); else if (deckCount() >= deckMax()) hubSay('THE POOL IS FULL', '#ffd27a'); else { meta.loadout[st.sk] = inDeck + 1; SFX.ui(); saveMeta(); hubSay(''); } });
       stacks(meta.loadout).forEach((st, i) => { const r = loadRow(i); if (inBox(c, r.x, r.y, 188, 28)) { meta.loadout[st.sk]--; if (!meta.loadout[st.sk]) delete meta.loadout[st.sk]; saveMeta(); SFX.ui(); } });
     },
     draw() {
-      panel('DECK');
+      panel('POOL');
       drawCollection(true);
       text(`${deckCount()} / ${deckMax()}`, PX + 640, PY + 56, 18, deckCount() < tune.deck_min ? '#ff9a9a' : '#efe6ff', 'left', 'bold');
       stacks(meta.loadout).forEach((st, i) => { const r = loadRow(i), hv = inBox(mouse, r.x, r.y, 188, 28);
@@ -2378,6 +2439,8 @@ const ST = {
       (meta.rifts || []).forEach((r, i) => { const x = PX + 30 + i * 340; if (inBox(c, x, PY + 70, 320, 380)) { meta.riftPick = i; applyRift(); saveMeta(); SFX.ui(); } });
       if (inBox(c, PX + 330, PY + 470, 46, 40) && meta.depth > 0) { meta.depth--; saveMeta(); }
       if (inBox(c, PX + 470, PY + 470, 46, 40) && meta.depth < meta.maxDepth) { meta.depth++; saveMeta(); }
+      if (bonuses().chosen) { const l = stacks(meta.loadout), i = l.findIndex(s => s.sk === meta.chosen), step = d => { if (l.length) { meta.chosen = l[((i < 0 ? 0 : i) + d + l.length) % l.length].sk; saveMeta(); SFX.ui(); } };
+        if (inBox(c, PX + 730, PY + 552, 40, 40)) step(-1); if (inBox(c, PX + 980, PY + 552, 40, 40)) step(1); }
       if (inBox(c, PX + PW / 2 - 170, PY + 540, 340, 64) || pressed('Enter')) beginAdventure();
     },
     draw() {
@@ -2392,24 +2455,28 @@ const ST = {
       text('DEPTH', PX + 230, PY + 490, 16, '#efe6ff', 'left', 'bold');
       abutton(PX + 330, PY + 470, 46, 40, '-', '', '#d8c8ff', meta.depth > 0); text(`${meta.depth}`, PX + 423, PY + 491, 24, '#ffd27a', 'center', 'bold'); abutton(PX + 470, PY + 470, 46, 40, '+', '', '#d8c8ff', meta.depth < meta.maxDepth);
       if (meta.depth) text(`+${Math.round(tune.depth_hp * meta.depth * 100)}% LIFE  +${Math.round(tune.depth_void * meta.depth * 100)}% VOID`, PX + 540, PY + 491, 12, '#9d92bb', 'left');
-      abutton(PX + PW / 2 - 170, PY + 540, 340, 64, 'ENTER THE RIFT', deckCount() < tune.deck_min ? `DECK NEEDS ${tune.deck_min}` : '', '#c8ffe8', deckCount() >= tune.deck_min);
+      if (bonuses().chosen) { const st = stacks(meta.loadout).find(s => s.sk === meta.chosen);
+        text('FIRST CARD', PX + 875, PY + 538, 12, '#9d92bb', 'center', 'bold');
+        abutton(PX + 730, PY + 552, 40, 40, '<', '', '#d8c8ff', true); abutton(PX + 980, PY + 552, 40, 40, '>', '', '#d8c8ff', true);
+        if (st) { cardSigil(st, PX + 800, PY + 572, 9); text(cardName(st), PX + 818, PY + 573, 13, cardColor(st), 'left', 'bold'); } else text('NONE', PX + 875, PY + 573, 13, '#6d6488', 'center', 'bold'); }
+      abutton(PX + PW / 2 - 170, PY + 540, 340, 64, 'ENTER THE RIFT', deckCount() < tune.deck_min ? `POOL NEEDS ${tune.deck_min}` : '', '#c8ffe8', deckCount() >= tune.deck_min);
     },
   },
   sigils: {
     update(c) {
-      Object.keys(SIG).forEach((id, i) => { const x = PX + 30 + (i % 4) * 252, y = PY + 70 + Math.floor(i / 4) * 128, lv = meta.upg[id] || 0, cost = SIG[id].costs[lv];
-        if (inBox(c, x, y, 240, 116)) { if (cost === undefined) hubSay('COMPLETE', '#ffd27a'); else if (meta.bank < cost) hubSay(`NEEDS ${cost}`, '#ff9a9a'); else { meta.bank -= cost; meta.upg[id] = lv + 1; saveMeta(); SFX.relic(); hubSay(SIG[id].name.toUpperCase(), '#fff0b0'); } } });
+      Object.keys(SIG).forEach((id, i) => { const x = PX + 30 + (i % 4) * 252, y = PY + 70 + Math.floor(i / 4) * 100, lv = meta.upg[id] || 0, cost = SIG[id].costs[lv];
+        if (inBox(c, x, y, 240, 92)) { if (SIG[id].need && !unlocked(SIG[id].need)) hubSay('LOCKED', '#ff9a9a'); else if (cost === undefined) hubSay('COMPLETE', '#ffd27a'); else if (meta.bank < cost) hubSay(`NEEDS ${cost}`, '#ff9a9a'); else { meta.bank -= cost; meta.upg[id] = lv + 1; saveMeta(); SFX.relic(); hubSay(SIG[id].name.toUpperCase(), '#fff0b0'); } } });
     },
     draw() {
       panel('SIGILS');
-      Object.keys(SIG).forEach((id, i) => { const x = PX + 30 + (i % 4) * 252, y = PY + 70 + Math.floor(i / 4) * 128, sg = SIG[id], lv = meta.upg[id] || 0, cost = sg.costs[lv], hv = inBox(mouse, x, y, 240, 116), can = cost !== undefined && meta.bank >= cost;
-        roundRect(x, y, 240, 116, 8); ctx.fillStyle = hv ? '#1d1430' : '#0e0a18'; ctx.fill(); ctx.strokeStyle = lv ? '#ffd27a' : '#3b3350'; ctx.lineWidth = hv ? 3 : 1.5; ctx.stroke();
+      Object.keys(SIG).forEach((id, i) => { const x = PX + 30 + (i % 4) * 252, y = PY + 70 + Math.floor(i / 4) * 100, sg = SIG[id], lv = meta.upg[id] || 0, locked = sg.need && !unlocked(sg.need), cost = locked ? undefined : sg.costs[lv], hv = inBox(mouse, x, y, 240, 92), can = cost !== undefined && meta.bank >= cost;
+        roundRect(x, y, 240, 92, 8); ctx.fillStyle = hv ? '#1d1430' : '#0e0a18'; ctx.fill(); ctx.strokeStyle = lv ? '#ffd27a' : '#3b3350'; ctx.lineWidth = hv ? 3 : 1.5; ctx.stroke();
         text(sg.name, x + 16, y + 24, 16, lv ? '#fff0b0' : '#efe6ff', 'left', 'bold');
         for (let k = 0; k < sg.costs.length; k++) { ctx.fillStyle = k < lv ? '#ffd27a' : '#3b3350'; ctx.beginPath(); ctx.moveTo(x + 200 + k * 14 - 20 * (sg.costs.length - 2), y + 18); ctx.lineTo(x + 205 + k * 14 - 20 * (sg.costs.length - 2), y + 24); ctx.lineTo(x + 200 + k * 14 - 20 * (sg.costs.length - 2), y + 30); ctx.lineTo(x + 195 + k * 14 - 20 * (sg.costs.length - 2), y + 24); ctx.fill(); }
-        wrapText(sg.says, x + 16, y + 56, 210, 12, '#cfc6e6', 'left');
-        text(cost === undefined ? 'MAX' : `${cost}`, x + 224, y + 96, 14, cost === undefined ? '#ffd27a' : can ? '#d8c8ff' : '#6d6488', 'right', 'bold'); });
-      text('UNLOCKS', PX + 30, PY + 470, 14, '#efe6ff', 'left', 'bold');
-      Object.entries(UNL).forEach(([id, u], i) => { const ok = unlocked(id), x = PX + 30 + (i % 2) * 510, y = PY + 500 + Math.floor(i / 2) * 30;
+        wrapText(sg.says, x + 16, y + 52, 214, 12, locked ? '#6d6488' : '#cfc6e6', 'left');
+        text(locked ? 'LOCKED' : cost === undefined ? 'MAX' : `${cost}`, x + 184 - 20 * Math.max(0, sg.costs.length - 2), y + 24, 13, cost === undefined ? '#ffd27a' : can ? '#d8c8ff' : '#6d6488', 'right', 'bold'); });
+      text('UNLOCKS', PX + 30, PY + 486, 14, '#efe6ff', 'left', 'bold');
+      Object.entries(UNL).forEach(([id, u], i) => { const ok = unlocked(id), x = PX + 30 + (i % 2) * 510, y = PY + 514 + Math.floor(i / 2) * 28;
         ctx.fillStyle = ok ? '#c8ffe8' : '#3b3350'; ctx.fillRect(x, y - 6, 12, 12); text(u.name, x + 22, y, 12, ok ? '#c8ffe8' : '#9d92bb', 'left'); });
     },
   },
@@ -2493,7 +2560,7 @@ function riteDraw(n) {
   saveMeta(); hubSay('');
 }
 function beginAdventure() {
-  if (deckCount() < tune.deck_min) { hubSay(`THE DECK NEEDS ${tune.deck_min}`, '#ff9a9a'); return; }
+  if (deckCount() < tune.deck_min) { hubSay(`THE POOL NEEDS ${tune.deck_min}`, '#ff9a9a'); return; }
   saveMeta(); reset(); scene = 'play';
 }
 function updateAltar(dt) {
@@ -2585,6 +2652,7 @@ const scenes = {
   },
   play: { update(dt) { if (pressed('KeyP') || pressed('Escape') || pressed('Space')) { scene = 'pause'; return; } if (state.hitstop > 0) { state.hitstop -= dt; return; } updatePlay(dt); }, draw() { drawPlay(); } },
   rest: { update(dt) { updateRest(dt); }, draw() { drawRest(); } },
+  pick: { update(dt) { updatePick(dt); }, draw() { drawPick(); } },
   altar: { update(dt) { updateAltar(dt); }, draw() { drawAltar(); } },
   pause: {
     update() { if (pressed('KeyP') || pressed('Escape') || pressed('Space')) scene = 'play'; },
@@ -2607,7 +2675,7 @@ function tick() {
   while (acc >= STEP) { step(); acc -= STEP; }
   ALPHA = acc / STEP; drawFrame();
 }
-function drawFrame() { ctx.setTransform(0.5, 0, 0, 0.5, 0, 0); ctx.imageSmoothingEnabled = false; scenes[scene].draw(); ctx.setTransform(1, 0, 0, 1, 0, 0); quantize(); }
+function drawFrame() { ctx.setTransform(BW / W, 0, 0, BH / H, 0, 0); ctx.imageSmoothingEnabled = false; scenes[scene].draw(); ctx.setTransform(1, 0, 0, 1, 0, 0); quantize(); }
 function frame() { tick(); requestAnimationFrame(frame); }
 function timer() { if (document.visibilityState === 'visible' && clock.now() - last > 0.1) tick(); }
 
