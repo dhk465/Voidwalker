@@ -1,0 +1,99 @@
+{
+ "firstRng": [
+  0.926348441047594,
+  0.7100826795212924,
+  0.8638392142020166
+ ],
+ "focusedBankAfter": 340,
+ "rifts": [
+  {
+   "name": "The Drowned Cradle",
+   "omen": "calm",
+   "prevail": "patience",
+   "boon": "calm"
+  },
+  {
+   "name": "The Gilded Choir",
+   "omen": "hunger",
+   "prevail": "pride",
+   "boon": "void"
+  },
+  {
+   "name": "The Starless Cradle",
+   "omen": "swarm",
+   "prevail": "greed",
+   "boon": "hive"
+  }
+ ],
+ "draw10": [
+  [
+   "sloth",
+   1,
+   "common",
+   false
+  ],
+  [
+   "temperance",
+   1,
+   "common",
+   false
+  ],
+  [
+   "sloth",
+   1,
+   "common",
+   false
+  ],
+  [
+   "greed+wrath",
+   1,
+   "mythic",
+   false
+  ],
+  [
+   "diligence",
+   1,
+   "common",
+   false
+  ],
+  [
+   "wrath",
+   1,
+   "common",
+   false
+  ],
+  [
+   "greed",
+   1,
+   "common",
+   false
+  ],
+  [
+   "diligence",
+   1,
+   "common",
+   false
+  ],
+  [
+   "sloth",
+   1,
+   "common",
+   false
+  ],
+  [
+   "diligence",
+   1,
+   "common",
+   false
+  ]
+ ],
+ "bank": 70,
+ "pity": 6,
+ "draws": 10,
+ "fusions": [
+  "greed+wrath",
+  "envy+wrath",
+  "charity+diligence",
+  "envy+sloth"
+ ]
+}

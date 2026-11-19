@@ -1,0 +1,2401 @@
+{
+ "source": "prototypes/voidwalker/config.js (exported by tools/data/export_data.mjs; do not edit by hand)",
+ "seed": 1,
+ "tune": {
+  "flow_trail": 2,
+  "flow_size": 1.25,
+  "star_blink_min": 6,
+  "star_blink_max": 18,
+  "fx_light": 0.6,
+  "volume": 0.5,
+  "rite_cost": 30,
+  "grand_rite_cost": 270,
+  "focus_cost": 10,
+  "focus_share": 0.5,
+  "rare_chance": 0.2,
+  "mythic_chance": 0.07,
+  "mythic_pity": 10,
+  "void_refund": 8,
+  "rest_actions": 2,
+  "relic_chance": 1,
+  "hitstop": 0.06,
+  "music_volume": 0.35,
+  "first_fusion_bonus": 15,
+  "discovery_bonus": 40,
+  "discovery_copies": 2,
+  "loss_keep": 0.6,
+  "win_bonus": 100,
+  "depth_void": 0.2,
+  "depth_hp": 0.25,
+  "deck_min": 6,
+  "deck_max": 12,
+  "max_level": 3,
+  "stage_heal": 5,
+  "player_speed": 470,
+  "max_energy": 20,
+  "iframes": 0.8,
+  "hit_damage": 2,
+  "glob_damage": 1,
+  "bump_damage": 1,
+  "magnet_radius": 120,
+  "mote_speed": 560,
+  "fire_interval": 0.17,
+  "bolt_speed": 640,
+  "bolt_bounces": 4,
+  "bolt_damage": 1,
+  "fused_bonus": 0.3,
+  "level_bonus": 0.5,
+  "card_drop": 1,
+  "card_plain": 0.005,
+  "card_natured": 0.04,
+  "card_mini": 0.6,
+  "card_boss": 1,
+  "card_wreck": 0.1,
+  "card_ruin": 0.15,
+  "trial_chance": 0.02,
+  "pick_temper": 0.3,
+  "reshuffle_time": 0.35,
+  "burn_dps": 1.6,
+  "burn_time": 2,
+  "chill_slow": 0.55,
+  "chill_time": 2.2,
+  "pull_radius": 110,
+  "pull_strength": 240,
+  "pull_time": 0.6,
+  "split_count": 2,
+  "heal_on_kill": 1,
+  "shard_damage": 0.6,
+  "radiant_mult": 2,
+  "stone_mult": 1.4,
+  "stone_matter": 2,
+  "venom_dps": 0.6,
+  "venom_stacks": 5,
+  "venom_time": 3,
+  "thorns_radius": 55,
+  "thorns_dps": 1.3,
+  "thorns_time": 3,
+  "charm_time": 2.5,
+  "charm_dps": 3,
+  "pierce_count": 3,
+  "devour_grow": 0.3,
+  "gust_push": 70,
+  "sleep_time": 1.2,
+  "chain_count": 2,
+  "chain_range": 170,
+  "chain_share": 0.7,
+  "well_radius": 95,
+  "well_time": 1.4,
+  "well_dps": 2.2,
+  "field_radius": 105,
+  "field_time": 1.8,
+  "field_slow": 0.85,
+  "execute_line": 0.35,
+  "doom_time": 1.5,
+  "doom_mult": 3,
+  "storm_radius": 95,
+  "storm_time": 3,
+  "storm_zap": 1.2,
+  "meteor_damage": 4,
+  "meteor_radius": 65,
+  "mine_damage": 3,
+  "mine_radius": 70,
+  "quake_damage": 1.2,
+  "wall_time": 4,
+  "timewarp_time": 1.6,
+  "timewarp_slow": 0.45,
+  "thrall_time": 6,
+  "frenzy_time": 3,
+  "frenzy_rate": 0.6,
+  "leech_share": 0.15,
+  "decoy_time": 4,
+  "ward_max": 3,
+  "pod_hatch": 9,
+  "grazer_dive_line": 0.45,
+  "glob_speed": 170,
+  "mother_hp": 320,
+  "mother_spawn": 3.2,
+  "mother_spread": 3.6,
+  "mother_volley": 7,
+  "telegraph_time": 1,
+  "beam_damage": 2,
+  "pulse_speed": 210,
+  "pulse_damage": 1,
+  "brine_slow": 0.5,
+  "brine_time": 5,
+  "hunt_time": 24,
+  "reach_time": 13,
+  "leech_drain": 1.3,
+  "pull_speed": 95,
+  "shriek_push": 520,
+  "nature_chance": 0.2,
+  "nature_chance_step": 0.12,
+  "prevailing_share": 0.6,
+  "opposite_mult": 1.6,
+  "same_mult": 0.5,
+  "stage_hp_scale": 0.35,
+  "stage_speed_scale": 0.1,
+  "beats_base": 3,
+  "beats_step": 1,
+  "debuts_per_wave": 1
+ },
+ "natures": {
+  "pride": {
+   "name": "Pride",
+   "kind": "sin",
+   "element": "radiance",
+   "color": "#fff0b0",
+   "opposite": "humility",
+   "form": "lion",
+   "formName": "Lion",
+   "trait": {
+    "damage": 1.2,
+    "max_energy": -3
+   },
+   "traitText": "+20% bolt damage, -3 max energy"
+  },
+  "greed": {
+   "name": "Greed",
+   "kind": "sin",
+   "element": "gravity",
+   "color": "#f2c94c",
+   "opposite": "charity",
+   "form": "rat",
+   "formName": "Rat",
+   "trait": {
+    "magnet": 120,
+    "mote_bonus": 0.25
+   },
+   "traitText": "pulls void energy from afar, +25% void energy"
+  },
+  "wrath": {
+   "name": "Wrath",
+   "kind": "sin",
+   "element": "fire",
+   "color": "#ff4b3a",
+   "opposite": "patience",
+   "form": "dragon",
+   "formName": "Dragon",
+   "trait": {
+    "fire_rate": 1.15,
+    "bite": 1
+   },
+   "traitText": "+15% fire rate, bites hurt 1 more"
+  },
+  "envy": {
+   "name": "Envy",
+   "kind": "sin",
+   "element": "venom",
+   "color": "#8be04e",
+   "opposite": "kindness",
+   "form": "serpent",
+   "formName": "Serpent",
+   "trait": {
+    "bounces": 1,
+    "status": 1.25
+   },
+   "traitText": "+1 ricochet, effects last 25% longer"
+  },
+  "lust": {
+   "name": "Lust",
+   "kind": "sin",
+   "element": "allure",
+   "color": "#ff6fc8",
+   "opposite": "chastity",
+   "form": "moth",
+   "formName": "Moth",
+   "trait": {
+    "contact_charm": 0.5,
+    "speed": 1.1
+   },
+   "traitText": "half of biting Ybasogs are charmed instead"
+  },
+  "gluttony": {
+   "name": "Gluttony",
+   "kind": "sin",
+   "element": "hunger",
+   "color": "#ff8a2a",
+   "opposite": "temperance",
+   "form": "toad",
+   "formName": "Toad",
+   "trait": {
+    "max_energy": 6,
+    "speed": 0.85
+   },
+   "traitText": "+6 max energy, 15% slower"
+  },
+  "sloth": {
+   "name": "Sloth",
+   "kind": "sin",
+   "element": "slumber",
+   "color": "#9a8fc8",
+   "opposite": "diligence",
+   "form": "snail",
+   "formName": "Snail",
+   "trait": {
+    "aura": 0.3,
+    "speed": 0.75
+   },
+   "traitText": "Ybasogs near you slow by 30%, 25% slower"
+  },
+  "humility": {
+   "name": "Humility",
+   "kind": "virtue",
+   "element": "stone",
+   "color": "#c8a77a",
+   "opposite": "pride",
+   "form": "tortoise",
+   "formName": "Tortoise",
+   "trait": {
+    "armor": 1,
+    "max_energy": 2,
+    "speed": 0.85
+   },
+   "traitText": "hits hurt 1 less, +2 max energy, 15% slower"
+  },
+  "charity": {
+   "name": "Charity",
+   "kind": "virtue",
+   "element": "grace",
+   "color": "#c8ffe8",
+   "opposite": "greed",
+   "form": "bird",
+   "formName": "Dove",
+   "trait": {
+    "wave_heal": 2,
+    "speed": 1.15
+   },
+   "traitText": "heal 2 after each wave, 15% faster"
+  },
+  "patience": {
+   "name": "Patience",
+   "kind": "virtue",
+   "element": "ice",
+   "color": "#8fe3ff",
+   "opposite": "wrath",
+   "form": "humanoid",
+   "formName": "Wanderer",
+   "trait": {
+    "iframes": 0.5,
+    "quick_shuffle": 1
+   },
+   "traitText": "longer safety after hits, instant reshuffle"
+  },
+  "kindness": {
+   "name": "Kindness",
+   "kind": "virtue",
+   "element": "growth",
+   "color": "#3fd08f",
+   "opposite": "envy",
+   "form": "stag",
+   "formName": "Stag",
+   "trait": {
+    "regen": 0.1
+   },
+   "traitText": "regrows energy steadily"
+  },
+  "chastity": {
+   "name": "Chastity",
+   "kind": "virtue",
+   "element": "purity",
+   "color": "#ffffff",
+   "opposite": "lust",
+   "form": "swan",
+   "formName": "Swan",
+   "trait": {
+    "glob_dodge": 0.4
+   },
+   "traitText": "40% of globs pass through you"
+  },
+  "temperance": {
+   "name": "Temperance",
+   "kind": "virtue",
+   "element": "wind",
+   "color": "#9ad7ff",
+   "opposite": "gluttony",
+   "form": "manta",
+   "formName": "Manta",
+   "trait": {
+    "speed": 1.3,
+    "iframes": 0.2
+   },
+   "traitText": "30% faster, longer safety after hits"
+  },
+  "diligence": {
+   "name": "Diligence",
+   "kind": "virtue",
+   "element": "lightning",
+   "color": "#7d8bff",
+   "opposite": "sloth",
+   "form": "bee",
+   "formName": "Bee",
+   "trait": {
+    "fire_rate": 1.3,
+    "damage": 0.85
+   },
+   "traitText": "+30% fire rate, -15% bolt damage"
+  }
+ },
+ "recipes": {
+  "": {
+   "name": "Void Bolt",
+   "color": "#b9a6ff",
+   "fx": [],
+   "says": "A plain bolt of void."
+  },
+  "pride": {
+   "name": "Pride",
+   "fx": [
+    "radiant"
+   ],
+   "says": "Double damage to the unhurt.",
+   "color": "#fff0b0"
+  },
+  "greed": {
+   "name": "Greed",
+   "fx": [
+    "pull"
+   ],
+   "says": "Pulls nearby Ybasogs to the hit.",
+   "color": "#f2c94c"
+  },
+  "wrath": {
+   "name": "Wrath",
+   "fx": [
+    "burn"
+   ],
+   "says": "Burns what it hits.",
+   "color": "#ff4b3a"
+  },
+  "envy": {
+   "name": "Envy",
+   "fx": [
+    "venom"
+   ],
+   "says": "Venom that stacks.",
+   "color": "#8be04e"
+  },
+  "lust": {
+   "name": "Lust",
+   "fx": [
+    "charm"
+   ],
+   "says": "Charms: the Ybasog turns on its kin.",
+   "color": "#ff6fc8"
+  },
+  "gluttony": {
+   "name": "Gluttony",
+   "fx": [
+    "devour"
+   ],
+   "says": "Grows with every hit; kills drop more.",
+   "color": "#ff8a2a"
+  },
+  "sloth": {
+   "name": "Sloth",
+   "fx": [
+    "sleep"
+   ],
+   "says": "Puts what it hits to sleep.",
+   "color": "#9a8fc8"
+  },
+  "humility": {
+   "name": "Humility",
+   "fx": [
+    "stone"
+   ],
+   "says": "A heavy stone; cracks matter.",
+   "color": "#c8a77a"
+  },
+  "charity": {
+   "name": "Charity",
+   "fx": [
+    "split",
+    "heal"
+   ],
+   "says": "Splits on hit; a kill heals you.",
+   "color": "#c8ffe8"
+  },
+  "patience": {
+   "name": "Patience",
+   "fx": [
+    "chill"
+   ],
+   "says": "Freezes: slows what it hits.",
+   "color": "#8fe3ff"
+  },
+  "kindness": {
+   "name": "Kindness",
+   "fx": [
+    "thorns"
+   ],
+   "says": "Leaves a patch of brambles.",
+   "color": "#3fd08f"
+  },
+  "chastity": {
+   "name": "Chastity",
+   "fx": [
+    "pierce"
+   ],
+   "says": "Pierces straight through.",
+   "color": "#ffffff"
+  },
+  "temperance": {
+   "name": "Temperance",
+   "fx": [
+    "gust"
+   ],
+   "says": "A gust that knocks them back.",
+   "color": "#9ad7ff"
+  },
+  "diligence": {
+   "name": "Diligence",
+   "fx": [
+    "chain"
+   ],
+   "says": "Lightning leaps to two more.",
+   "color": "#7d8bff"
+  },
+  "greed+pride": {
+   "name": "Midas",
+   "fx": [
+    "gild"
+   ],
+   "says": "The slain burst into golden shards.",
+   "color": "#f9dd7e"
+  },
+  "pride+wrath": {
+   "name": "Supernova",
+   "fx": [
+    "nova",
+    "burn"
+   ],
+   "shardFx": [
+    "burn"
+   ],
+   "says": "A ring of burning shards on impact.",
+   "color": "#ff9e75"
+  },
+  "envy+pride": {
+   "name": "Vanity",
+   "fx": [
+    "mirror",
+    "radiant"
+   ],
+   "says": "A mirror-twin strikes from the far wall.",
+   "color": "#c5e87f"
+  },
+  "lust+pride": {
+   "name": "Adoration",
+   "fx": [
+    "charm",
+    "thrall"
+   ],
+   "says": "The charmed who die rise as your wisps.",
+   "color": "#ffb0bc"
+  },
+  "gluttony+pride": {
+   "name": "Gilded Maw",
+   "fx": [
+    "execute",
+    "devour"
+   ],
+   "says": "Swallows any Ybasog below a third of its life.",
+   "color": "#ffbd6d"
+  },
+  "pride+sloth": {
+   "name": "Throne",
+   "fx": [
+    "orbit",
+    "radiant"
+   ],
+   "says": "Circles you as a guard, then launches.",
+   "color": "#cdc0bc"
+  },
+  "greed+wrath": {
+   "name": "Hunger",
+   "fx": [
+    "well",
+    "burn"
+   ],
+   "says": "A burning gravity well.",
+   "color": "#f98a43"
+  },
+  "envy+greed": {
+   "name": "Covet",
+   "fx": [
+    "tether"
+   ],
+   "says": "Binds two Ybasogs: they share their wounds.",
+   "color": "#bfd54d"
+  },
+  "greed+lust": {
+   "name": "Siren",
+   "fx": [
+    "lure",
+    "charm"
+   ],
+   "says": "A wide pull, and the pulled are charmed.",
+   "color": "#f99c8a"
+  },
+  "gluttony+greed": {
+   "name": "Hoard",
+   "fx": [
+    "hoard",
+    "devour"
+   ],
+   "says": "Kills drop triple void energy.",
+   "color": "#f9aa3b"
+  },
+  "greed+sloth": {
+   "name": "Event Horizon",
+   "fx": [
+    "singularity"
+   ],
+   "says": "A slow orb that collapses into a black hole.",
+   "color": "#c6ac8a"
+  },
+  "envy+wrath": {
+   "name": "Spite",
+   "fx": [
+    "doom"
+   ],
+   "says": "Marks a Ybasog; it bursts for triple a moment later.",
+   "color": "#c59644"
+  },
+  "lust+wrath": {
+   "name": "Ardor",
+   "fx": [
+    "frenzy",
+    "burn"
+   ],
+   "says": "Each kill quickens your fire.",
+   "color": "#ff5d81"
+  },
+  "gluttony+wrath": {
+   "name": "Wildfire",
+   "fx": [
+    "killburst",
+    "burn"
+   ],
+   "shardFx": [
+    "burn"
+   ],
+   "says": "Kills erupt in a ring of fire.",
+   "color": "#ff6b32"
+  },
+  "sloth+wrath": {
+   "name": "Smolder",
+   "fx": [
+    "mine",
+    "burn"
+   ],
+   "says": "Clings, smoulders, then erupts.",
+   "color": "#cd6d81"
+  },
+  "envy+lust": {
+   "name": "Obsession",
+   "fx": [
+    "homing",
+    "venom"
+   ],
+   "says": "Hunts the nearest Ybasog and never lets go.",
+   "color": "#c5a88b"
+  },
+  "envy+gluttony": {
+   "name": "Parasite",
+   "fx": [
+    "leech",
+    "venom"
+   ],
+   "says": "Venom; the damage feeds you.",
+   "color": "#c5b53c"
+  },
+  "envy+sloth": {
+   "name": "Rot",
+   "fx": [
+    "spore",
+    "venom"
+   ],
+   "says": "Kills release a cloud of rot.",
+   "color": "#93b88b"
+  },
+  "gluttony+lust": {
+   "name": "Indulgence",
+   "fx": [
+    "echo",
+    "devour"
+   ],
+   "says": "A second helping fires right behind it.",
+   "color": "#ff7d79"
+  },
+  "lust+sloth": {
+   "name": "Reverie",
+   "fx": [
+    "lullaby"
+   ],
+   "says": "Lulls every Ybasog nearby to sleep.",
+   "color": "#cd7fc8"
+  },
+  "gluttony+sloth": {
+   "name": "Glut",
+   "fx": [
+    "pierce",
+    "devour",
+    "stone",
+    "big"
+   ],
+   "says": "A slow boulder that pierces and grows.",
+   "color": "#cd8d79"
+  },
+  "charity+humility": {
+   "name": "Alms",
+   "fx": [
+    "aegis",
+    "heal"
+   ],
+   "says": "Kills grant a ward that blocks one hit.",
+   "color": "#c8d3b1"
+  },
+  "humility+patience": {
+   "name": "Glacier",
+   "fx": [
+    "quake",
+    "chill"
+   ],
+   "says": "A frost shockwave runs the whole row.",
+   "color": "#acc5bd"
+  },
+  "humility+kindness": {
+   "name": "Hedgerow",
+   "fx": [
+    "thorns",
+    "split",
+    "wide"
+   ],
+   "shardFx": [
+    "thorns"
+   ],
+   "says": "Brambles burst wide and scatter seeds.",
+   "color": "#84bc85"
+  },
+  "chastity+humility": {
+   "name": "Penance",
+   "fx": [
+    "pierce",
+    "cleanse"
+   ],
+   "says": "Pierces and washes away nearby globs.",
+   "color": "#e4d3bd"
+  },
+  "humility+temperance": {
+   "name": "Sandstorm",
+   "fx": [
+    "storm",
+    "stone"
+   ],
+   "says": "Leaves a scouring storm of grit.",
+   "color": "#b1bfbd"
+  },
+  "diligence+humility": {
+   "name": "Bulwark",
+   "fx": [
+    "wall"
+   ],
+   "says": "Raises a stone wall that stops globs and Ybasogs.",
+   "color": "#a399bd"
+  },
+  "charity+patience": {
+   "name": "Mercy",
+   "fx": [
+    "shatter",
+    "chill",
+    "heal"
+   ],
+   "shardFx": [
+    "chill"
+   ],
+   "says": "Shatters into ice shards; kills heal.",
+   "color": "#acf1f4"
+  },
+  "charity+kindness": {
+   "name": "Blossom",
+   "fx": [
+    "bloom",
+    "heal"
+   ],
+   "says": "The slain bloom into healing petals.",
+   "color": "#84e8bc"
+  },
+  "charity+chastity": {
+   "name": "Halo",
+   "fx": [
+    "homing",
+    "heal",
+    "radiant"
+   ],
+   "says": "A seeking halo; kills heal.",
+   "color": "#e4fff4"
+  },
+  "charity+temperance": {
+   "name": "Zephyr",
+   "fx": [
+    "timewarp"
+   ],
+   "says": "A soft wind slows every Ybasog in the rift.",
+   "color": "#b1ebf4"
+  },
+  "charity+diligence": {
+   "name": "Providence",
+   "fx": [
+    "chain",
+    "heal"
+   ],
+   "says": "Chain lightning; kills heal.",
+   "color": "#a3c5f4"
+  },
+  "kindness+patience": {
+   "name": "Evergreen",
+   "fx": [
+    "thorns",
+    "chill"
+   ],
+   "says": "Frost brambles that slow and wound.",
+   "color": "#67dac7"
+  },
+  "chastity+patience": {
+   "name": "Snowdrop",
+   "fx": [
+    "pierce",
+    "chill"
+   ],
+   "says": "A frozen lance through the line.",
+   "color": "#c7f1ff"
+  },
+  "patience+temperance": {
+   "name": "Blizzard",
+   "fx": [
+    "storm",
+    "chill"
+   ],
+   "says": "A storm of frost that freezes as it strikes.",
+   "color": "#95ddff"
+  },
+  "diligence+patience": {
+   "name": "Hourglass",
+   "fx": [
+    "sleep",
+    "doom"
+   ],
+   "says": "Stops a Ybasog, then shatters it for triple.",
+   "color": "#86b7ff"
+  },
+  "chastity+kindness": {
+   "name": "Lily",
+   "fx": [
+    "split3",
+    "heal"
+   ],
+   "shardFx": [
+    "thorns"
+   ],
+   "says": "Three seeds that root as brambles.",
+   "color": "#9fe8c7"
+  },
+  "kindness+temperance": {
+   "name": "Pollen",
+   "fx": [
+    "decoy",
+    "thorns"
+   ],
+   "says": "Plants a flower the grazers dive at.",
+   "color": "#6dd4c7"
+  },
+  "diligence+kindness": {
+   "name": "Hive",
+   "fx": [
+    "split",
+    "chain"
+   ],
+   "shardFx": [
+    "homing"
+   ],
+   "says": "Releases bees that hunt on their own.",
+   "color": "#5eaec7"
+  },
+  "chastity+temperance": {
+   "name": "Clarity",
+   "fx": [
+    "beam"
+   ],
+   "says": "A beam of pure light, instant and endless.",
+   "color": "#cdebff"
+  },
+  "chastity+diligence": {
+   "name": "Oath",
+   "fx": [
+    "snowball",
+    "pierce"
+   ],
+   "says": "Keeps going: every ricochet makes it stronger.",
+   "color": "#bec5ff"
+  },
+  "diligence+temperance": {
+   "name": "Tempest",
+   "fx": [
+    "chain",
+    "gust"
+   ],
+   "says": "Lightning on the wind; flings them back.",
+   "color": "#8cb1ff"
+  },
+  "charity+pride": {
+   "name": "Largesse",
+   "fx": [
+    "prism"
+   ],
+   "says": "Splits into three bolts of natures you know.",
+   "color": "#e4f8cc"
+  },
+  "patience+pride": {
+   "name": "Diamond",
+   "fx": [
+    "shatter",
+    "radiant"
+   ],
+   "shardFx": [
+    "radiant"
+   ],
+   "says": "A crystal that bursts into blinding shards.",
+   "color": "#c7ead8"
+  },
+  "kindness+pride": {
+   "name": "Laurel",
+   "fx": [
+    "execute",
+    "heal"
+   ],
+   "says": "Finishes the weakened; kills heal.",
+   "color": "#9fe0a0"
+  },
+  "chastity+pride": {
+   "name": "Seraph",
+   "fx": [
+    "homing",
+    "pierce",
+    "radiant"
+   ],
+   "says": "A seeking light that passes through.",
+   "color": "#fff8d8"
+  },
+  "pride+temperance": {
+   "name": "Comet",
+   "fx": [
+    "meteor"
+   ],
+   "says": "Calls a comet down on what it hits.",
+   "color": "#cde4d8"
+  },
+  "diligence+pride": {
+   "name": "Zenith",
+   "fx": [
+    "boomerang",
+    "radiant"
+   ],
+   "says": "Flies out, then returns to strike again.",
+   "color": "#bebed8"
+  },
+  "greed+humility": {
+   "name": "Lodestone",
+   "fx": [
+    "pull",
+    "stone",
+    "magnet",
+    "boomerang"
+   ],
+   "says": "A heavy magnet flung out that swings back to you; calls all void energy home.",
+   "color": "#ddb863"
+  },
+  "greed+patience": {
+   "name": "Stasis",
+   "fx": [
+    "field",
+    "chill"
+   ],
+   "says": "A freezing field that holds them.",
+   "color": "#c1d6a6"
+  },
+  "greed+kindness": {
+   "name": "Harvest",
+   "fx": [
+    "hoard",
+    "heal"
+   ],
+   "says": "Kills drop triple void energy and heal.",
+   "color": "#99cd6e"
+  },
+  "chastity+greed": {
+   "name": "Tithe",
+   "fx": [
+    "tithe",
+    "pierce"
+   ],
+   "says": "Takes a tenth of a Ybasog's life with each hit.",
+   "color": "#f9e4a6"
+  },
+  "greed+temperance": {
+   "name": "Whirlpool",
+   "fx": [
+    "vortex",
+    "gust"
+   ],
+   "says": "A spinning vortex that grinds them down.",
+   "color": "#c6d0a6"
+  },
+  "diligence+greed": {
+   "name": "Compound",
+   "fx": [
+    "snowball",
+    "hoard"
+   ],
+   "says": "Interest grows with every ricochet.",
+   "color": "#b8aaa6"
+  },
+  "humility+wrath": {
+   "name": "Magma",
+   "fx": [
+    "stone",
+    "killburst",
+    "burn"
+   ],
+   "shardFx": [
+    "burn"
+   ],
+   "says": "Molten rock; kills erupt.",
+   "color": "#e4795a"
+  },
+  "charity+wrath": {
+   "name": "Zeal",
+   "fx": [
+    "split3",
+    "burn",
+    "heal"
+   ],
+   "shardFx": [
+    "burn"
+   ],
+   "says": "Bursts into three burning shards.",
+   "color": "#e4a591"
+  },
+  "kindness+wrath": {
+   "name": "Ember Bloom",
+   "fx": [
+    "thorns",
+    "burn"
+   ],
+   "says": "Burning brambles.",
+   "color": "#9f8e65"
+  },
+  "chastity+wrath": {
+   "name": "Crusade",
+   "fx": [
+    "pierce",
+    "burn"
+   ],
+   "says": "A burning lance through the line.",
+   "color": "#ffa59d"
+  },
+  "temperance+wrath": {
+   "name": "Firestorm",
+   "fx": [
+    "storm",
+    "burn"
+   ],
+   "says": "A storm that rains fire.",
+   "color": "#cd919d"
+  },
+  "diligence+wrath": {
+   "name": "Arc Forge",
+   "fx": [
+    "chain",
+    "burn"
+   ],
+   "says": "Lightning that sets them alight.",
+   "color": "#be6b9d"
+  },
+  "envy+humility": {
+   "name": "Moss",
+   "fx": [
+    "venom",
+    "stone",
+    "wall"
+   ],
+   "says": "A heavy venom stone that raises a wall.",
+   "color": "#aac464"
+  },
+  "charity+envy": {
+   "name": "Poisoned Gift",
+   "fx": [
+    "split",
+    "venom"
+   ],
+   "shardFx": [
+    "venom"
+   ],
+   "says": "Splits into poisoned shards.",
+   "color": "#aaf09b"
+  },
+  "envy+patience": {
+   "name": "Frostbite",
+   "fx": [
+    "venom",
+    "chill"
+   ],
+   "says": "Cold venom: slows and rots.",
+   "color": "#8de2a7"
+  },
+  "chastity+envy": {
+   "name": "Truth",
+   "fx": [
+    "cleanse",
+    "venom",
+    "execute"
+   ],
+   "says": "Washes globs away; finishes the weak.",
+   "color": "#c5f0a7"
+  },
+  "envy+temperance": {
+   "name": "Miasma",
+   "fx": [
+    "storm",
+    "venom"
+   ],
+   "says": "A storm of rot.",
+   "color": "#93dca7"
+  },
+  "diligence+envy": {
+   "name": "Rivalry",
+   "fx": [
+    "mirror",
+    "venom"
+   ],
+   "says": "A jealous twin strikes from the far wall.",
+   "color": "#84b6a7"
+  },
+  "humility+lust": {
+   "name": "Devotion",
+   "fx": [
+    "charm",
+    "aegis"
+   ],
+   "says": "Charms; kills grant a ward.",
+   "color": "#e48ba1"
+  },
+  "charity+lust": {
+   "name": "Embrace",
+   "fx": [
+    "charm",
+    "leech"
+   ],
+   "says": "Charms, and the damage feeds you.",
+   "color": "#e4b7d8"
+  },
+  "lust+patience": {
+   "name": "Longing",
+   "fx": [
+    "charm",
+    "chill",
+    "long"
+   ],
+   "says": "A long, cold charm.",
+   "color": "#c7a9e4"
+  },
+  "kindness+lust": {
+   "name": "Rose",
+   "fx": [
+    "thorns",
+    "charm"
+   ],
+   "says": "Thorny brambles that charm.",
+   "color": "#9fa0ac"
+  },
+  "lust+temperance": {
+   "name": "Allure",
+   "fx": [
+    "decoy",
+    "lure"
+   ],
+   "says": "A lure the Ybasogs cannot resist.",
+   "color": "#cda3e4"
+  },
+  "diligence+lust": {
+   "name": "Fervor",
+   "fx": [
+    "frenzy",
+    "chain"
+   ],
+   "says": "Lightning; each kill quickens your fire.",
+   "color": "#be7de4"
+  },
+  "gluttony+humility": {
+   "name": "Famine",
+   "fx": [
+    "quake",
+    "devour"
+   ],
+   "says": "A hungry shockwave across the row.",
+   "color": "#e49952"
+  },
+  "charity+gluttony": {
+   "name": "Feast",
+   "fx": [
+    "hoard",
+    "heal",
+    "devour"
+   ],
+   "says": "Kills drop a feast of void energy and heal.",
+   "color": "#e4c589"
+  },
+  "gluttony+patience": {
+   "name": "Hibernate",
+   "fx": [
+    "sleep",
+    "chill",
+    "devour"
+   ],
+   "says": "Cold sleep, and it grows as it feeds.",
+   "color": "#c7b795"
+  },
+  "gluttony+kindness": {
+   "name": "Orchard",
+   "fx": [
+    "bloom",
+    "devour"
+   ],
+   "says": "The slain fall as healing fruit.",
+   "color": "#9fad5d"
+  },
+  "chastity+gluttony": {
+   "name": "Fast",
+   "fx": [
+    "pierce",
+    "execute"
+   ],
+   "says": "Pierces, and finishes the weak.",
+   "color": "#ffc595"
+  },
+  "diligence+gluttony": {
+   "name": "Grindstone",
+   "fx": [
+    "snowball",
+    "devour"
+   ],
+   "says": "Grinds harder with every ricochet.",
+   "color": "#be8b95"
+  },
+  "humility+sloth": {
+   "name": "Mire",
+   "fx": [
+    "field",
+    "stone"
+   ],
+   "says": "A heavy mire that holds them fast.",
+   "color": "#b19ba1"
+  },
+  "charity+sloth": {
+   "name": "Respite",
+   "fx": [
+    "lullaby",
+    "heal"
+   ],
+   "says": "Lulls them to sleep; kills heal.",
+   "color": "#b1c7d8"
+  },
+  "patience+sloth": {
+   "name": "Permafrost",
+   "fx": [
+    "timewarp",
+    "chill"
+   ],
+   "says": "The whole rift freezes for a moment.",
+   "color": "#95b9e4"
+  },
+  "kindness+sloth": {
+   "name": "Lichen",
+   "fx": [
+    "thorns",
+    "sleep"
+   ],
+   "says": "Sleepy brambles.",
+   "color": "#6db0ac"
+  },
+  "chastity+sloth": {
+   "name": "Daydream",
+   "fx": [
+    "orbit",
+    "sleep"
+   ],
+   "says": "Drifts around you, then puts them to sleep.",
+   "color": "#cdc7e4"
+  },
+  "sloth+temperance": {
+   "name": "Doldrums",
+   "fx": [
+    "timewarp",
+    "sleep"
+   ],
+   "says": "The wind dies; the rift slows to a crawl.",
+   "color": "#9ab3e4"
+  }
+ },
+ "discover": {
+  "wrath": {
+   "stat": "multikill",
+   "n": 30,
+   "text": "Slay 3 Ybasogs within half a second, 30 times"
+  },
+  "patience": {
+   "stat": "cleanwave",
+   "n": 8,
+   "text": "Clear 8 waves without being hurt"
+  },
+  "greed": {
+   "stat": "motes",
+   "n": 2500,
+   "text": "Gather 2,500 void energy"
+  },
+  "charity": {
+   "stat": "sealedwave",
+   "n": 15,
+   "text": "Clear 15 waves with nothing escaping"
+  },
+  "pride": {
+   "stat": "kills",
+   "n": 1500,
+   "text": "Slay 1,500 Ybasogs"
+  },
+  "humility": {
+   "stat": "asteroids",
+   "n": 150,
+   "text": "Break 150 asteroids"
+  },
+  "envy": {
+   "stat": "ricochets",
+   "n": 200,
+   "text": "Slay 200 Ybasogs with bolts that ricocheted twice"
+  },
+  "kindness": {
+   "stat": "lowwave",
+   "n": 5,
+   "text": "Clear 5 waves on 5 energy or less"
+  },
+  "lust": {
+   "stat": "closekills",
+   "n": 150,
+   "text": "Slay 150 Ybasogs close to your body"
+  },
+  "chastity": {
+   "stat": "ruins",
+   "n": 40,
+   "text": "Shatter 40 ruins"
+  },
+  "gluttony": {
+   "stat": "pods",
+   "n": 400,
+   "text": "Slay 400 pods before they hatch"
+  },
+  "temperance": {
+   "stat": "debris",
+   "n": 150,
+   "text": "Break 150 pieces of space debris"
+  },
+  "sloth": {
+   "stat": "stillkills",
+   "n": 300,
+   "text": "Slay 300 Ybasogs while standing still"
+  },
+  "diligence": {
+   "stat": "feeders",
+   "n": 120,
+   "text": "Slay 120 feeders"
+  }
+ },
+ "omens": {
+  "calm": {
+   "name": "A Quiet Drift",
+   "says": "Nothing stirs but the Ybasogs."
+  },
+  "swarm": {
+   "name": "The Brood Wakes",
+   "says": "Half again as many pods; void energy +25%.",
+   "pods": 1.5,
+   "void": 1.25
+  },
+  "rockfall": {
+   "name": "Rockfall",
+   "says": "Twice the asteroids, and they drop twice the void energy.",
+   "rocks": 2,
+   "rockVoid": 2
+  },
+  "ruinwake": {
+   "name": "Ruinwake",
+   "says": "Ruins drift from the first stage and drop triple.",
+   "ruinsEarly": 1,
+   "ruinVoid": 3
+  },
+  "hunger": {
+   "name": "The Hungry Dark",
+   "says": "Feeders spit faster; every kill drops one more.",
+   "spit": 0.7,
+   "killVoid": 1
+  },
+  "eclipse": {
+   "name": "Eclipse",
+   "says": "Bolts ricochet once more; Ybasogs have 20% more life.",
+   "bounces": 1,
+   "hp": 1.2
+  },
+  "resonance": {
+   "name": "Resonance",
+   "says": "Nature effects last half again as long.",
+   "status": 1.5
+  }
+ },
+ "sigils": {
+  "vessel": {
+   "name": "Vessel",
+   "says": "+3 max energy",
+   "costs": [
+    60,
+    140,
+    300
+   ],
+   "give": {
+    "max_energy": 3
+   }
+  },
+  "reach": {
+   "name": "Reach",
+   "says": "+50 px void energy pull",
+   "costs": [
+    50,
+    120,
+    250
+   ],
+   "give": {
+    "magnet": 50
+   }
+  },
+  "swiftness": {
+   "name": "Swiftness",
+   "says": "+8% speed",
+   "costs": [
+    80,
+    180
+   ],
+   "give": {
+    "speed": 0.08
+   }
+  },
+  "ricochet": {
+   "name": "Ricochet",
+   "says": "+1 ricochet",
+   "costs": [
+    200,
+    450
+   ],
+   "give": {
+    "bounces": 1
+   }
+  },
+  "resonance": {
+   "name": "Resonance",
+   "says": "+0.1 damage to opposites",
+   "costs": [
+    120,
+    260,
+    420
+   ],
+   "give": {
+    "opposite_bonus": 0.1
+   }
+  },
+  "warding": {
+   "name": "Warding",
+   "says": "begin with a ward",
+   "costs": [
+    120,
+    280
+   ],
+   "give": {
+    "ward_start": 1
+   }
+  },
+  "recovery": {
+   "name": "Recovery",
+   "says": "+3 energy between stages",
+   "costs": [
+    90,
+    220
+   ],
+   "give": {
+    "stage_heal": 3
+   }
+  },
+  "rites": {
+   "name": "Rites",
+   "says": "+1 rite at each Rift Rest",
+   "costs": [
+    250,
+    500
+   ],
+   "give": {
+    "rest_actions": 1
+   }
+  },
+  "breadth": {
+   "name": "Breadth",
+   "says": "+2 cards in the pool",
+   "costs": [
+    100,
+    250
+   ],
+   "give": {
+    "deck_max": 2
+   }
+  },
+  "favor": {
+   "name": "Favor",
+   "says": "+2% mythic chance at the Rite",
+   "costs": [
+    150,
+    300,
+    500
+   ],
+   "give": {
+    "mythic": 0.02
+   }
+  },
+  "keeping": {
+   "name": "Keeping",
+   "says": "keep +10% void after a fall",
+   "costs": [
+    70,
+    160,
+    320
+   ],
+   "give": {
+    "loss_keep": 0.1
+   }
+  },
+  "shrine": {
+   "name": "Shrine",
+   "says": "+1 relic slot",
+   "costs": [
+    400
+   ],
+   "give": {
+    "relic_slots": 1
+   }
+  },
+  "inborn": {
+   "name": "Inborn",
+   "says": "begin with your form's nature card",
+   "costs": [
+    150
+   ],
+   "give": {
+    "inborn": 1
+   }
+  },
+  "chosen": {
+   "name": "Chosen",
+   "says": "begin with a card chosen at the Gate",
+   "costs": [
+    300
+   ],
+   "give": {
+    "chosen": 1
+   },
+   "need": "chosen"
+  }
+ },
+ "relics": {
+  "bell": {
+   "name": "Drowned Bell",
+   "give": {
+    "ward_stage": 1
+   },
+   "says": "A ward at the start of each stage.",
+   "lore": "It still rings under the void, for a city no one remembers."
+  },
+  "shard": {
+   "name": "Star-Map Shard",
+   "give": {
+    "void_mul": 0.15
+   },
+   "says": "+15% void energy.",
+   "lore": "A sliver of a chart of stars that have since gone out."
+  },
+  "lens": {
+   "name": "Hollow Lens",
+   "give": {
+    "telegraph": 0.4
+   },
+   "says": "Warnings last 0.4 s longer.",
+   "lore": "Ground from the eye of something that watched too long."
+  },
+  "charm": {
+   "name": "Chitin Charm",
+   "give": {
+    "shell_break": 1
+   },
+   "says": "Shells no longer halve your damage.",
+   "lore": "Carved from a husk; the brood fear their own skins."
+  },
+  "ember": {
+   "name": "First Ember",
+   "give": {
+    "status": 0.2
+   },
+   "says": "Nature effects last 20% longer.",
+   "lore": "Taken from the first fire, before Wrath had a name."
+  },
+  "tide": {
+   "name": "Tide Stone",
+   "give": {
+    "opposite_bonus": 0.2
+   },
+   "says": "+0.2 to opposite-nature damage.",
+   "lore": "Two halves that will not touch, however long you hold them."
+  },
+  "lamp": {
+   "name": "Pilgrim's Lamp",
+   "give": {
+    "magnet": 80
+   },
+   "says": "+80 px void energy pull.",
+   "lore": "Its light falls toward whoever carries it."
+  },
+  "crown": {
+   "name": "Broken Crown",
+   "give": {
+    "damage": 0.1
+   },
+   "says": "+10% bolt damage.",
+   "lore": "Three points remain. The rest were eaten."
+  },
+  "tooth": {
+   "name": "Hive Tooth",
+   "give": {
+    "fire_rate": 0.1
+   },
+   "says": "+10% fire rate.",
+   "lore": "It hums when the Mother is near."
+  },
+  "salt": {
+   "name": "Vial of Black Salt",
+   "give": {
+    "max_energy": 3
+   },
+   "says": "+3 max energy.",
+   "lore": "Salt of a sea that dried into the void."
+  },
+  "scale": {
+   "name": "Mirror Scale",
+   "give": {
+    "glob_dodge": 0.15
+   },
+   "says": "15% of globs pass through you.",
+   "lore": "What strikes it sees itself and hesitates."
+  },
+  "nail": {
+   "name": "Keel Nail",
+   "give": {
+    "bounces": 1
+   },
+   "says": "+1 ricochet.",
+   "lore": "From a ship that sailed between the stars and struck one."
+  },
+  "orrery": {
+   "name": "Brass Orrery",
+   "give": {
+    "stage_heal": 3
+   },
+   "says": "+3 energy between stages.",
+   "lore": "The planets on it no longer exist. It still keeps their time."
+  },
+  "idoleye": {
+   "name": "Idol's Eye",
+   "give": {
+    "relic_find": 0.5
+   },
+   "says": "Relics and logs turn up more often.",
+   "lore": "A green stone that was set in a drowned face. It looks for its kin."
+  },
+  "psalm": {
+   "name": "Sealed Psalm",
+   "give": {
+    "rest_actions": 1
+   },
+   "says": "One more rite at each Rift Rest.",
+   "lore": "The Choir sang it once. No one has opened it since."
+  },
+  "pearl": {
+   "name": "Void Pearl",
+   "give": {
+    "loss_keep": 0.15
+   },
+   "says": "Keep 15% more void energy after a fall.",
+   "lore": "It formed around nothing at all."
+  }
+ },
+ "logs": {
+  "l1": {
+   "src": "wreck",
+   "title": "Flight recorder, the Cassiel",
+   "text": "Day 212. The stars ahead are going out one by one. Navigation says they are not dying. Something is eating the light."
+  },
+  "l2": {
+   "src": "wreck",
+   "title": "Cargo manifest",
+   "text": "Hold 3: seed vaults, sealed. Hold 4: void-glass, do not open in darkness. Hold 5: unlisted. Hold 5 is warm."
+  },
+  "l3": {
+   "src": "wreck",
+   "title": "Engineer's note",
+   "text": "The pods on the hull hatched. We vented the deck. The grazers came back through the vents."
+  },
+  "l4": {
+   "src": "wreck",
+   "title": "Last broadcast",
+   "text": "To anyone: do not follow the fireflies. They show you the way, then they leave you there."
+  },
+  "l5": {
+   "src": "wreck",
+   "title": "Medical log",
+   "text": "Crew report the same dream: a choir of three, singing from behind their own faces."
+  },
+  "l6": {
+   "src": "wreck",
+   "title": "Captain, unsent",
+   "text": "If the hive takes the ship, burn the cargo. If the cargo wakes, burn the ship."
+  },
+  "l7": {
+   "src": "wreck",
+   "title": "Survey drone",
+   "text": "Rift wall composition: unknown. Rift wall temperature: rising. Rift wall: breathing."
+  },
+  "l8": {
+   "src": "wreck",
+   "title": "Child's drawing",
+   "text": "A blob of black crayon with two small eyes, holding a light. Written under it: our friend."
+  },
+  "l9": {
+   "src": "ruin",
+   "title": "Glyph band, translated",
+   "text": "Seven we cast down, seven we raised up. Where two opposites meet, nothing remains, and nothing is holy."
+  },
+  "l10": {
+   "src": "ruin",
+   "title": "Idol inscription",
+   "text": "He sleeps in the drowned deep and dreams the rift. When he wakes, the void will be awake too."
+  },
+  "l11": {
+   "src": "ruin",
+   "title": "Shrine tablet",
+   "text": "Bring light to the hollow, and the hollow will take its shape from you."
+  },
+  "l12": {
+   "src": "ruin",
+   "title": "Monolith, the black face",
+   "text": "There is no writing. Only your reflection, and behind it something that is not reflecting you."
+  },
+  "l13": {
+   "src": "ruin",
+   "title": "Wall of names",
+   "text": "A thousand names, each scratched out. The last name is unfinished, and the stone is wet."
+  },
+  "l14": {
+   "src": "ruin",
+   "title": "The record of records",
+   "text": "Those who gather all fourteen will read the Akashic Records, and learn why the void dreamed them."
+  },
+  "l15": {
+   "src": "ruin",
+   "title": "Hymn fragment",
+   "text": "The Mother does not hunger. She is hunger, given a body so it could be killed."
+  },
+  "l16": {
+   "src": "ruin",
+   "title": "Pillar graffiti",
+   "text": "We were here. We were many. We were food."
+  }
+ },
+ "quests": {
+  "mother": {
+   "name": "The Brood Ends",
+   "text": "Fell the Mother",
+   "stat": "fell_mother",
+   "n": 1,
+   "reward": {
+    "void": 150
+   }
+  },
+  "choir": {
+   "name": "Silence the Hymn",
+   "text": "Fell the Choir",
+   "stat": "fell_choir",
+   "n": 1,
+   "reward": {
+    "void": 100
+   }
+  },
+  "hollow": {
+   "name": "Close the Eye",
+   "text": "Fell the Hollow Eye",
+   "stat": "fell_hollow",
+   "n": 1,
+   "reward": {
+    "void": 100
+   }
+  },
+  "minis": {
+   "name": "Wardens and Knights",
+   "text": "Fell 6 mini-bosses",
+   "stat": "minis",
+   "n": 6,
+   "reward": {
+    "void": 120
+   }
+  },
+  "natures": {
+   "name": "Seven and Seven",
+   "text": "Discover 6 natures",
+   "stat": "natures",
+   "n": 6,
+   "reward": {
+    "void": 200
+   }
+  },
+  "logs": {
+   "name": "Archivist",
+   "text": "Find 6 logs",
+   "stat": "logs",
+   "n": 6,
+   "reward": {
+    "void": 100
+   }
+  },
+  "relics": {
+   "name": "Reliquary",
+   "text": "Find 4 relics",
+   "stat": "relics",
+   "n": 4,
+   "reward": {
+    "relic": 1
+   }
+  },
+  "deep": {
+   "name": "Deeper",
+   "text": "Win at depth 1+",
+   "stat": "deepwin",
+   "n": 1,
+   "reward": {
+    "void": 250
+   }
+  },
+  "bestiary": {
+   "name": "Naturalist",
+   "text": "Meet 20 Ybasog kinds",
+   "stat": "bestiary",
+   "n": 20,
+   "reward": {
+    "void": 150
+   }
+  },
+  "weak": {
+   "name": "Opposites",
+   "text": "Slay 100 with opposites",
+   "stat": "weakkills",
+   "n": 100,
+   "reward": {
+    "void": 150
+   }
+  },
+  "clean": {
+   "name": "Untouched",
+   "text": "Clear a stage unhurt",
+   "stat": "cleanstage",
+   "n": 1,
+   "reward": {
+    "relic": 1
+   }
+  },
+  "codex": {
+   "name": "Codex Keeper",
+   "text": "Record 12 fusions",
+   "stat": "codex",
+   "n": 12,
+   "reward": {
+    "void": 250
+   }
+  }
+ },
+ "unlocks": {
+  "rift3": {
+   "name": "A third rift at the Gate",
+   "stat": "wins",
+   "n": 1
+  },
+  "omens": {
+   "name": "Darker omens",
+   "stat": "runs",
+   "n": 4
+  },
+  "slot2": {
+   "name": "A second relic slot",
+   "stat": "relics",
+   "n": 3
+  },
+  "depth": {
+   "name": "Deeper rifts",
+   "stat": "wins",
+   "n": 1
+  },
+  "chosen": {
+   "name": "The Chosen sigil",
+   "stat": "wins",
+   "n": 1
+  }
+ },
+ "rifts": {
+  "adj": [
+   "Drowned",
+   "Whispering",
+   "Hollow",
+   "Weeping",
+   "Starless",
+   "Coiled",
+   "Ashen",
+   "Gilded",
+   "Sunken",
+   "Screaming"
+  ],
+  "noun": [
+   "Trench",
+   "Choir",
+   "Maw",
+   "Reach",
+   "Deep",
+   "Vault",
+   "Spiral",
+   "Expanse",
+   "Throat",
+   "Cradle"
+  ],
+  "boons": {
+   "relics": {
+    "name": "Relic-rich",
+    "says": "Relics and logs turn up twice as often.",
+    "relic": 2
+   },
+   "void": {
+    "name": "Rich veins",
+    "says": "+30% void energy.",
+    "void": 1.3
+   },
+   "hive": {
+    "name": "Teeming",
+    "says": "One more new kind each wave; more natured Ybasogs.",
+    "debut": 1,
+    "natured": 0.15
+   },
+   "calm": {
+    "name": "Still",
+    "says": "No boon, and no added danger."
+   }
+  }
+ },
+ "ybasogs": {
+  "pod": {
+   "name": "Pod",
+   "says": "Drifts down and hatches a grazer.",
+   "role": "minion",
+   "fam": "pod"
+  },
+  "husk": {
+   "name": "Husk Pod",
+   "says": "An armoured shell halves damage until it cracks; hatches a horned grazer.",
+   "role": "minion",
+   "fam": "pod"
+  },
+  "clutch": {
+   "name": "Clutch Pod",
+   "says": "Bursts into three mites when it dies or hatches.",
+   "role": "minion",
+   "fam": "pod"
+  },
+  "bloat": {
+   "name": "Bloat Pod",
+   "says": "Swollen with bile: bursts into a ring of globs when killed.",
+   "role": "minion",
+   "fam": "pod"
+  },
+  "grazer": {
+   "name": "Grazer",
+   "says": "Dives at you once it passes the middle.",
+   "role": "minion",
+   "fam": "grazer"
+  },
+  "swift": {
+   "name": "Swift Grazer",
+   "says": "Small and quick; dives early.",
+   "role": "minion",
+   "fam": "grazer"
+  },
+  "stalker": {
+   "name": "Stalker",
+   "says": "Weaves as it falls and turns once mid-dive.",
+   "role": "minion",
+   "fam": "grazer"
+  },
+  "horned": {
+   "name": "Horned Grazer",
+   "says": "Tough; plunges straight down.",
+   "role": "minion",
+   "fam": "grazer"
+  },
+  "feeder": {
+   "name": "Feeder",
+   "says": "Hovers and spits a glob at you.",
+   "role": "minion",
+   "fam": "feeder"
+  },
+  "spitter": {
+   "name": "Spitter",
+   "says": "Three mouths: a spread of three globs.",
+   "role": "minion",
+   "fam": "feeder"
+  },
+  "lobber": {
+   "name": "Lobber",
+   "says": "Lobs a sac that bursts into droplets above you.",
+   "role": "minion",
+   "fam": "feeder"
+  },
+  "sniper": {
+   "name": "Sniper",
+   "says": "Aims a line, then fires a fast glob along it.",
+   "role": "minion",
+   "fam": "feeder"
+  },
+  "watcher": {
+   "name": "Watcher",
+   "says": "Marks your column, then burns it with its gaze.",
+   "role": "minion",
+   "fam": "eye"
+  },
+  "blinker": {
+   "name": "Blinker",
+   "says": "Vanishes and reappears, spitting after each blink.",
+   "role": "minion",
+   "fam": "eye"
+  },
+  "weeper": {
+   "name": "Weeper",
+   "says": "Drips tears that fall straight down.",
+   "role": "minion",
+   "fam": "eye"
+  },
+  "devourer": {
+   "name": "Devourer",
+   "says": "Chases and eats your void energy, growing as it feeds.",
+   "role": "minion",
+   "fam": "devourer"
+  },
+  "gorger": {
+   "name": "Gorger",
+   "says": "Eats falling matter it touches to heal and grow.",
+   "role": "minion",
+   "fam": "devourer"
+  },
+  "maw": {
+   "name": "Maw",
+   "says": "Its open mouth swallows bolts from below: strike it from the sides or bank shots off the top.",
+   "role": "minion",
+   "fam": "devourer"
+  },
+  "warder": {
+   "name": "Warder",
+   "says": "Shields Ybasogs around it.",
+   "role": "minion",
+   "fam": "deacon"
+  },
+  "mender": {
+   "name": "Mender",
+   "says": "Heals Ybasogs around it.",
+   "role": "minion",
+   "fam": "deacon"
+  },
+  "herald": {
+   "name": "Herald",
+   "says": "Calls pods out of the dark.",
+   "role": "minion",
+   "fam": "deacon"
+  },
+  "mite": {
+   "name": "Mite",
+   "says": "A flickering swarm.",
+   "role": "minion",
+   "fam": "mite"
+  },
+  "lancer": {
+   "name": "Lancer",
+   "says": "Hovers, then darts at you.",
+   "role": "minion",
+   "fam": "mite"
+  },
+  "thief": {
+   "name": "Thief Mite",
+   "says": "Steals void energy on touch and flees.",
+   "role": "minion",
+   "fam": "mite"
+  },
+  "creeper": {
+   "name": "Creeper",
+   "says": "Crawls down a rift wall, spitting across.",
+   "role": "minion",
+   "fam": "crawler"
+  },
+  "lasher": {
+   "name": "Lasher",
+   "says": "Clings to a wall and sweeps a tendril across the rift.",
+   "role": "minion",
+   "fam": "crawler"
+  },
+  "weaver": {
+   "name": "Weaver",
+   "says": "Spins webs across the rift that catch bolts.",
+   "role": "minion",
+   "fam": "crawler"
+  },
+  "warden": {
+   "name": "Brood Warden",
+   "says": "A shelled brood-carrier that sows pods and mites.",
+   "role": "mini",
+   "fam": "mini"
+  },
+  "knight": {
+   "name": "Hive Knight",
+   "says": "An armoured grazer that charges again and again.",
+   "role": "mini",
+   "fam": "mini"
+  },
+  "prime": {
+   "name": "Gazer Prime",
+   "says": "Burns three columns at once; five when hurt.",
+   "role": "mini",
+   "fam": "mini"
+  },
+  "behemoth": {
+   "name": "Gorging Behemoth",
+   "says": "Eats falling matter and hurls it back at you.",
+   "role": "mini",
+   "fam": "mini"
+  },
+  "choir": {
+   "name": "The Choir",
+   "says": "Three hooded heads behind orbiting wards; sings rings of globs and calls deacons.",
+   "role": "boss",
+   "fam": "boss"
+  },
+  "hollow": {
+   "name": "The Hollow Eye",
+   "says": "A vast eye that blinks across the rift and burns your column.",
+   "role": "boss",
+   "fam": "boss"
+  },
+  "mother": {
+   "name": "The Mother",
+   "says": "The hive itself: pods, grazers, spreads of globs, hurled matter.",
+   "role": "boss",
+   "fam": "boss"
+  },
+  "oracle": {
+   "name": "Oracle",
+   "says": "Many eyes, one will: its globs seek you.",
+   "role": "minion",
+   "fam": "eye"
+  },
+  "leech": {
+   "name": "Void Leech",
+   "says": "Latches on and drains you until shot off.",
+   "role": "minion",
+   "fam": "devourer"
+  },
+  "cantor": {
+   "name": "Cantor",
+   "says": "Sings a ring that spreads across the rift.",
+   "role": "minion",
+   "fam": "deacon"
+  },
+  "gnat": {
+   "name": "Biter Gnat",
+   "says": "Circles you, then bites.",
+   "role": "minion",
+   "fam": "mite"
+  },
+  "skitter": {
+   "name": "Skitterer",
+   "says": "Runs along the rift floor, spitting up at you.",
+   "role": "minion",
+   "fam": "crawler"
+  },
+  "grasper": {
+   "name": "Grasping Limb",
+   "says": "Reaches from a wall at your height, then lunges.",
+   "role": "minion",
+   "fam": "reacher"
+  },
+  "sucker": {
+   "name": "Suckermouth",
+   "says": "Clings to a wall and drags you toward its mouth.",
+   "role": "minion",
+   "fam": "reacher"
+  },
+  "thrasher": {
+   "name": "Thrasher",
+   "says": "Hangs from the top and sweeps down at you.",
+   "role": "minion",
+   "fam": "reacher"
+  },
+  "stalkeye": {
+   "name": "Stalk Eye",
+   "says": "Peers from a wall on a stalk and fires at you.",
+   "role": "minion",
+   "fam": "reacher"
+  },
+  "shambler": {
+   "name": "Shambler",
+   "says": "A drowned thing that walks straight at you.",
+   "role": "minion",
+   "fam": "deep"
+  },
+  "croaker": {
+   "name": "Croaker",
+   "says": "Keeps its distance and croaks out rings.",
+   "role": "minion",
+   "fam": "deep"
+  },
+  "harpooner": {
+   "name": "Harpooner",
+   "says": "Aims a line at you, then throws.",
+   "role": "minion",
+   "fam": "deep"
+  },
+  "brine": {
+   "name": "Brine Priest",
+   "says": "Marks where you stand; the brine there slows you.",
+   "role": "minion",
+   "fam": "deep"
+  },
+  "polyp": {
+   "name": "Polyp",
+   "says": "Drifts after you and stings on touch, unharmed.",
+   "role": "minion",
+   "fam": "jelly"
+  },
+  "siphon": {
+   "name": "Siphon Jelly",
+   "says": "Drains your void energy while you are near.",
+   "role": "minion",
+   "fam": "jelly"
+  },
+  "lantern": {
+   "name": "Lantern Jelly",
+   "says": "Its light bends your bolts toward it.",
+   "role": "minion",
+   "fam": "jelly"
+  },
+  "manowar": {
+   "name": "Man-o-War",
+   "says": "Trails stinging tendrils far below it.",
+   "role": "minion",
+   "fam": "jelly"
+  },
+  "gaunt": {
+   "name": "Faceless Gaunt",
+   "says": "Swoops at you in long arcs.",
+   "role": "minion",
+   "fam": "gaunt"
+  },
+  "harrier": {
+   "name": "Harrier",
+   "says": "Marks your row, then strafes across it.",
+   "role": "minion",
+   "fam": "gaunt"
+  },
+  "shrieker": {
+   "name": "Shrieker",
+   "says": "Screams a ring that throws you back.",
+   "role": "minion",
+   "fam": "gaunt"
+  },
+  "carrion": {
+   "name": "Carrion Wing",
+   "says": "Flies above you and drops bile bombs.",
+   "role": "minion",
+   "fam": "gaunt"
+  },
+  "matron": {
+   "name": "Tide Matron",
+   "says": "Calls the drowned and sings rings of brine.",
+   "role": "mini",
+   "fam": "mini"
+  },
+  "gauntlord": {
+   "name": "Gaunt Lord",
+   "says": "A great faceless swooper that calls harriers.",
+   "role": "mini",
+   "fam": "mini"
+  },
+  "drowned": {
+   "name": "The Drowned King",
+   "says": "Dreaming in the deep: tidal walls, limbs from the rift walls, the drowned at his call.",
+   "role": "boss",
+   "fam": "boss"
+  }
+ },
+ "matter": {
+  "asteroid": {
+   "name": "Asteroid",
+   "says": "Jagged rock; bolts ricochet off it."
+  },
+  "big": {
+   "name": "Big Asteroid",
+   "says": "Splits into two chunks."
+  },
+  "iron": {
+   "name": "Iron Asteroid",
+   "says": "Dense ore: tough, and rich in void energy."
+  },
+  "crystal": {
+   "name": "Crystal Asteroid",
+   "says": "Shatters into six shards that fly as your bolts."
+  },
+  "comet": {
+   "name": "Comet",
+   "says": "Dangerously fast, with rare materials; a mark at the top warns of it."
+  },
+  "cinder": {
+   "name": "Cinder Rock",
+   "says": "Bursts in fire when broken, burning Ybasogs and you nearby."
+  },
+  "plate": {
+   "name": "Hull Plate",
+   "says": "A fast, spinning plate of hull."
+  },
+  "slab": {
+   "name": "Debris Slab",
+   "says": "A wide, slow slab that shelters what falls behind it."
+  },
+  "hull": {
+   "name": "Hull Section",
+   "says": "A long piece of a dead ship, dark windows in a row."
+  },
+  "panel": {
+   "name": "Solar Panel",
+   "says": "Fragile; breaks into a spray of scrap."
+  },
+  "core": {
+   "name": "Engine Core",
+   "says": "Explodes when broken, hurting only Ybasogs."
+  },
+  "cargo": {
+   "name": "Cargo Pod",
+   "says": "Sealed cargo, full of void energy."
+  },
+  "spar": {
+   "name": "Antenna Spar",
+   "says": "A long spinning mast with a dish."
+  },
+  "ruin": {
+   "name": "Ruin Wall",
+   "says": "A carved wall, with two pods sheltering behind it."
+  },
+  "pillar": {
+   "name": "Fallen Pillar",
+   "says": "A fluted column, falling upright."
+  },
+  "arch": {
+   "name": "Broken Arch",
+   "says": "Two legs and a lintel: bolts slip through the gap."
+  },
+  "idol": {
+   "name": "Sunken Idol",
+   "says": "The carved head of a drowned god, its beard of tentacles."
+  },
+  "glyph": {
+   "name": "Glyph Stone",
+   "says": "Breaking its glyph grants you a ward."
+  },
+  "shrine": {
+   "name": "Shrine",
+   "says": "A small lit shrine; breaking it heals you 4."
+  },
+  "monolith": {
+   "name": "Monolith",
+   "says": "A black slab that drinks light: bolts never ricochet off it."
+  }
+ },
+ "palette": [
+  "#000000",
+  "#07040d",
+  "#0e0a18",
+  "#1a1229",
+  "#241a3a",
+  "#3b3350",
+  "#6d6488",
+  "#9d92bb",
+  "#cfc6e6",
+  "#efe6ff",
+  "#ffffff",
+  "#b9a6ff",
+  "#7b5bdf",
+  "#d8c8ff",
+  "#4a3a7a",
+  "#9b55b0",
+  "#5d2e6e",
+  "#3a1746",
+  "#1a0a20",
+  "#b5c43a",
+  "#6f7a1e",
+  "#d6e25a",
+  "#c06a8a",
+  "#3a0a1c",
+  "#e8e6c0",
+  "#2a1636",
+  "#c8e04a",
+  "#8a1030",
+  "#ff4466",
+  "#ff8a8a",
+  "#c94a4a",
+  "#6e6156",
+  "#2c2520",
+  "#a89a8a",
+  "#353a44",
+  "#8b95a3",
+  "#45404d",
+  "#8a8296",
+  "#5ac8b9",
+  "#1f3a72",
+  "#5a4a36",
+  "#ffd27a",
+  "#e0a040",
+  "#fff0b0",
+  "#d8f4ff",
+  "#16302e",
+  "#2e5a55",
+  "#7fd6c8"
+ ]
+}

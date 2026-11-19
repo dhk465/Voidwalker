@@ -1,5 +1,10 @@
 ; Engine configuration file.
-; Voidwalker, moved from the browser one-shot (prototypes/voidwalker) to Godot 4.8 .NET.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
 
 config_version=5
 
@@ -8,26 +13,22 @@ config_version=5
 config/name="Voidwalker"
 run/main_scene="res://src/hub/Hub.tscn"
 config/features=PackedStringArray("4.8", "C#", "GL Compatibility")
+config/icon="res://assets/icon.png"
+config/version="0.2.0"
+config/quit_on_go_back=false
 
-[rendering]
+[autoload]
 
-renderer/rendering_method="gl_compatibility"
-renderer/rendering_method.mobile="gl_compatibility"
-textures/canvas_textures/default_texture_filter=0
-2d/snap/snap_2d_transforms_to_pixel=true
-2d/snap/snap_2d_vertices_to_pixel=true
-environment/defaults/default_clear_color=Color(0.027, 0.016, 0.051, 1)
+PixelScreen="*res://src/core/PixelScreen.cs"
 
 [display]
 
-; Pixel-perfect on phones: the game is drawn at 640x360 and scaled up in whole steps only (3x fills a 1080p
-; height); "expand" gives wider screens more width instead of bars. Every pixel is the same size.
 window/size/viewport_width=640
 window/size/viewport_height=360
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="viewport"
-window/stretch/aspect="expand"
+window/stretch/aspect="keep"
 window/stretch/scale_mode="integer"
 window/handheld/orientation=4
 
@@ -35,6 +36,12 @@ window/handheld/orientation=4
 
 project/assembly_name="Voidwalker"
 
-[input_devices]
+[rendering]
 
-pointing/emulate_mouse_from_touch=true
+textures/canvas_textures/default_texture_filter=0
+textures/vram_compression/import_etc2_astc=true
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.027, 0.016, 0.051, 1)
+2d/snap/snap_2d_transforms_to_pixel=true
+2d/snap/snap_2d_vertices_to_pixel=true

@@ -4,14 +4,11 @@ using Godot;
 namespace Voidwalker.Hub;
 
 /// <summary>
-/// One of the hub's six stations. Touch-first: a tap selects it and lights its own pixels (the highlight shader);
-/// a tap on the selected station opens it. On PC the pointer hovering it lights it too.
+/// One of the hub's six stations. A tap opens its screen, and it lights its own pixels (the highlight shader)
+/// while open. On PC the pointer hovering it lights it too.
 /// </summary>
 public partial class Station : Node2D
 {
-	/// <summary>Raised when the selected station is tapped again: open its screen.</summary>
-	[Signal] public delegate void OpenedEventHandler(string id);
-
 	/// <summary>The station's id (deck, rite, gate, sigils, relics, journal).</summary>
 	public string Id { get; private set; } = "";
 	/// <summary>Tap radius round the station's centre, in pixels.</summary>
@@ -34,6 +31,14 @@ public partial class Station : Node2D
 		node.Material = mat; _materials.Add(mat);
 		AddChild(node);
 		return node;
+	}
+
+	/// <summary>Removes and frees a sprite added with <see cref="AddArt{T}"/>.</summary>
+	public void RemoveArt(CanvasItem node)
+	{
+		if (node.Material is ShaderMaterial m) _materials.Remove(m);
+		RemoveChild(node);
+		node.QueueFree();
 	}
 
 	/// <summary>Whether a point (in the stage's space) is within the station's tap area.</summary>

@@ -5,6 +5,6 @@
     <RootNamespace>Voidwalker</RootNamespace>
     <Nullable>enable</Nullable>
     <!-- The browser one-shot, the tools and the art sources are not part of the game build. -->
-    <DefaultItemExcludes>$(DefaultItemExcludes);prototypes/**;tools/**;.claude/**;production/**;docs/**;design/**;assets/art-src/**</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);prototypes/**;tools/**;.claude/**;production/**;docs/**;design/**;assets/art-src/**;tests/**</DefaultItemExcludes>
   </PropertyGroup>
 </Project>

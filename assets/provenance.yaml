@@ -46,3 +46,8 @@
   licence: {id: BSD-2-Clause}
   date: 2026-11-19
   ships: true
+- path: assets/icon.png
+  origin: code
+  tool: "assets/sprites/lobby/void-ball.png enlarged by a whole number (nearest) on the game's background colour"
+  date: 2026-11-19
+  ships: true
