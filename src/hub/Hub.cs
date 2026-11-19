@@ -104,12 +104,12 @@ public partial class Hub : Node2D
 		rite.AddArt(SheetPlayer.Load("res://assets/fx/", "rift", new Vector2(150, 239) - rite.Position), highlight);
 		foreach (var (depth, at) in ring) if (depth >= 0) rite.AddArt(art.Make("standing-stone-lit", at - rite.Position), highlight);
 
-		// the Rift Gate: two stone horns round a swirl tinted by the chosen rift's prevailing nature
+		// the Rift Gate: two stone horns round a rift (a stepped pixelfx portal) painted in the chosen rift's prevailing
+		// nature; its pivot is the portal's floor, 49 px under the rift's centre (205)
 		var gate = AddStation("gate", new Vector2(492, 205), 48);
-		var swirl = new ColorRect { Size = new Vector2(56, 104), Position = new Vector2(492 - 28, 205 - 52) - gate.Position, MouseFilter = Control.MouseFilterEnum.Ignore };
-		_swirl = new ShaderMaterial { Shader = GD.Load<Shader>("res://src/shaders/canvas_env_gate_swirl.gdshader") };
-		_swirl.SetShaderParameter("rect_size", swirl.Size);
-		swirl.Material = _swirl; gate.AddChild(swirl);
+		var rift = SheetPlayer.Load("res://assets/fx/", "gate-rift", new Vector2(492, 254) - gate.Position);
+		_swirl = new ShaderMaterial { Shader = GD.Load<Shader>("res://src/shaders/canvas_env_rift_tint.gdshader") };
+		rift.Material = _swirl; gate.AddChild(rift);
 		gate.AddArt(art.Make("gate-arch", new Vector2(437, 144) - gate.Position), highlight);
 		gate.AddArt(art.Make("gate-arch", new Vector2(548, 144) - gate.Position, flipH: true), highlight);
 

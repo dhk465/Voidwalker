@@ -2,17 +2,20 @@ using System;
 using System.Linq;
 using Godot;
 using Voidwalker.Core;
+using Voidwalker.Hub;
 
 namespace Voidwalker.Ui;
 
 /// <summary>
 /// The Rift Gate: choose one of the rifts offered (its prevailing nature, omen and boon), the depth, and with the
 /// Chosen sigil a first card. Entering the rift explains that the adventure is not ported yet. The rift cards take
-/// the body's width and whatever height the control rows at the bottom leave.
+/// the body's width and whatever height the control rows at the bottom leave; each shows the hub's rift in small,
+/// painted in its nature, when it has the room.
 /// </summary>
 public partial class GateScreen : StationScreen
 {
 	private const int Gap = 8, RowH = 30, Line = Ui.SmallSize;
+	private const int RiftH = 52, RiftPivotY = 53; // assets/fx/gate-rift-small.json: frame height and pivot
 
 	/// <inheritdoc/>
 	protected override string Title => "RIFT GATE";
@@ -25,8 +28,8 @@ public partial class GateScreen : StationScreen
 
 		var rifts = R.Meta.Rifts ?? new();
 		int n = Math.Max(1, rifts.Count), w = (BodyW - (n - 1) * Gap) / n;
-		var swirlShader = GD.Load<Shader>("res://src/shaders/canvas_env_gate_swirl.gdshader");
-		int swirlH = Math.Clamp(cardH - 160, 24, 64);
+		var tintShader = GD.Load<Shader>("res://src/shaders/canvas_env_rift_tint.gdshader");
+		int swirlH = cardH - 160 >= RiftH ? RiftH : 0; // the small rift when the card has room for it
 		for (int i = 0; i < rifts.Count; i++)
 		{
 			var r = rifts[i]; int k = i;
@@ -35,12 +38,14 @@ public partial class GateScreen : StationScreen
 			bool on = R.Meta.RiftPick == i;
 			var card = Ui.Tile(Body, i * (w + Gap), 0, w, cardH, () => { R.PickRift(k); Commit(); }, colour: on ? colour : Pal.Line);
 			card.Fill = on ? Pal.Chosen : Pal.Panel;
-			var swirl = new ColorRect { Position = new Vector2(w / 2 - 20, 6), Size = new Vector2(40, swirlH), MouseFilter = MouseFilterEnum.Ignore };
-			var mat = new ShaderMaterial { Shader = swirlShader };
-			mat.SetShaderParameter("tint", colour);
-			mat.SetShaderParameter("rect_size", swirl.Size);
-			swirl.Material = mat;
-			card.AddChild(swirl);
+			if (swirlH > 0)
+			{
+				var rift = SheetPlayer.Load("res://assets/fx/", "gate-rift-small", new Vector2(w / 2, 6 + RiftPivotY));
+				var mat = new ShaderMaterial { Shader = tintShader };
+				mat.SetShaderParameter("tint", colour);
+				rift.Material = mat;
+				card.AddChild(rift);
+			}
 
 			int y = 6 + swirlH + 4, textW = w - 12;
 			Ui.Text(card, r.Name, 6, y, Pal.Bright, width: textW, align: HorizontalAlignment.Center);
