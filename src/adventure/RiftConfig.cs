@@ -41,6 +41,31 @@ public partial class RiftConfig : Resource
 	[Export] public float XpBase { get; set; } = 12f;
 	/// <summary>See XpBase.</summary>
 	[Export] public float XpStep { get; set; } = 6f;
+	// ---- feel: the tells and motion the screen shows (the rules' own numbers stay in game_data.json) ----
+	/// <summary>Seconds before a spit that a feeder's maw gapes wide: the tell that a glob is coming.</summary>
+	[Export] public float FeederGapeTell { get; set; } = 0.35f;
+	/// <summary>Share of a pod's hatch time after which it shudders and cracks: the tell that a grazer is coming.</summary>
+	[Export] public float PodCrackShare { get; set; } = 0.6f;
+	/// <summary>How fast a grazer's legs run while it turns at the dive line, against its walk (1).</summary>
+	[Export] public float GrazerPaceTurning { get; set; } = 0.5f;
+	/// <summary>How fast a grazer's legs run on the charge, against its walk (1).</summary>
+	[Export] public float GrazerPaceDive { get; set; } = 1.7f;
+	/// <summary>Blinks per second while the blob is safe after a hit.</summary>
+	[Export] public float IframeBlinkRate { get; set; } = 14f;
+	/// <summary>How fast the blob bobs a pixel while it stands still (radians per second of the bob's wave).</summary>
+	[Export] public float BobStill { get; set; } = 3f;
+	/// <summary>How fast the blob bobs while it moves.</summary>
+	[Export] public float BobMoving { get; set; } = 12f;
+	/// <summary>How bright a struck Ybasog or rock flashes (its colour times this, clamped to white).</summary>
+	[Export] public float HitFlash { get; set; } = 2.5f;
+	/// <summary>Seconds a small floating word (damage, a card's name) stays up.</summary>
+	[Export] public float WordTime { get; set; } = 0.9f;
+	/// <summary>Seconds a big floating word (STAGE 1, a level, a discovery) stays up.</summary>
+	[Export] public float BigWordTime { get; set; } = 1.8f;
+	/// <summary>The longest single step of the rules, seconds (a slow frame takes several, so nothing jumps through a target).</summary>
+	[Export] public float MaxStep { get; set; } = 1f / 30f;
+	/// <summary>The most time one frame catches up on, seconds (a stall is not played out in full).</summary>
+	[Export] public float MaxCatchUp { get; set; } = 0.5f;
 	/// <summary>Game pixels of drag for full speed on a touch screen (the floating stick's reach).</summary>
 	[Export] public float StickRadius { get; set; } = 22f;
 	/// <summary>Game pixels of drag ignored, so a resting thumb does not creep.</summary>

@@ -214,9 +214,9 @@ public partial class RiftScene : Node2D
 		if (_run.Outcome == RiftOutcome.None && !_paused)
 		{
 			// in steps of at most 1/30 s, so a slow frame (or a sped-up check) never jumps a bolt through a Ybasog
-			for (double left = Math.Min(delta, 0.5); left > 1e-6 && _run.Outcome == RiftOutcome.None; left -= 1 / 30.0)
+			for (double left = Math.Min(delta, _cfg.MaxCatchUp); left > 1e-6 && _run.Outcome == RiftOutcome.None; left -= _cfg.MaxStep)
 			{
-				_run.Step(Math.Min(left, 1 / 30.0), ReadInput());
+				_run.Step(Math.Min(left, _cfg.MaxStep), ReadInput());
 				foreach (var ev in _run.Events) Show(ev);
 				_run.Events.Clear();
 			}
@@ -265,7 +265,8 @@ public partial class RiftScene : Node2D
 	private void Say(string s, double x, double y, Color c, bool big)
 	{
 		if (_floatN >= _floats.Length) { Array.Copy(_floats, 1, _floats, 0, _floats.Length - 1); _floatN--; }
-		_floats[_floatN++] = new Floater { X = (float)x, Y = (float)y, S = s, C = c, Big = big, Life = big ? 1.8f : 0.9f, Max = big ? 1.8f : 0.9f };
+		float life = big ? _cfg.BigWordTime : _cfg.WordTime;
+		_floats[_floatN++] = new Floater { X = (float)x, Y = (float)y, S = s, C = c, Big = big, Life = life, Max = life };
 	}
 
 	// Starts a baked one-shot (pixelfx, via tools/art/bake_rift_fx.py) at a rift position.
@@ -332,7 +333,7 @@ public partial class RiftScene : Node2D
 		if (_run.Outcome != RiftOutcome.None) DrawEnd();
 	}
 
-	private static readonly Color FlashWhite = new(2.5f, 2.5f, 2.5f);
+	private Color FlashWhite => new(_cfg.HitFlash, _cfg.HitFlash, _cfg.HitFlash);
 
 	// Falling matter: a rock picks the frame of its turn; a slab's dead lights flicker.
 	private void DrawMatter(RiftMatter m)
@@ -355,19 +356,19 @@ public partial class RiftScene : Node2D
 			{
 				const int Dirs = 16; // the sheet's rows: heading d (row d * 2), then the same with red dive eyes (+1)
 				int dir = Mathf.PosMod((int)Math.Round((e.Heading - Math.PI / 2) / (Math.Tau / Dirs)), Dirs); // dir 0 faces down the rift
-				double pace = e.Turning ? 0.5 : e.Dive ? 1.7 : 1; // legs scrabble on the turn, race on the charge
+				double pace = e.Turning ? _cfg.GrazerPaceTurning : e.Dive ? _cfg.GrazerPaceDive : 1; // legs scrabble on the turn, race on the charge
 				_sheets.DrawRow(this, "grazer", dir * 2 + (e.Dive ? 1 : 0), _t * pace + e.Ph, at, tint);
 				break;
 			}
 			case "feeder":
 			{
-				bool gape = e.T1 < 0.35 && e.Y > 20; // the maw opens wide just before it spits
+				bool gape = e.T1 < _cfg.FeederGapeTell && e.Y > 20; // the maw opens wide just before it spits (the rules spit from y 20)
 				_sheets.DrawRow(this, "feeder", gape ? 1 : 0, _t + e.Ph, at, tint);
 				break;
 			}
 			default: // a pod: pixelfx's breathing egg sac, then the cracking one as it nears hatching
 			{
-				bool cracking = e.Age > _data.Tune("pod_hatch") * 0.6;
+				bool cracking = e.Age > _data.Tune("pod_hatch") * _cfg.PodCrackShare;
 				_sheets.DrawAt(this, cracking ? "pod-crack" : "pod", _t + e.Ph, at, tint);
 				break;
 			}
@@ -431,9 +432,9 @@ public partial class RiftScene : Node2D
 	private void DrawPlayer()
 	{
 		var p = _run.Player;
-		if (p.Iframe > 0 && (int)(_t * 14) % 2 == 0) return; // blinking while safe after a hit
+		if (p.Iframe > 0 && (int)(_t * _cfg.IframeBlinkRate) % 2 == 0) return; // blinking while safe after a hit
 		var tex = _art.Texture(_formSprite); var anchor = (Vector2)_art.Anchor(_formSprite);
-		float bob = p.Still ? (Math.Sin(_t * 3) > 0 ? -1 : 0) : (Math.Sin(_t * 12) > 0 ? -1 : 0); // breathing, or bounding as it moves
+		float bob = Math.Sin(_t * (p.Still ? _cfg.BobStill : _cfg.BobMoving)) > 0 ? -1 : 0; // breathing, or bounding as it moves
 		var pos = ToScreen(p.X, p.Y) - anchor + new Vector2(0, bob);
 		DrawTexture(tex, pos); // never flipped: the form keeps its drawn facing whichever way it moves
 		if (_touch && _run.AimAtNearest() == null) return;
