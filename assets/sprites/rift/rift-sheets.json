@@ -1,0 +1,297 @@
+{
+ "schema": "voidwalker.rift_sheets.v1",
+ "art_source": "code",
+ "disclosure": "code-drawn, no image model",
+ "made_by": "tools/art/gen_rift.py",
+ "scale": 0.5,
+ "sheets": {
+  "pod": {
+   "file": "pod.png",
+   "frame": [
+    18,
+    24
+   ],
+   "cols": 12,
+   "rows": 6,
+   "frames": 72,
+   "fps": 30,
+   "loop": true,
+   "anchor": [
+    9,
+    11
+   ],
+   "variants": 1,
+   "source": "tools/art/fx/critters/ybasog-pod.js rendered by pixelfx 0.3.1 (MIT), snapped to the game palette by tools/art/bake_rift_fx.py"
+  },
+  "grazer": {
+   "file": "grazer.png",
+   "frame": [
+    30,
+    30
+   ],
+   "cols": 12,
+   "rows": 32,
+   "frames": 12,
+   "fps": 24,
+   "loop": true,
+   "anchor": [
+    15,
+    15
+   ],
+   "variants": 32,
+   "source": "tools/art/fx/critters/grazer.js rendered by pixelfx 0.3.1 (MIT), snapped to the game palette by tools/art/bake_rift_fx.py"
+  },
+  "feeder": {
+   "file": "feeder.png",
+   "frame": [
+    30,
+    36
+   ],
+   "cols": 38,
+   "rows": 2,
+   "frames": 38,
+   "fps": 24,
+   "loop": true,
+   "anchor": [
+    15,
+    24
+   ],
+   "variants": 2,
+   "source": "tools/art/fx/critters/feeder.js rendered by pixelfx 0.3.1 (MIT), snapped to the game palette by tools/art/bake_rift_fx.py"
+  },
+  "rock-0": {
+   "file": "rock-0.png",
+   "frame": [
+    28,
+    28
+   ],
+   "cols": 12,
+   "rows": 4,
+   "frames": 12,
+   "fps": 10,
+   "loop": true,
+   "anchor": [
+    14,
+    14
+   ],
+   "variants": 4,
+   "source": "tools/art/fx/nature/asteroid.js rendered by pixelfx 0.3.1 (MIT), snapped to the game palette by tools/art/bake_rift_fx.py"
+  },
+  "rock-1": {
+   "file": "rock-1.png",
+   "frame": [
+    26,
+    26
+   ],
+   "cols": 12,
+   "rows": 4,
+   "frames": 12,
+   "fps": 10,
+   "loop": true,
+   "anchor": [
+    13,
+    13
+   ],
+   "variants": 4,
+   "source": "tools/art/fx/nature/asteroid.js rendered by pixelfx 0.3.1 (MIT), snapped to the game palette by tools/art/bake_rift_fx.py"
+  },
+  "rock-2": {
+   "file": "rock-2.png",
+   "frame": [
+    26,
+    26
+   ],
+   "cols": 12,
+   "rows": 4,
+   "frames": 12,
+   "fps": 10,
+   "loop": true,
+   "anchor": [
+    13,
+    13
+   ],
+   "variants": 4,
+   "source": "tools/art/fx/nature/asteroid.js rendered by pixelfx 0.3.1 (MIT), snapped to the game palette by tools/art/bake_rift_fx.py"
+  },
+  "slab": {
+   "file": "slab.png",
+   "frame": [
+    84,
+    17
+   ],
+   "cols": 12,
+   "rows": 2,
+   "frames": 24,
+   "fps": 12,
+   "loop": true,
+   "anchor": [
+    45,
+    9
+   ],
+   "variants": 1,
+   "source": "tools/art/fx/scifi/debris-slab.js rendered by pixelfx 0.3.1 (MIT), snapped to the game palette by tools/art/bake_rift_fx.py"
+  },
+  "pod-crack": {
+   "file": "pod-crack.png",
+   "frame": [
+    20,
+    24
+   ],
+   "cols": 12,
+   "rows": 6,
+   "frames": 72,
+   "fps": 30,
+   "loop": true,
+   "anchor": [
+    10,
+    11
+   ],
+   "variants": 1,
+   "source": "tools/art/fx/critters/ybasog-pod.js rendered by pixelfx 0.3.1 (MIT), snapped to the game palette by tools/art/bake_rift_fx.py"
+  },
+  "pod-burst": {
+   "file": "pod-burst.png",
+   "frame": [
+    42,
+    76
+   ],
+   "cols": 12,
+   "rows": 3,
+   "frames": 31,
+   "fps": 30,
+   "loop": false,
+   "anchor": [
+    28,
+    19
+   ],
+   "variants": 1,
+   "source": "tools/art/fx/spawn/pod-burst.js rendered by pixelfx 0.3.1 (MIT), snapped to the game palette by tools/art/bake_rift_fx.py"
+  },
+  "rock-break": {
+   "file": "rock-break.png",
+   "frame": [
+    47,
+    75
+   ],
+   "cols": 12,
+   "rows": 3,
+   "frames": 28,
+   "fps": 30,
+   "loop": false,
+   "anchor": [
+    26,
+    20
+   ],
+   "variants": 1,
+   "source": "tools/art/fx/nature/rock-break.js rendered by pixelfx 0.3.1 (MIT), snapped to the game palette by tools/art/bake_rift_fx.py"
+  },
+  "slab-break": {
+   "file": "slab-break.png",
+   "frame": [
+    53,
+    67
+   ],
+   "cols": 12,
+   "rows": 3,
+   "frames": 28,
+   "fps": 30,
+   "loop": false,
+   "anchor": [
+    20,
+    22
+   ],
+   "variants": 1,
+   "source": "tools/art/fx/nature/rock-break.js rendered by pixelfx 0.3.1 (MIT), snapped to the game palette by tools/art/bake_rift_fx.py"
+  },
+  "bolt": {
+   "file": "bolt.png",
+   "frame": [
+    31,
+    31
+   ],
+   "cols": 4,
+   "rows": 32,
+   "frames": 4,
+   "fps": 10,
+   "loop": true,
+   "anchor": [
+    15,
+    15
+   ],
+   "variants": 32,
+   "source": "tools/art/fx/projectiles/void-bolt.js rendered by pixelfx 0.3.1 (MIT), kept to its grey steps by tools/art/bake_rift_fx.py"
+  },
+  "glob": {
+   "file": "glob.png",
+   "frame": [
+    24,
+    24
+   ],
+   "cols": 4,
+   "rows": 8,
+   "frames": 4,
+   "fps": 10,
+   "loop": true,
+   "anchor": [
+    12,
+    12
+   ],
+   "variants": 8,
+   "source": "tools/art/fx/projectiles/bile-glob.js rendered by pixelfx 0.3.1 (MIT), snapped to the game palette by tools/art/bake_rift_fx.py"
+  },
+  "hit-spark": {
+   "file": "hit-spark.png",
+   "frame": [
+    117,
+    80
+   ],
+   "cols": 16,
+   "rows": 8,
+   "frames": 16,
+   "fps": 30,
+   "loop": false,
+   "anchor": [
+    44,
+    64
+   ],
+   "variants": 8,
+   "source": "pixelfx impacts/hit-spark rendered by pixelfx 0.3.1 (MIT), snapped to the game palette by tools/art/bake_rift_fx.py"
+  },
+  "glob-splash": {
+   "file": "glob-splash.png",
+   "frame": [
+    131,
+    80
+   ],
+   "cols": 16,
+   "rows": 8,
+   "frames": 16,
+   "fps": 30,
+   "loop": false,
+   "anchor": [
+    44,
+    64
+   ],
+   "variants": 8,
+   "source": "pixelfx impacts/hit-spark rendered by pixelfx 0.3.1 (MIT), snapped to the game palette by tools/art/bake_rift_fx.py"
+  },
+  "scrap": {
+   "file": "scrap.png",
+   "frame": [
+    8,
+    8
+   ],
+   "cols": 12,
+   "rows": 1,
+   "frames": 10,
+   "fps": 12,
+   "loop": true,
+   "anchor": [
+    4,
+    4
+   ],
+   "variants": 1,
+   "source": "tools/art/fx/pickups/scrap-bit.js rendered by pixelfx 0.3.1 (MIT), snapped to the game palette by tools/art/bake_rift_fx.py"
+  }
+ }
+}

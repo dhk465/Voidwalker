@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="RiftConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/adventure/RiftConfig.cs" id="1"]
+
+[resource]
+script = ExtResource("1")
+Ybasogs = PackedStringArray("pod", "grazer", "feeder")
+Matter = PackedStringArray("asteroid", "slab")
+Stages = 1
+GrazerTurnTime = 0.35
+GrazerTurnRate = 9.0
+AsteroidVoidOnly = 0.5
+AsteroidBoth = 0.2
+ScrapPerAsteroid = 2
+ScrapPerWreck = 3
+ScrapPerRuin = 2
+PriceStep = 0.5
+RetrieveBase = 8
+RetrieveStep = 4
+XpBase = 12.0
+XpStep = 6.0
+StickRadius = 22.0
+StickDeadzone = 3.0
+FlashTime = 0.08
+NextShown = 5

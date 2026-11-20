@@ -1,0 +1,54 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-bee",
+ "canvas": [
+  20,
+  20
+ ],
+ "anchor_px": [
+  10,
+  10
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "R": "#423e79",
+  "S": "#7d8bff",
+  "T": "#cbd1ff",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "20.",
+    "20.",
+    "20.",
+    "20.",
+    "9.2T9.",
+    "8.T2RT8.",
+    "3.3T.TSTKST.3T3.",
+    "3.TKST2S2K2STSKS3.",
+    "3.T3K2S2K2S3KS3.",
+    "3.T5S2K6S3.",
+    "6.2T6S6.",
+    "7.T4KS7.",
+    "7.T5S7.",
+    "7.TS2K2S7.",
+    "8.T2KS8.",
+    "8.T3S8.",
+    "9.TS9.",
+    "20.",
+    "20.",
+    "20."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

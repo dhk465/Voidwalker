@@ -90,6 +90,18 @@ Between stages: 2 rites to **merge** two of this adventure's cards (a new fusion
 - Every other wave opens with a debut of kinds not yet met, then beats (formations, swarms, rockfalls, wreck fields, ruin walls, elite pairs, lulls); see the Bestiary.
 - Each wave rolls a nature tide: a void tide, a mixed tide or a nature surge.
 
+### In the Godot port (core loop migrated 2026-11-19)
+
+The Gate's ENTER THE RIFT now opens the adventure in Godot. The rules (`src/core/RiftRun.cs`) run in the browser's own 1280×720 units with the browser's tuning, and the screen scales the rift to fit, so the numbers above hold. Stage 1 plays from start to finish:
+
+- **Ported:** the deck as the magazine (one void card, plus Inborn and Chosen), ricocheting bolts, energy and wards, form traits, sigil and relic bonuses, void motes, pods that hatch grazers, diving grazers, feeders spitting globs, asteroids and debris slabs, the hand-made first minute, and waves 2 and 3 built from debuts and beats. Omens and depth change life, void energy, pods and rocks. Discoveries are counted while you play.
+- **Controls:** on a phone, drag anywhere to move (a floating stick under the thumb) while the deck fires on its own at the nearest Ybasog. On a PC, WASD or the arrows move, the mouse aims, the left button fires and Q toggles auto-fire. Escape, P or Space pauses (on a phone, the button at the top right), and the pause screen can leave the rift, which counts as a fall.
+- **The end:** a fall keeps 60% of the void energy, as in the browser. Clearing stage 1 ends the adventure as **STAGE CLEARED**: everything gathered is banked, but it doesn't count as a win, because the way deeper isn't ported yet. A tap returns to the Rift Altar.
+- **Scrap and levels (new in the port, 2026-11-20):** kills give experience (a Ybasog's void value; a broken rock or slab 1); level 1 needs 12, each level after 6 more (guessed). A level-up, like clearing wave 1 or 2, opens **the pick**: the rift holds still; take one of up to three cards from your pool (sometimes a temper, +1 to a deck card) or skip; and spend scrap: Fire+10% (6), Dmg+10% (6), Bounce+1 (10), Reach+40 (4), Speed+6% (5), Heal+5 (4), Ward+1 (8), each half again dearer per one bought; or buy a card back from the pool (8, then +4 each). Asteroids: 50% void only, 30% scrap only, 20% both, 2 scrap each; slabs 3 scrap and no void (all guessed; `src/data/rift_config.tres`). The HUD shows the energy bar without a number, a thin experience bar under it and the level, void energy and scrap.
+- **Not yet ported:** nature effects on bolts, card drops, natured Ybasogs and tides, the other Ybasog and matter kinds, mini-bosses and bosses, stages 2 and 3, the Rift Rest, relics and logs found in play, sound and the score.
+- **Drawn and moving:** every figure and effect is made with pixelfx (`tools/art/fx/`, baked to sheets in the game palette by `tools/art/bake_rift_fx.py`). The pod breathes on a heartbeat with a grazer curled inside, cracks along seams of bile light before it hatches, and bursts in torn membrane and bile (as every Ybasog does when killed). A grazer faces where it goes, from 16 headings, walking on a tripod gait; at the dive line it **stops and turns to face the blob, then charges straight ahead**, its eyes red. The browser charges at once; the turn is the port's change. A feeder's tendrils sway and its maw gapes, bile welling in its throat, before it spits. Asteroids tumble through a full turn and show what they carry (violet void crystal, hull scrap); slabs are torn hull with stuttering lights and spitting sparks; both break apart in chunks. Bolts are the browser's diamond in each card's colour; globs are wobbling drops of bile; hits throw pixelfx's hit spark along the blow. Void energy drops as the hub's void ball. The blob bobs but never flips.
+- **Projectiles:** bolts are the browser's diamond pointing where they fly, with a white heart and a trail in the card's colour (one ring per nature on a fused card), drawn half again bigger to read on a phone. Globs are round drops of bile, and motes are turning four-pointed stars.
+
 ## 4. The Rift Altar
 
 *Source: Godot port (migrated 2026-11-19). The browser build's Altar has the same rules; its differences are listed at the end of this section.*
@@ -220,6 +232,8 @@ The browser Altar keeps the same stations and rules, drawn at 1280×720: void fl
 | **Codex Keeper** | Record 12 fusions | 250 void |
 
 ## 5. The economy
+
+**Two currencies.** Void energy lasts: it is banked after every adventure and spent on sigils and the Void Rite. **Scrap** (Godot port) is for one adventure only: it drops from debris (scrap only), ruins (scrap and void) and asteroids (void, scrap or both: void crystal or hull metal shows in the rock), buys run-only boosts or a card back from the pool at the pick, and is lost when the adventure ends.
 
 | Source or sink | Void energy |
 |---|---|
@@ -791,8 +805,30 @@ All 131 values the game reads live, from `prototypes/voidwalker/config.js`.
 | 2026-11-19 | Forms, relics, phone scaling (`4f71af7`, `00703ce`, `87f074a`) | The blob's 15 forms drawn and shown on the altar and the Pool screen; relics over the pedestals; bigger pixels and fonts on phones. Checked on the phone. |
 | 2026-11-19 | Gate rift, Rite crack (`784e8a8`, `e1c4803`) | The Gate's rift and the Rite's crack in space-time as pixelfx effects. |
 | 2026-11-19 | Lobby islands (`20b1e1b`) | Each station on its own island, faceted rock, depth redraws, void balls drifting from the crack to the rift, tap to dodge or burst. Checked in desktop Godot. |
+| 2026-11-20 | Pixel art through pixelfx; scrap and adventure levels (Godot) | Every rift figure and effect redone with pixelfx; scrap, levels and the pick with its scrap shop. 70 tests; a full autoplayed stage with picks and purchases cleared. |
+| 2026-11-19 | The adventure's core loop (Godot) | The Gate enters the rift: the deck as the magazine, ricocheting bolts, pods, grazers, feeders, asteroids and slabs, stage 1 to STAGE CLEARED and the banking. Drag to move with auto-aim on phones. New pixel sprites. 57 tests; two autoplayed stages cleared in desktop Godot. |
 
 ### Changelog
+
+#### The Godot port: scrap and adventure levels (2026-11-20)
+
+Your words: *"One thing to add is another currency \"scrap\" from ruins/debris and asteroids. The asteroids can have either/both void energy or/and scrap. Scrap is used for adventure temporary upgrades. Void energy mostly for permanent upgrades and rite summons."* Your choices: spend it between waves and on level-ups (the level per adventure you asked for earlier: *"after lvl up, the card upgrade popup should be shown just like when the substages are cleared"*); it buys run-only boosts and cards back from your pool; leftover scrap is lost. And: *"Remove the energy (hp) number. Player does not need to see the number, only the bar."*
+
+- **Added** scrap: from debris, ruins and asteroids (which show what they carry), flown to the blob like void energy, counted in the HUD, lost at the end.
+- **Added** adventure levels with experience from kills and matter; a level-up opens the pick.
+- **Added** the pick (ported from the browser's wave pick) after waves 1 and 2 and on every level-up, with the scrap shop: seven run-only boosts with rising prices, and buying back a card from the pool.
+- **Changed** the HUD: the energy bar without its number; level and experience; scrap.
+- **Changed** all rift art to pixelfx (your rule: pixel art through pixelfx and agent-sprite-forge first): pod, grazer, feeder, asteroids, slab, bolts, globs, scrap, hit sparks, bursts and breaks.
+
+#### The Godot port: the adventure's core loop
+
+Your words: *"port the adventure"*. Your choices: the core loop first, drag to move with auto-aim on phones, and new pixel sprites.
+
+- **Added** `RiftRun`, the adventure's rules in plain C#. It follows the browser's code in its own units and with its tuning: the deck as the magazine, ricochets, energy and wards, motes, pods, grazers, feeders, asteroids, debris slabs, the hand-made first minute and stage 1's waves, with omens, depth, form traits, sigils, relics and discoveries.
+- **Added** the rift scene: the field scaled to the screen in whole pixels, a floating stick and auto-aim on touch, WASD and mouse on PC, a HUD (energy, void, wave pips, the next bolts), pause, and an end screen that banks the void energy and returns to the Altar.
+- **Added** code-drawn sprite sheets: the grazer in 16 headings walking, the pod pulsing and cracking, the feeder swaying and gaping, three rocks spinning, the slab flickering, and the 15 blob forms at the rift's size.
+- **Changed** after your review (*"Grazers do not face the player character before walking forward. The projectiles are too small. The ybasog sprites are smudged."*): sprites redrawn cel-shaded with no dither; a grazer now stops at the dive line, turns to face you, then charges; bolts, globs and motes are bigger and shaped like the browser's.
+- **Changed** the Gate: ENTER THE RIFT now enters. Clearing stage 1 ends the adventure as STAGE CLEARED, banking everything without a win, until stages 2 and 3 are ported.
 
 #### The Godot port: the Rift Altar hub (`08cd289` to `20b1e1b`)
 
@@ -958,11 +994,15 @@ The game moves from the browser build to Godot 4.8 beta 4 .NET (C#), mobile-firs
 | The Rift Altar hub and its six stations (section 4) | Godot port | 2026-11-19 |
 | The save (section 15) | Godot port (its own save) | 2026-11-19 |
 | The blob's 15 forms, as hub and Pool sprites (section 7) | Godot port (sprites); traits still apply only in the browser adventure | 2026-11-19 |
-| The adventure: the rift, bolts and the deck (section 3) | Browser build | not yet |
-| Ybasogs and falling matter (sections 12, 13) | Browser build | not yet |
-| Stages, waves, tides and omens in play (sections 11, 14) | Browser build | not yet |
+| The adventure's core loop: the rift, the deck as the magazine, bolts, energy, motes, stage 1 (section 3) | Godot port (`src/core/RiftRun.cs`) | 2026-11-19 |
+| The pick after a wave (and, new in the port, after an adventure level-up), with the scrap shop (sections 3, 5) | Godot port | 2026-11-20 |
+| Card drops from kills and matter, nature effects on bolts (section 3) | Browser build | not yet |
+| Pods, grazers, feeders, asteroids and debris slabs (sections 12, 13) | Godot port (new pixel sprites) | 2026-11-19 |
+| The other 55 Ybasog kinds, natured Ybasogs, and the other matter (sections 12, 13) | Browser build | not yet |
+| Stage 1's waves; omens and depth on life, void energy, pods and rocks (sections 11, 14) | Godot port | 2026-11-19 |
+| Stages 2 and 3, nature tides, bosses (sections 11, 14) | Browser build | not yet |
 | The Rift Rest (section 3) | Browser build | not yet |
-| Discoveries counted in play (section 10) | Browser build (the port shows progress) | not yet |
+| Discoveries counted in play (section 10) | Godot port | 2026-11-19 |
 | Sound and score | Browser build | not yet |
 
 ## 19. Known gaps and next steps
@@ -988,7 +1028,8 @@ The game moves from the browser build to Godot 4.8 beta 4 .NET (C#), mobile-firs
 
 - The serpent and swan forms show no eyes at the hub's size.
 - About 400 colours on screen; no global palette snap yet.
-- The lobby islands are checked in desktop Godot only, not yet on the phone.
+- The lobby islands and the rift are checked in desktop Godot only, not yet on the phone. The touch stick and auto-aim have only run through autoplay.
+- The rift has no sound, card drops, nature effects, or kinds beyond pods, grazers, feeders, asteroids and slabs.
 
 **Next:** play several adventures, then say what to change.
 

@@ -1,0 +1,53 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-lion",
+ "canvas": [
+  20,
+  20
+ ],
+ "anchor_px": [
+  10,
+  10
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "S": "#fff0b0",
+  "T": "#fff9df",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "20.",
+    "20.",
+    "9.2T9.",
+    "6.3T2S3T6.",
+    "6.T6KS6.",
+    "6.TKT2KTKS6.",
+    "5.TSKT2KTKST5.",
+    "5.TS6K2S5.",
+    "6.T6KS6.",
+    "6.T6KS6.",
+    "6.T7S6.",
+    "6.TSK2SK2S6.",
+    "6.TS4K3S5.",
+    "6.TS4K2S3T3.",
+    "6.TS4K4S4.",
+    "7.T3K4S5.",
+    "7.T7S5.",
+    "20.",
+    "20.",
+    "20."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

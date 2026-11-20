@@ -81,6 +81,17 @@ elsewhere in the repo, so they are restated here rather than lost:
   that scores or judges will eventually contradict a mode or override it cannot
   see. (Cited by `artifact-check.sh` and `adr-dep-graph.sh`.)
 
+## Pixel art tools (standing rule from the user, 2026-11-20)
+
+All pixel art for the game goes through the two toolkits the user provided, before
+any other tool: **pixelfx** (`tools/pixelfx`, the `pixelfx` skill) and
+**agent-sprite-forge** (`tools/agent-sprite-forge`, whose skills are
+`generate2dsprite`, `generate2dmap`, `video2dsprite`, `generate2dmedia` and `codeart2d`).
+- Hand-written generators and art drawn straight from engine code don't count.
+- Follow each skill's own workflow: its capability check, route order, QC and
+  review sheets.
+- When a piece was made without these tools, redo it with them.
+
 ## Voidwalker Codex (standing rule from the user, 2026-11-19)
 
 The Voidwalker Codex is the game's reference page, built by `tools/codex/genpage.js`

@@ -1,0 +1,189 @@
+{
+ "schema": "voidwalker.lobby_sprites.v2",
+ "art_source": "code",
+ "disclosure": "code-drawn, no image model",
+ "made_by": "tools/art/gen_lobby.py --scale 0.5 -> codeart2d render_pixelspec.py --strict-qc -> tools/art/pack_lobby.py",
+ "pad": 3,
+ "sprites": {
+  "form-bee": {
+   "file": "form-bee.png",
+   "size": [
+    26,
+    26
+   ],
+   "anchor": [
+    13,
+    13
+   ],
+   "qa": "pass"
+  },
+  "form-bird": {
+   "file": "form-bird.png",
+   "size": [
+    26,
+    26
+   ],
+   "anchor": [
+    13,
+    13
+   ],
+   "qa": "pass"
+  },
+  "form-blob": {
+   "file": "form-blob.png",
+   "size": [
+    26,
+    26
+   ],
+   "anchor": [
+    13,
+    13
+   ],
+   "qa": "pass"
+  },
+  "form-dragon": {
+   "file": "form-dragon.png",
+   "size": [
+    26,
+    26
+   ],
+   "anchor": [
+    13,
+    13
+   ],
+   "qa": "pass"
+  },
+  "form-humanoid": {
+   "file": "form-humanoid.png",
+   "size": [
+    26,
+    26
+   ],
+   "anchor": [
+    13,
+    13
+   ],
+   "qa": "pass"
+  },
+  "form-lion": {
+   "file": "form-lion.png",
+   "size": [
+    26,
+    26
+   ],
+   "anchor": [
+    13,
+    13
+   ],
+   "qa": "pass"
+  },
+  "form-manta": {
+   "file": "form-manta.png",
+   "size": [
+    26,
+    26
+   ],
+   "anchor": [
+    13,
+    13
+   ],
+   "qa": "pass"
+  },
+  "form-moth": {
+   "file": "form-moth.png",
+   "size": [
+    26,
+    26
+   ],
+   "anchor": [
+    13,
+    13
+   ],
+   "qa": "pass"
+  },
+  "form-rat": {
+   "file": "form-rat.png",
+   "size": [
+    26,
+    26
+   ],
+   "anchor": [
+    13,
+    13
+   ],
+   "qa": "pass"
+  },
+  "form-serpent": {
+   "file": "form-serpent.png",
+   "size": [
+    26,
+    26
+   ],
+   "anchor": [
+    13,
+    13
+   ],
+   "qa": "pass"
+  },
+  "form-snail": {
+   "file": "form-snail.png",
+   "size": [
+    26,
+    26
+   ],
+   "anchor": [
+    13,
+    13
+   ],
+   "qa": "pass"
+  },
+  "form-stag": {
+   "file": "form-stag.png",
+   "size": [
+    26,
+    26
+   ],
+   "anchor": [
+    13,
+    13
+   ],
+   "qa": "pass"
+  },
+  "form-swan": {
+   "file": "form-swan.png",
+   "size": [
+    26,
+    26
+   ],
+   "anchor": [
+    13,
+    13
+   ],
+   "qa": "pass"
+  },
+  "form-toad": {
+   "file": "form-toad.png",
+   "size": [
+    26,
+    26
+   ],
+   "anchor": [
+    13,
+    13
+   ],
+   "qa": "pass"
+  },
+  "form-tortoise": {
+   "file": "form-tortoise.png",
+   "size": [
+    26,
+    26
+   ],
+   "anchor": [
+    13,
+    13
+   ],
+   "qa": "pass"
+  }
+ }
+}

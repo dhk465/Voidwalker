@@ -78,7 +78,16 @@ public partial class GateScreen : StationScreen
 		Ui.Tile(Body, 108, ctrlY, 30, RowH, () => { R.StepDepth(1); Commit(); }, "+", Pal.Void, R.Meta.Depth < R.Meta.MaxDepth, big: true);
 		if (R.Meta.Depth > 0) { var (life, v) = R.DepthBonus(); Ui.Text(Body, $"+{life}% LIFE +{v}% VOID", 146, ctrlY + 7, Pal.Mid); }
 		bool ready = R.DeckCount() >= R.DeckMin();
-		Ui.Tile(Body, BodyW - 200, ctrlY, 200, RowH, () => Say(R.BeginAdventure(), Pal.Gold), "ENTER THE RIFT", Pal.Mint, ready, big: true);
+		Ui.Tile(Body, BodyW - 200, ctrlY, 200, RowH, Enter, "ENTER THE RIFT", Pal.Mint, ready, big: true);
 		if (!ready) Say($"THE POOL NEEDS {R.DeckMin()}", Pal.Warn);
+	}
+
+	// Into the rift: the save is written first, then the adventure's scene takes over from the hub.
+	private void Enter()
+	{
+		string why = R.BeginAdventure();
+		if (why != "") { Say(why, Pal.Gold); return; }
+		S.Save();
+		GetTree().ChangeSceneToFile(Voidwalker.Adventure.RiftScene.ScenePath);
 	}
 }

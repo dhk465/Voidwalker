@@ -1,0 +1,54 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-toad",
+ "canvas": [
+  20,
+  20
+ ],
+ "anchor_px": [
+  10,
+  10
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "R": "#763d24",
+  "S": "#ff8a2a",
+  "T": "#ffd0aa",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "20.",
+    "20.",
+    "20.",
+    "7.2T2.2T7.",
+    "6.TKS2TSKT6.",
+    "6.TKT2STKS6.",
+    "5.TSKT2KTKST5.",
+    "5.T8KS5.",
+    "4.TS8KST4.",
+    "4.TS8K2S4.",
+    "2.T.TS8K2S.T2.",
+    "2.2T2S8K2STS2.",
+    "3.T12KS3.",
+    "3.T2SR6KR3S3.",
+    "6.TS4K2S6.",
+    "7.T5S7.",
+    "20.",
+    "20.",
+    "20.",
+    "20."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

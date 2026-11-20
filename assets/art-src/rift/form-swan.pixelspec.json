@@ -1,0 +1,54 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-swan",
+ "canvas": [
+  20,
+  20
+ ],
+ "anchor_px": [
+  10,
+  10
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "R": "#766c79",
+  "S": "#ffffff",
+  "T": "#ffffff",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "20.",
+    "11.T8.",
+    "9.2TS8.",
+    "8.2TS9.",
+    "7.T2S10.",
+    "7.TKS10.",
+    "7.T2S5.T4.",
+    "8.TST3.TS4.",
+    "8.TKS3T2S4.",
+    "7.TS6KS4.",
+    "6.TS7KS4.",
+    "6.T7KRS4.",
+    "6.T7KS5.",
+    "6.T6K2S5.",
+    "6.TS4K2S6.",
+    "7.T5S7.",
+    "9.TS9.",
+    "20.",
+    "20.",
+    "20."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

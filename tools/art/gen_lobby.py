@@ -6,7 +6,8 @@
 # Shapes are written in layout units (the browser hub's 1280x720 space) and sampled at --scale, so the same design
 # renders for the browser build (--scale 1) or for the Godot build's 640x360 screen (--scale 0.5): re-shaded at the
 # target size, never shrunk. Hand-placed details have a small version where the full one would not fit.
-# Run: python tools/art/gen_lobby.py <out-dir> [--scale 0.5]
+# Run: python tools/art/gen_lobby.py <out-dir> [--scale 0.5] [--set lobby|forms]
+# The blob's forms at the rift's size: --set forms --scale 0.25 into assets/art-src/rift (the rift's Ybasogs and rocks are tools/art/gen_rift.py)
 # Godot build: python tools/art/gen_lobby.py assets/art-src/lobby --scale 0.5 (the browser prototype keeps its own copy at scale 1)
 import json, math, os, sys
 import numpy as np
@@ -759,6 +760,11 @@ def gate_arch():
         put(img, boss, (60 if not mirror else 32), 13, center=True)
         spec(name, img, [0, 0])
 
-for f in (altar, lectern, standing_stone, gate_arch, sigil_star, pedestal, tome, asteroids, void_icon, card_back, void_ball, blob, forms, puffs, rite_isle, gate_dais, sigil_disc, journal_rock, relic_slab):
+SET = sys.argv[sys.argv.index("--set") + 1] if "--set" in sys.argv else "lobby"
+SETS = {
+    "lobby": (altar, lectern, standing_stone, gate_arch, sigil_star, pedestal, tome, asteroids, void_icon, card_back, void_ball, blob, forms, puffs, rite_isle, gate_dais, sigil_disc, journal_rock, relic_slab),
+    "forms": (forms,),  # the blob's forms at the rift's size: ... assets/art-src/rift --scale 0.25 --set forms
+}
+for f in SETS[SET]:
     f()
-print("ok", OUT, "scale", S)
+print("ok", OUT, "scale", S, "set", SET)

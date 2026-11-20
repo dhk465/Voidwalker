@@ -1,0 +1,53 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-bird",
+ "canvas": [
+  20,
+  20
+ ],
+ "anchor_px": [
+  10,
+  10
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "S": "#c8ffe8",
+  "T": "#e9fff6",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "20.",
+    "20.",
+    "20.",
+    "9.2T9.",
+    "9.TS9.",
+    "8.T2ST8.",
+    "5.3TS2KS3T5.",
+    "3.2TS2KT2KT2KS2T3.",
+    ".2TS4KT2KT4KS2T.",
+    ".T3S10K4S.",
+    "4.T3S4K4S4.",
+    "6.2T4K2S6.",
+    "7.T4KS7.",
+    "7.T5S7.",
+    "7.T.TS.T7.",
+    "8.2T2S8.",
+    "20.",
+    "20.",
+    "20.",
+    "20."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

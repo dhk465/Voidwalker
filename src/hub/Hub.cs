@@ -259,7 +259,8 @@ public partial class Hub : Node2D
 		return label;
 	}
 
-	private static ShaderMaterial SkyMaterial(HubConfig cfg)
+	/// <summary>The deep-space sky in exact palette colours, also behind the rift.</summary>
+	internal static ShaderMaterial SkyMaterial(HubConfig cfg)
 	{
 		var m = new ShaderMaterial { Shader = GD.Load<Shader>("res://src/shaders/canvas_env_deep_space.gdshader") };
 		m.SetShaderParameter("violet", new[] { new Color("#07040d"), new Color("#0e0a18"), new Color("#1a1229"), new Color("#2a1636"), new Color("#3a1746"), new Color("#4a3a7a") });

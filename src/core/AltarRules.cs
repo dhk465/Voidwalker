@@ -297,6 +297,50 @@ public sealed class AltarRules
 		Meta.Chosen = l[((i < 0 ? 0 : i) + d + l.Count) % l.Count].Sk;
 	}
 
-	/// <summary>What entering the rift would do; the adventure is not ported yet, so it always explains why not.</summary>
-	public string BeginAdventure() => DeckCount() < DeckMin() ? $"THE POOL NEEDS {DeckMin()}" : "THE RIFT IS NOT PORTED YET";
+	/// <summary>Whether the rift can be entered: "" when it can, else why not (the browser's words).</summary>
+	public string BeginAdventure() => DeckCount() < DeckMin() ? $"THE POOL NEEDS {DeckMin()}" : "";
+
+	// ---- after an adventure ---------------------------------------------------------------------
+
+	/// <summary>
+	/// Adds to a lifetime stat (kills, motes, pods, ...) and discovers every nature whose goal it now reaches: the
+	/// nature joins the known ones, its cards join the collection and the discovery bonus is banked (browser:
+	/// track and discover). Returns the natures discovered. Nothing is discovered before the innate nature is known.
+	/// </summary>
+	public List<string> Track(string stat, double n = 1)
+	{
+		Meta.Stats[stat] = Meta.Stats.GetValueOrDefault(stat) + n;
+		var found = new List<string>();
+		if (Meta.Innate == null) return found;
+		foreach (var nat in _d.Discover.Ids)
+		{
+			var d = _d.Discover[nat];
+			if (d.Stat != stat || Meta.Discovered.Contains(nat) || Meta.Stats[stat] < d.N) continue;
+			Meta.Discovered.Add(nat);
+			string sk = StackKey(new[] { nat }, 1);
+			Meta.Cards[sk] = Meta.Cards.GetValueOrDefault(sk) + (int)_d.Tune("discovery_copies");
+			Meta.Bank += (int)_d.Tune("discovery_bonus");
+			found.Add(nat);
+		}
+		return found;
+	}
+
+	/// <summary>
+	/// Banks an adventure's void energy (browser: endRun): <paramref name="gathered"/> is the void energy already
+	/// multiplied by the rift and the share kept; a win adds the win bonus, counts the win and opens the next depth.
+	/// The adventure counts as one more run, and the Gate offers new rifts. Returns what was banked.
+	/// </summary>
+	public int EndAdventure(double gathered, bool won)
+	{
+		int banked = (int)Math.Round(gathered, MidpointRounding.AwayFromZero) + (won ? (int)_d.Tune("win_bonus") : 0);
+		Meta.Bank += banked; Meta.Runs++;
+		if (won)
+		{
+			Meta.Wins++;
+			if (Meta.Depth >= 1) Track("deepwin");
+			if (Meta.Depth >= Meta.MaxDepth) Meta.MaxDepth = Meta.Depth + 1;
+		}
+		Meta.Rifts = RollRifts(); Meta.RiftPick = 0; ApplyRift();
+		return banked;
+	}
 }

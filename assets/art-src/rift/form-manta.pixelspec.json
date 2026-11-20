@@ -1,0 +1,54 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-manta",
+ "canvas": [
+  20,
+  20
+ ],
+ "anchor_px": [
+  10,
+  10
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "R": "#4d5c79",
+  "S": "#9ad7ff",
+  "T": "#d7efff",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "20.",
+    "20.",
+    "20.",
+    "20.",
+    "8.T2.T8.",
+    "8.T2.T8.",
+    "7.TS2TST7.",
+    "5.2TSK2SKS2T5.",
+    "3.2TS8KS2T3.",
+    "2.TS4KT2KT4KST2.",
+    ".TR5KT2KT5KRT.",
+    ".T4S8K5S.",
+    "5.T2S4K3S5.",
+    "7.T5S7.",
+    "8.2T2S8.",
+    "9.TS9.",
+    "9.TS9.",
+    "9.TS9.",
+    "9.TS9.",
+    "20."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

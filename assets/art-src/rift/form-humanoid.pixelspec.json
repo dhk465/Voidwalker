@@ -1,0 +1,53 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-humanoid",
+ "canvas": [
+  20,
+  20
+ ],
+ "anchor_px": [
+  10,
+  10
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "S": "#8fe3ff",
+  "T": "#d2f4ff",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "20.",
+    "20.",
+    "20.",
+    "8.4T8.",
+    "8.T2KS8.",
+    "8.2TKS8.",
+    "7.T4ST7.",
+    "6.TS4KST6.",
+    "6.T6KS6.",
+    "5.T2S4K2ST5.",
+    "5.T2S4K3S5.",
+    "5.T2S4K3S5.",
+    "5.T2S4K3S5.",
+    "6.2T4K2S6.",
+    "7.TS2K2S7.",
+    "8.T3S8.",
+    "8.T3S8.",
+    "9.TS9.",
+    "20.",
+    "20."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

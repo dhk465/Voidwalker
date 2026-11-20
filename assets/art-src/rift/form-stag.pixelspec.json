@@ -1,0 +1,54 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-stag",
+ "canvas": [
+  20,
+  20
+ ],
+ "anchor_px": [
+  10,
+  10
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "R": "#29594c",
+  "S": "#3fd08f",
+  "T": "#b2ecd2",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "20.",
+    "7.T4.T7.",
+    "4.T2.T4.T2.T4.",
+    "4.2T.T4.T.TS4.",
+    "3.T2STS4.2T2ST3.",
+    "3.T3.2T2.2T3.T3.",
+    "7.5TS7.",
+    "5.2T.T3S.2T5.",
+    "5.3TS2KS2TS5.",
+    "6.2TS2K3S6.",
+    "7.2T2KTS7.",
+    "6.TST2KTST6.",
+    "6.T6KS6.",
+    "6.TS4K2S6.",
+    "6.TS4K2S6.",
+    "7.TR2KRS7.",
+    "8.T3S8.",
+    "8.T3S8.",
+    "20.",
+    "20."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

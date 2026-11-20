@@ -39,6 +39,8 @@ const out = {
   ybasogs: Object.fromEntries(Object.entries(window.YBASOGS).map(([k, y]) => [k, { name: y.name, says: y.says, role: y.role, fam: y.fam }])),
   matter: Object.fromEntries(Object.entries(window.MATTER).filter(([, m]) => !m.only).map(([k, m]) => [k, { name: m.name, says: m.says }])),
   palette: window.PALETTE,
+  // the adventure's full stats (life, speed, radius, drops, behaviour numbers), matter pieces included
+  adventure: { ybasogs: window.YBASOGS, matter: window.MATTER },
 };
 writeFileSync('src/data/game_data.json', JSON.stringify(out, null, 1) + '\n');
 console.log(`natures ${Object.keys(BASE).length}, recipes ${Object.keys(N.recipes).length}, sigils ${Object.keys(out.sigils).length}, relics ${Object.keys(out.relics).length}, logs ${Object.keys(out.logs).length}, quests ${Object.keys(out.quests).length}, ybasogs ${Object.keys(out.ybasogs).length}, matter ${Object.keys(out.matter).length}, tune ${Object.keys(tune).length}`);

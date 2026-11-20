@@ -27,10 +27,11 @@ for meta in sorted(glob.glob(os.path.join(RENDER, "*", "codeart-meta.json"))):
         ax, ay = spec["anchor_px"]
         man["sprites"][key] = {"file": key + ".png", "size": [out.width, out.height], "anchor": [ax + PAD, ay + PAD], "qa": qa}
 puffs.sort()
-w, h = puffs[0][1].size
-strip = Image.new("RGBA", (w * len(puffs), h), (0, 0, 0, 0))
-for i, (_, im) in enumerate(puffs): strip.paste(im, (i * w, 0))
-strip.save(os.path.join(OUT, "puff-strip.png"))
-man["sprites"]["puff-strip"] = {"file": "puff-strip.png", "size": [strip.width, strip.height], "frames": len(puffs), "frame_size": [w, h]}
+if puffs:  # the lobby's flame puffs become one strip; the rift's set has none
+    w, h = puffs[0][1].size
+    strip = Image.new("RGBA", (w * len(puffs), h), (0, 0, 0, 0))
+    for i, (_, im) in enumerate(puffs): strip.paste(im, (i * w, 0))
+    strip.save(os.path.join(OUT, "puff-strip.png"))
+    man["sprites"]["puff-strip"] = {"file": "puff-strip.png", "size": [strip.width, strip.height], "frames": len(puffs), "frame_size": [w, h]}
 json.dump(man, open(os.path.join(OUT, "lobby-sprites.json"), "w"), indent=1)
 print(len(man["sprites"]), "packed into", OUT)

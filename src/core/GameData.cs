@@ -29,6 +29,14 @@ public sealed record BoonDef(string Name, string Says);
 /// <summary>A Ybasog kind or a piece of matter, for the bestiary.</summary>
 public sealed record CreatureDef(string Name, string Says, string? Role);
 
+/// <summary>A Ybasog kind's numbers in the adventure (browser units: a 1280x720 screen, px and px/s).</summary>
+/// <param name="W">How often waves pick it (a weight).</param><param name="Dive">A grazer's dive speed.</param>
+/// <param name="Spit">A spitter's seconds between globs.</param><param name="Group">How many come together (0: one).</param>
+public sealed record YbasogStats(string Name, string Fam, string Role, double Hp, double Sp, double R, double Drop, int From, double W, double Dive, double Spit, int Group, string? Nature);
+/// <summary>A kind of falling matter's numbers in the adventure (browser units). <c>Shape</c> is rock, circle, rect or arch.</summary>
+/// <param name="Wt">How often waves pick it.</param><param name="Only">Only made by something else breaking.</param>
+public sealed record MatterStats(string Name, string Fam, string Shape, double R, double W, double H, double Hp, double Sp, double Drop, int From, double Wt, double Drift, string? OnBreak, bool Only, bool Tilt, double Spin, bool Brood, bool Absorb);
+
 /// <summary>A table keyed by id that keeps the source's order (the browser build lists things in a meaningful order).</summary>
 public sealed class Table<T>
 {
@@ -92,6 +100,17 @@ public sealed class GameData
 	/// <summary>Matter shown in the bestiary after the Ybasogs.</summary>
 	public Table<CreatureDef> Matter { get; } = new();
 
+	/// <summary>Every Ybasog kind's adventure numbers, in the browser's order.</summary>
+	public Table<YbasogStats> YbasogStats { get; } = new();
+	/// <summary>Every kind of matter's adventure numbers, pieces made by breaking included.</summary>
+	public Table<MatterStats> MatterStats { get; } = new();
+	/// <summary>Each omen's effects by key (hp, void, pods, rocks, spit, bounces, killVoid, rockVoid, ...); empty for calm.</summary>
+	public Dictionary<string, Dictionary<string, double>> OmenFx { get; } = new();
+	/// <summary>Each boon's effects by key (void, relic, debut, natured).</summary>
+	public Dictionary<string, Dictionary<string, double>> BoonFx { get; } = new();
+	/// <summary>Each nature's form trait by key (fire_rate, bite, iframes, ...), what the blob gains in that form.</summary>
+	public Dictionary<string, Dictionary<string, double>> Traits { get; } = new();
+
 	/// <summary>A tuning value by its browser name (rite_cost, deck_max, ...); throws when absent.</summary>
 	public double Tune(string key) => _tune.TryGetValue(key, out var v) ? v : throw new KeyNotFoundException($"tune.{key}");
 
@@ -118,7 +137,40 @@ public sealed class GameData
 		d.RiftNouns = rifts.GetProperty("noun").Deserialize<string[]>(Json)!;
 		Fill(d.Ybasogs, root.GetProperty("ybasogs"));
 		Fill(d.Matter, root.GetProperty("matter"));
+		foreach (var p in root.GetProperty("omens").EnumerateObject()) d.OmenFx[p.Name] = Effects(p.Value);
+		foreach (var p in rifts.GetProperty("boons").EnumerateObject()) d.BoonFx[p.Name] = Effects(p.Value);
+		foreach (var p in root.GetProperty("natures").EnumerateObject())
+			d.Traits[p.Name] = p.Value.TryGetProperty("trait", out var t) ? Effects(t) : new();
+		if (root.TryGetProperty("adventure", out var adv))
+		{
+			foreach (var p in adv.GetProperty("ybasogs").EnumerateObject())
+			{
+				var y = p.Value;
+				d.YbasogStats.Add(p.Name, new YbasogStats(Str(y, "name")!, Str(y, "fam")!, Str(y, "role") ?? "minion", Num(y, "hp"), Num(y, "sp"), Num(y, "r"),
+					Num(y, "drop"), (int)Num(y, "from", 1), Num(y, "w", 1), Num(y, "dive"), Num(y, "spit"), (int)Num(y, "group"), Str(y, "nature")));
+			}
+			foreach (var p in adv.GetProperty("matter").EnumerateObject())
+			{
+				var m = p.Value;
+				d.MatterStats.Add(p.Name, new MatterStats(Str(m, "name")!, Str(m, "fam")!, Str(m, "shape") ?? "rock", Num(m, "r"), Num(m, "w"), Num(m, "h"), Num(m, "hp"),
+					Num(m, "sp"), Num(m, "drop"), (int)Num(m, "from", 1), Num(m, "wt", 1), Num(m, "drift", 16), Str(m, "onBreak"), Num(m, "only") > 0,
+					Num(m, "tilt") > 0, Num(m, "spin", 1), Num(m, "brood") > 0, Num(m, "absorb") > 0));
+			}
+		}
 		return d;
+	}
+
+	// a number, or a flag (true = 1), or the default when the key is absent
+	private static double Num(JsonElement o, string key, double def = 0) =>
+		o.TryGetProperty(key, out var v) ? v.ValueKind switch { JsonValueKind.Number => v.GetDouble(), JsonValueKind.True => 1, JsonValueKind.False => 0, _ => def } : def;
+	private static string? Str(JsonElement o, string key) => o.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+	// an omen's, boon's or trait's numeric keys (its name and words left out)
+	private static Dictionary<string, double> Effects(JsonElement o)
+	{
+		var fx = new Dictionary<string, double>();
+		foreach (var p in o.EnumerateObject())
+			if (p.Value.ValueKind is JsonValueKind.Number or JsonValueKind.True) fx[p.Name] = p.Value.ValueKind == JsonValueKind.True ? 1 : p.Value.GetDouble();
+		return fx;
 	}
 
 	private static void Fill<T>(Table<T> table, JsonElement obj)

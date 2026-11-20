@@ -12,7 +12,7 @@ Clone or download the repository, then open `prototypes/voidwalker/index.html` i
 
 ## Build and run the Godot port
 
-The Godot build currently opens at the Rift Altar with a playable demo collection. Each station floats on its own island in deep space. The Void Rite is a crack in space-time leaking void, and the Rift Gate holds a rift painted in the chosen nature. Void balls seep out of the crack and drift through the lobby before the rift draws them in. Tap a ball and it either dodges or bursts. The blob on the altar takes the form of your pool's main nature, and equipped relics float over their pedestals. The six stations let you manage your pool, draw cards, buy sigils, equip relics, read the journal, and choose a rift. Combat and the three-stage adventure are still only playable in the browser prototype.
+The Godot build currently opens at the Rift Altar with a playable demo collection. Each station floats on its own island in deep space. The Void Rite is a crack in space-time leaking void, and the Rift Gate holds a rift painted in the chosen nature. Void balls seep out of the crack and drift through the lobby before the rift draws them in. Tap a ball and it either dodges or bursts. The blob on the altar takes the form of your pool's main nature, and equipped relics float over their pedestals. The six stations let you manage your pool, draw cards, buy sigils, equip relics, read the journal, and choose a rift. At the Rift Gate, **ENTER THE RIFT** starts the adventure's first stage: your deck fires as ricocheting bolts at pods, grazers, feeders, asteroids and debris. Asteroids, debris and ruins also drop **scrap**, a currency for this adventure only. After waves 1 and 2, and whenever the adventure levels up, a pick opens: take a card from your pool or skip, and spend scrap on boosts for this run or on buying back a card from your pool. Clearing the stage banks your void energy and returns you to the Altar. On a phone, drag anywhere to move and the deck fires on its own. On a PC, use WASD and the mouse. Stages 2 and 3, nature effects, card drops, bosses and the Rift Rest are still only playable in the browser prototype.
 
 ![The Rift Altar lobby in the Godot port](production/qa/evidence/lobby-islands/rocks-hub-640x360-x2.png)
 
@@ -62,11 +62,19 @@ mkdir -p movie
 "$GODOT" --path . --write-movie movie/f.png --fixed-fps 30 --quit-after 900
 ```
 
+**The rift.** Open the adventure directly with `"$GODOT" --path . res://src/adventure/Rift.tscn`. In the rift, the left button fires, Q toggles auto-fire, and Escape, P or Space pauses. It takes its own options after `--`: `--autoplay` moves and fires on its own; `--speed=6` runs time faster; `--shot=<png>` with `--shot-at=<seconds>` or `--shot-at=end` saves a frame and quits; `--return-at-end` goes back to the Altar after the end screen. A run that ends banks into your save, so copy the save first.
+
+```bash
+"$GODOT" --path . --windowed res://src/adventure/Rift.tscn -- --autoplay --speed=6 --shot-at=end --shot=rift-end.png
+```
+
 **Your save.** The collection is saved to `user://save.json`. On Windows that is `%APPDATA%\Godot\app_userdata\Voidwalker\save.json`. A first launch with no save starts the demo collection. If the save cannot be read, the game leaves the file alone and shows **SAVE PROTECTED** in the HUD, and changes in that session are not kept. Copy the file before a test that changes your collection. To start over, use **RESET TO DEMO** on the Journal's Natures tab and tap it twice, or delete the file while the game is closed.
 
 **Tuning.** Lobby values live in `src/data/hub_config.tres`. They include how many void balls there are and how fast they drift, the tap radius and burst chance, the trails, the star blink and the asteroid drift. Each value is documented in `src/hub/HubConfig.cs`. Edit them in the Godot inspector or in the file, then run the game again.
 
 **Version label.** The HUD shows `v0.2.0 dev` from `project.godot` unless `src/data/build_info.json` exists. The Android export script writes that file, and it is gitignored. After an Android build, the desktop build shows that APK's version until you delete the file.
+
+**Rift art.** All pixel art goes through pixelfx (`tools/pixelfx`) and agent-sprite-forge, first. The rift's figures and effects are pixelfx effects in `tools/art/fx/`; `python tools/art/bake_rift_fx.py [sheet ...]` renders them with pixelfx and bakes sheets in the game palette into `assets/sprites/rift/` (needs Node). Check a changed effect with `node tools/check.mjs <id>` in `tools/pixelfx`. In the rift, `-- --shot-at=pick` saves the first pick panel.
 
 **Lobby art.** The lobby sprites are drawn in code, with no image model. To change one, edit `tools/art/gen_lobby.py`, then regenerate the specs, render them, and pack them:
 
@@ -81,11 +89,13 @@ python tools/art/pack_lobby.py render assets/art-src/lobby assets/sprites/lobby
 "$GODOT" --headless --path . --import
 ```
 
+The adventure's sprite sheets (Ybasogs, rocks, the slab) are drawn by `python tools/art/gen_rift.py`, which writes `assets/sprites/rift/` directly. The blob's forms at the rift's size come from `gen_lobby.py` with `--set forms --scale 0.25`.
+
 The Gate rift and the void effects (the Rite crack and the ball burst) are pixelfx effects in `tools/art/fx/arcane/`. Bake them with `python tools/art/bake_gate_rift.py` and `python tools/art/bake_void_fx.py`, which need Node. The renderer (`.claude/skills/codeart2d/`) and pixelfx (`tools/pixelfx/`) are local tools that are not in the repository yet, so these steps only work where they are installed. The game runs from the committed sprites without them.
 
 ## Test the port
 
-Run the rules and save regression tests from the repository root. The suite checks card draws against fixtures from the browser game, exercises save preservation and the reset flow, and checks the void balls' paths: their bounds, pace, waypoint hops and depth lanes.
+Run the rules and save regression tests from the repository root. The suite checks card draws against fixtures from the browser game, exercises save preservation and the reset flow, and checks the void balls' paths: their bounds, pace, waypoint hops and depth lanes. It also checks the adventure's rules: the hand-made first minute, firing and reshuffling, ricochets, kills and motes, grazers and feeders, a fall, a cleared stage, and the banking after.
 
 ```bash
 dotnet test Voidwalker.sln

@@ -1,0 +1,54 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-rat",
+ "canvas": [
+  20,
+  20
+ ],
+ "anchor_px": [
+  10,
+  10
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "R": "#705632",
+  "S": "#f2c94c",
+  "T": "#fae9b7",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "20.",
+    "20.",
+    "20.",
+    "20.",
+    "6.2T.2T.2T6.",
+    "5.T2STSRT2ST5.",
+    "5.T2KS2KS2KS5.",
+    "5.T2ST2KTK2S5.",
+    "6.TKT2KTKS6.",
+    "6.T6KS6.",
+    "6.T6KS6.",
+    "6.TS4K2S6.",
+    "7.T4KS7.",
+    "7.TR2K2S7.",
+    "8.T3S8.",
+    "10.TS8.",
+    "11.2T7.",
+    "11.TS7.",
+    "10.TS8.",
+    "20."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

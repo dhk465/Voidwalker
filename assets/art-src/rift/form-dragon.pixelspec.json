@@ -1,0 +1,54 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-dragon",
+ "canvas": [
+  20,
+  20
+ ],
+ "anchor_px": [
+  10,
+  10
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "R": "#76242a",
+  "S": "#ff4b3a",
+  "T": "#ffb7b0",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "20.",
+    "20.",
+    "20.",
+    "7.T4.T7.",
+    "7.5TS7.",
+    "2.T4.T5S4.T2.",
+    "2.4T.TS2K2S.3TS2.",
+    "2.TSKSTST2KTSTSK2S2.",
+    "2.TS4KT2KT4K2S2.",
+    ".TS14KST.",
+    "2.T2S10K3S2.",
+    "3.T4S4K5S3.",
+    "7.TS2K2S7.",
+    "8.TRKS8.",
+    "9.TRST7.",
+    "10.T2S7.",
+    "11.TS7.",
+    "12.2T6.",
+    "20.",
+    "20."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

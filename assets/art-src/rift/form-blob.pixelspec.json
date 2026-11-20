@@ -1,0 +1,53 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-blob",
+ "canvas": [
+  20,
+  20
+ ],
+ "anchor_px": [
+  10,
+  10
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "S": "#b9a6ff",
+  "T": "#e3dbff",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "20.",
+    "20.",
+    "20.",
+    "20.",
+    "20.",
+    "7.6T7.",
+    "7.T4KS7.",
+    "6.TS4KST6.",
+    "6.T6KS6.",
+    "5.TSKT2KTKST5.",
+    "5.T2KT2KT2KS5.",
+    "5.T8KS5.",
+    "5.TS6K2S5.",
+    "6.T7S6.",
+    "8.T3S8.",
+    "20.",
+    "20.",
+    "20.",
+    "20.",
+    "20."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

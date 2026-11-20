@@ -1,0 +1,54 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-serpent",
+ "canvas": [
+  20,
+  20
+ ],
+ "anchor_px": [
+  10,
+  10
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "R": "#476032",
+  "S": "#8be04e",
+  "T": "#d1f3b8",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "20.",
+    "20.",
+    "9.2T9.",
+    "8.T2ST8.",
+    "7.TSTKST7.",
+    "7.TS2K2S7.",
+    "8.T2KS8.",
+    "8.T3ST7.",
+    "9.2TSRT6.",
+    "10.TSKS6.",
+    "9.T4S6.",
+    "8.T3S8.",
+    "6.2T2S10.",
+    "6.TKS11.",
+    "6.T2ST10.",
+    "8.TST9.",
+    "10.3T7.",
+    "11.TS7.",
+    "20.",
+    "20."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}

@@ -1,0 +1,54 @@
+{
+ "schema": "codeart2d.pixelspec.v1",
+ "name": "form-snail",
+ "canvas": [
+  20,
+  20
+ ],
+ "anchor_px": [
+  10,
+  10
+ ],
+ "palette": {
+  "K": "#1a0a20",
+  "R": "#4d3f63",
+  "S": "#9a8fc8",
+  "T": "#d7d2e9",
+  "o": "#0e0a18"
+ },
+ "layers": [
+  {
+   "name": "body",
+   "origin": [
+    0,
+    0
+   ],
+   "segments": [
+    "20.",
+    "20.",
+    "20.",
+    "8.4T8.",
+    "8.T3S8.",
+    "8.T3S8.",
+    "8.T3S8.",
+    "8.T3S8.",
+    "8.T3ST7.",
+    "7.T5ST6.",
+    "7.T2ST2SRT5.",
+    "7.T7S5.",
+    "6.T3SK4ST4.",
+    "7.T2S2K3S5.",
+    "7.TSK5S5.",
+    "8.T5S6.",
+    "8.T4S7.",
+    "8.T3S8.",
+    "20.",
+    "20."
+   ]
+  }
+ ],
+ "outline": {
+  "mode": "solid",
+  "color": "o"
+ }
+}
